@@ -3,7 +3,7 @@ package ae.core;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 
 import ae.entity.DirectionalLight;
 import ae.entity.Entity;
@@ -110,6 +110,9 @@ public final class ShaderManager {
 		}
 	}
 	
+	private static final Path SHADER_PATH =
+		AbstractEngine.SOURCE_PATH.resolve("shader");
+	
 	private static final int _UNI_MAT_MODELVIEW     = 0;
 	private static final int _UNI_MAT_NORMAL        = 1;
 	private static final int _UNI_MAT_PROJECTION    = 2;
@@ -146,18 +149,18 @@ public final class ShaderManager {
 	
 	private final boolean createShader(
 			final AbstractEngine engine,
-			final int    shaderType,
-			final int    program,
-			final String sourcePath) {
+			final int            shaderType,
+			final int            program,
+			final String         shaderFile) {
 		
 		final int shader = glCreateShader(shaderType);
 		
 		// Load the shader source code
 		try {
-			glShaderSource(shader, loadFile(sourcePath));
+			glShaderSource(shader, loadFile(shaderFile));
 		} catch(IOException e) {
 			engine.err.println(
-				"Error while loading shader source '" + sourcePath + "'");
+				"Error while loading shader source '" + shaderFile + "'");
 			return false;
 		}
 		
@@ -175,11 +178,11 @@ public final class ShaderManager {
 	}
 	
 	private static final String loadFile(
-			final String path) throws IOException {
+			final String shaderFile) throws IOException {
 		
-		byte[] encoded = Files.readAllBytes(Paths.get(path));
-		
-		return new String(encoded, StandardCharsets.UTF_8);
+		return new String(
+			Files.readAllBytes(SHADER_PATH.resolve(shaderFile)),
+			StandardCharsets.UTF_8);
 	}
 	
 	public ShaderManager(

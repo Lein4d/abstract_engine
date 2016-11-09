@@ -1,6 +1,9 @@
 package ae.core;
 
 import java.io.PrintStream;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
@@ -85,12 +88,40 @@ public final class AbstractEngine {
 	public static final int SIZE_FLOAT  = 4;
 	public static final int SIZE_DOUBLE = 8;
 	
+	public static final Path SOURCE_PATH;
+	
 	public final PrintStream out;
 	public final PrintStream err;
 	
 	public final Texture  defaultTexture;
 	public final Vector3D background = Vector4D.BLACK.xyz.cloneStatic();
 	public final Matrix4D projection = new Matrix4D();
+	
+	static {
+		
+		Path fullPath = Paths.get("");
+		
+		try {
+			fullPath = Paths.get(
+				AbstractEngine.class.getProtectionDomain().getCodeSource().
+				getLocation().toURI());
+		} catch(URISyntaxException e) {
+			e.printStackTrace();
+		}
+		
+		if(fullPath.getFileName().toString().endsWith(".jar")) {
+			
+			final Path fullPathRelative =
+				Paths.get("").toAbsolutePath().relativize(fullPath);
+			
+			SOURCE_PATH =
+				fullPathRelative.subpath(0, fullPathRelative.getNameCount() - 1);
+			
+		} else {
+			
+			SOURCE_PATH = Paths.get("");
+		}
+	}
 	
 	private final void updateViewport() {
 		
@@ -207,7 +238,7 @@ public final class AbstractEngine {
 			Texture.createCheckerTexture(Vector4D.WHITE, Vector4D.WHITE);
 		
 		_colorShader = _sm.createShaderProgram(
-			this, "shader/color.vert", "shader/color.frag",
+			this, "color.vert", "color.frag",
 			new String[]{"in_position", null, "in_texCoord"},
 			new String[]{"out_color"},
 			"u_matModelView", null, "u_matProjection",
@@ -215,7 +246,7 @@ public final class AbstractEngine {
 			null, null, null, null);
 
 		_lightShader = _sm.createShaderProgram(
-			this, "shader/light.vert", "shader/light.frag",
+			this, "light.vert", "light.frag",
 			new String[]{"in_position", "in_normal", "in_texCoord"},
 			new String[]{"out_color"},
 			"u_matModelView", "u_matNormal", "u_matProjection",
