@@ -36,7 +36,7 @@ public final class TextureBuilder {
 	}
 	
 	private final CachedObject<Texture> _lastValidTexture =
-		new CachedObject<Texture>(null, (object) -> createCachedTexture());
+		new CachedObject<Texture>(null, (object) -> _createCachedTexture());
 	
 	private int        _width              = -1;
 	private int        _height             = -1;
@@ -48,7 +48,7 @@ public final class TextureBuilder {
 	private float      _anisotropy         = 1;
 	private ByteBuffer _data               = null;
 	
-	private static final void checkDimensions(
+	private static final void _checkDimensions(
 			final int width,
 			final int height) {
 		
@@ -63,7 +63,7 @@ public final class TextureBuilder {
 				") must be multiples of 4 (due to padding problem)");
 	}
 	
-	private final Texture createCachedTexture() {
+	private final Texture _createCachedTexture() {
 		
 		return new Texture(
 			_width, _height, _alpha,
@@ -85,7 +85,7 @@ public final class TextureBuilder {
     		final boolean     invertX,
     		final boolean     invertY) {
 		
-		checkDimensions(width, height);
+		_checkDimensions(width, height);
 		
 		final int[] channelMap = format.mapping;
 
@@ -164,7 +164,7 @@ public final class TextureBuilder {
     		final boolean            alpha,
     		final DiscreteGradient2D gradient) {
 
-		checkDimensions(width, height);
+		_checkDimensions(width, height);
 		
 		final int[] color = new int[alpha ? 4 : 3];
 		

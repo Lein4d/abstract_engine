@@ -58,7 +58,7 @@ public class SceneGraph {
 	
 	public final Entity<?> root;
 	
-	private final Entity.Instance instantiateEntity(
+	private final Entity.Instance _instantiateEntity(
 			final Entity<?>       entity,
 			final Entity.Instance parent,
 			final Entity.Instance nextSibling,
@@ -70,7 +70,7 @@ public class SceneGraph {
 		// Die Kinder iterieren, die Sibling-Verweise sind genau andersrum wie
 		// in der children-Liste gespeichert
 		for(Entity<?> i : entity.getChildren())
-			latestNode = instantiateEntity(i, node, latestNode, level + 1);
+			latestNode = _instantiateEntity(i, node, latestNode, level + 1);
 		
 		entity.assignInstance(node, parent, latestNode, nextSibling, level);
 		
@@ -84,7 +84,7 @@ public class SceneGraph {
 		return node;
 	}
 	
-	private final void traversePrefix(
+	private final void _traversePrefix(
 			final Entity.Instance           instance,
 			final Consumer<Entity.Instance> consumer) {
 		
@@ -93,7 +93,7 @@ public class SceneGraph {
 		Entity.Instance child = instance.getFirstChild();
 		
 		while(child != null) {
-			traversePrefix(child, consumer);
+			_traversePrefix(child, consumer);
 			child = child.getNextSibling();
 		}
 	}
@@ -113,11 +113,11 @@ public class SceneGraph {
 			_dirLights  .removeAll();
 			_pointLights.removeAll();
 			// Start the recursive tree creation
-			_rootInstance = instantiateEntity(root, null, null, 0);
+			_rootInstance = _instantiateEntity(root, null, null, 0);
 		}
 		
 		// Compute transformation matrices
-		traversePrefix(_rootInstance, _transformationUpdater);
+		_traversePrefix(_rootInstance, _transformationUpdater);
 		
 		_engine.setDirectionalLights(_dirLights);
 		_engine.setPointLights(_pointLights);

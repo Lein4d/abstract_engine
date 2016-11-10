@@ -7,14 +7,14 @@ import ae.util.Functions;
 
 public final class Meshes {
 	
-	private static final float[][] QUAD_POSITIONS = {
+	private static final float[][] _QUAD_POSITIONS = {
 		{0,0,0},{1,0,0},{1,0,1},{0,0,1}};
 	
-	private static final float[][] QUAD_TEXCOORDS = {{0,0},{0,1},{1,1},{1,0}};
+	private static final float[][] _QUAD_TEXCOORDS = {{0,0},{0,1},{1,1},{1,0}};
 	
-	private static final int[][] QUAD_INDICES = {{0,1,2,3},{3,2,1,0}};
+	private static final int[][] _QUAD_INDICES = {{0,1,2,3},{3,2,1,0}};
 	
-	private static final float[][] CUBE_POSITIONS = {
+	private static final float[][] _CUBE_POSITIONS = {
 		{0,0,0},{0,1,0},{1,1,0},{1,0,0},  // front
 		{1,0,0},{1,1,0},{1,1,1},{1,0,1},  // right
 		{1,0,1},{1,1,1},{0,1,1},{0,0,1},  // back
@@ -22,7 +22,7 @@ public final class Meshes {
 		{0,0,0},{1,0,0},{1,0,1},{0,0,1},  // bottom
 		{0,1,0},{0,1,1},{1,1,1},{1,1,0}}; // top
 
-	private static final float[][] CUBE_TEXCOORDS = {
+	private static final float[][] _CUBE_TEXCOORDS = {
 		{0,0},{0,1},{1,1},{1,0},
 		{0,0},{0,1},{1,1},{1,0},
 		{0,0},{0,1},{1,1},{1,0},
@@ -32,7 +32,7 @@ public final class Meshes {
 
 	private Meshes() {}
 	
-	private static final void computeCylinderShellData(
+	private static final void _computeCylinderShellData(
 			final int       subdivisions,
 			final int       iOffset,
 			final int       vOffset,
@@ -56,10 +56,10 @@ public final class Meshes {
 			indices[iPos][3] = vPos            + 1;
 		}
 		
-		computeDiscVertices(
+		_computeDiscVertices(
 			subdivisions, 0, vOffset,
 			false, positions, normals, null);
-		computeDiscVertices(
+		_computeDiscVertices(
 			subdivisions, 1, vOffset + ringSize,
 			false, positions, normals, null);
 		
@@ -74,7 +74,7 @@ public final class Meshes {
 		}
 	}
 	
-	private static final void computeDiscData(
+	private static final void _computeDiscData(
     		final int       subdivisions,
     		final float     posY1,
     		final float     posY2,
@@ -85,23 +85,23 @@ public final class Meshes {
     		final float[][] normals,
     		final float[][] texCoords) {
 		
-		final int quadCount = computeDiscQuadCount(subdivisions);
+		final int quadCount = _computeDiscQuadCount(subdivisions);
 		
 		// Indices of down-facing cap
-		computeDiscIndices(
+		_computeDiscIndices(
 			subdivisions, iOffset,             vOffset,
 			true, false, indices);
 		// Indices of up-facing cap
-		computeDiscIndices(
+		_computeDiscIndices(
 			subdivisions, iOffset + quadCount, vOffset + subdivisions,
 			true, true,  indices);
 		
 		// Vertices of down-facing cap
-		computeDiscVertices(
+		_computeDiscVertices(
 			subdivisions, posY1, vOffset,
 			true, positions, null, texCoords);
 		// Vertices of up-facing cap
-		computeDiscVertices(
+		_computeDiscVertices(
 			subdivisions, posY2, vOffset + subdivisions,
 			true, positions, null, texCoords);
 		
@@ -112,7 +112,7 @@ public final class Meshes {
 		}
 	}
 	
-	private static final void computeDiscIndices(
+	private static final void _computeDiscIndices(
 			final int     subdivisions,
 			final int     iOffset,
 			final int     vOffset,
@@ -121,7 +121,7 @@ public final class Meshes {
 			final int[][] indices) {
 
 		final int ringSize  = subdivisions + (wrapIndices ? 0 : 1);
-		final int quadCount = computeDiscQuadCount(subdivisions);
+		final int quadCount = _computeDiscQuadCount(subdivisions);
 		final int offset1   = invert ? 3 : 1;
 		final int offset3   = invert ? 1 : 3;
 		
@@ -138,7 +138,7 @@ public final class Meshes {
 		}
 	}
 	
-	private static final void computeDiscVertices(
+	private static final void _computeDiscVertices(
 			final int       subdivisions,
 			final float     posY,
 			final int       vOffset,
@@ -175,7 +175,7 @@ public final class Meshes {
 		}
 	}
 
-	private static final int computeDiscQuadCount(
+	private static final int _computeDiscQuadCount(
 			final int subdivisions) {
 		
 		return (int)Math.ceil((subdivisions - 2.0) / 2.0);
@@ -185,8 +185,8 @@ public final class Meshes {
 		
 		final MeshBuilder mb = new MeshBuilder();
 		
-		mb.setPositionArray(Functions.cloneArray2D(CUBE_POSITIONS));
-		mb.setTexCoordArray(Functions.cloneArray2D(CUBE_TEXCOORDS));
+		mb.setPositionArray(Functions.cloneArray2D(_CUBE_POSITIONS));
+		mb.setTexCoordArray(Functions.cloneArray2D(_CUBE_TEXCOORDS));
 		
 		mb.setPrimitiveType(PrimitiveType.QUAD);
 		mb.computeNormals(true, true);
@@ -223,7 +223,7 @@ public final class Meshes {
 		final MeshBuilder mb = new MeshBuilder();
 		
 		final int ringSize  = subdivisions + 1;
-		final int quadCount = computeDiscQuadCount(subdivisions);
+		final int quadCount = _computeDiscQuadCount(subdivisions);
 		
 		final int[][]   indices   = mb.createIndexArray(
 			2 * quadCount + subdivisions, PrimitiveType.QUAD);
@@ -232,10 +232,10 @@ public final class Meshes {
 		final float[][] normals   = mb.createNormalArray();
 		final float[][] texCoords = mb.createTexCoordArray();
 		
-		computeDiscData(
+		_computeDiscData(
 			subdivisions, 0, 1, 0, 0, indices, positions, normals, texCoords);
 		
-		computeCylinderShellData(
+		_computeCylinderShellData(
 			subdivisions, 2 * quadCount, 2 * subdivisions,
 			indices, positions, normals, texCoords);
 		
@@ -279,7 +279,7 @@ public final class Meshes {
 		final float[][] normals   = mb.createNormalArray();
 		final float[][] texCoords = mb.createTexCoordArray();
 		
-		computeCylinderShellData(
+		_computeCylinderShellData(
 			subdivisions, 0, 0, indices, positions, normals, texCoords);
 		
 		mb.enableCullFacingSupport(true);
@@ -313,7 +313,7 @@ public final class Meshes {
 		
 		final MeshBuilder mb = new MeshBuilder();
 		
-		final int quadCount = computeDiscQuadCount(subdivisions);
+		final int quadCount = _computeDiscQuadCount(subdivisions);
 		
 		final int[][]   indices   = mb.createIndexArray(
 			2 * quadCount, PrimitiveType.QUAD);
@@ -321,7 +321,7 @@ public final class Meshes {
 		final float[][] normals   = mb.createNormalArray();
 		final float[][] texCoords = mb.createTexCoordArray();
 		
-		computeDiscData(
+		_computeDiscData(
 			subdivisions, 0, 0, 0, 0, indices, positions, normals, texCoords);
 		
 		mb.enableCullFacingSupport(true);
@@ -350,9 +350,9 @@ public final class Meshes {
 		
 		final MeshBuilder mb = new MeshBuilder();
 		
-		mb.setIndices      (Functions.cloneArray2D(QUAD_INDICES));
-		mb.setPositionArray(Functions.cloneArray2D(QUAD_POSITIONS));
-		mb.setTexCoordArray(Functions.cloneArray2D(QUAD_TEXCOORDS));
+		mb.setIndices      (Functions.cloneArray2D(_QUAD_INDICES));
+		mb.setPositionArray(Functions.cloneArray2D(_QUAD_POSITIONS));
+		mb.setTexCoordArray(Functions.cloneArray2D(_QUAD_TEXCOORDS));
 		
 		mb.setPrimitiveType(PrimitiveType.QUAD);
 		mb.computeNormals(true, true);

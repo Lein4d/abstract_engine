@@ -123,7 +123,7 @@ public final class AbstractEngine {
 		}
 	}
 	
-	private final void updateViewport() {
+	private final void _updateViewport() {
 		
 		glViewport(0, 0, _fbWidth, _fbHeight);
 		
@@ -226,7 +226,7 @@ public final class AbstractEngine {
 			(window, width, height) -> {
 				_fbWidth  = width;
 				_fbHeight = height;
-				if(_state == State.RUNNING) updateViewport();
+				if(_state == State.RUNNING) _updateViewport();
 			});
 		
 		glfwMakeContextCurrent(_window);
@@ -430,7 +430,7 @@ public final class AbstractEngine {
 			_fbWidth  = _windowWidth  = vidMode.width();
 			_fbHeight = _windowHeight = vidMode.height();
 			
-			updateViewport();
+			_updateViewport();
 			
 			glfwSetWindowMonitor(
 				_window, monitor,

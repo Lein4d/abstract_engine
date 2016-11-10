@@ -58,7 +58,7 @@ public final class Mesh {
 	// the bounding box stays valid.
 	//public readonly Rect3D BoundingBox = new Rect3D();
 
-	private final int initIbo(
+	private final int _initIbo(
 			final int[][] indices) {
 
 		int iboType;
@@ -120,7 +120,7 @@ public final class Mesh {
 		return iboType;
 	}
 
-	private final void initVbo(
+	private final void _initVbo(
 			final float[][] positions,
 			final float[][] normals,
 			final float[][] texCoords) {
@@ -146,7 +146,7 @@ public final class Mesh {
 		glBufferData(GL_ARRAY_BUFFER, vboData, GL_STATIC_DRAW);
 	}
 
-	private final void setVertexAttributes() {
+	private final void _setVertexAttributes() {
 		
 		final int vertexSize = (3 + 3 + 2) * AbstractEngine.SIZE_FLOAT;
 		
@@ -189,11 +189,11 @@ public final class Mesh {
 		glBindVertexArray(_vao);
 		
 		// Fill the vbo
-		initVbo(positions, normals, texCoords);
-		setVertexAttributes();
+		_initVbo(positions, normals, texCoords);
+		_setVertexAttributes();
 		
 		// Fill the ibo
-		_iboType = initIbo(indices);
+		_iboType = _initIbo(indices);
 		
 		// Unbind all buffers to prevent them from changes
 		glBindVertexArray(0);

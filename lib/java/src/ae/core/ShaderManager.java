@@ -22,7 +22,7 @@ public final class ShaderManager {
 		private final int   _program;
 		private final int[] _uniLocations = new int[_uniforms.length];
 		
-		private Shader(
+		public Shader(
 				final int        program,
 				final String ... uniNames) {
 			
@@ -35,7 +35,7 @@ public final class ShaderManager {
 					glGetUniformLocation(_program, uniNames[i]) : -1;
 		}
 		
-		private final <T> void setUniformValue(
+		public final <T> void setUniformValue(
 				final int index,
 				final T   value) {
 			
@@ -81,7 +81,7 @@ public final class ShaderManager {
 		
 		private T _value;
 		
-		private UniformVariable(
+		public UniformVariable(
 				final int uniformId) {
 			
 			_uniformId = uniformId;
@@ -89,7 +89,7 @@ public final class ShaderManager {
 			for(int i = 0; i < _validity.length; i++) _validity[i] = false;
 		}
 		
-		private final void applyToCurShader() {
+		public final void applyToCurShader() {
 			
 			if(_curShaderId == -1 || _validity[_curShaderId]) return;
 			
@@ -98,7 +98,7 @@ public final class ShaderManager {
 			_validity[_curShaderId] = true;
 		}
 		
-		private final void setValue(
+		public final void setValue(
 				final T value) {
 			
 			_value = value;
@@ -147,7 +147,7 @@ public final class ShaderManager {
 	public final int maxDirLightCount;
 	public final int maxPointLightCount;
 	
-	private final boolean createShader(
+	private final boolean _createShader(
 			final AbstractEngine engine,
 			final int            shaderType,
 			final int            program,
@@ -157,7 +157,7 @@ public final class ShaderManager {
 		
 		// Load the shader source code
 		try {
-			glShaderSource(shader, loadFile(shaderFile));
+			glShaderSource(shader, _loadFile(shaderFile));
 		} catch(IOException e) {
 			engine.err.println(
 				"Error while loading shader source '" + shaderFile + "'");
@@ -177,7 +177,7 @@ public final class ShaderManager {
 		return true;
 	}
 	
-	private static final String loadFile(
+	private static final String _loadFile(
 			final String shaderFile) throws IOException {
 		
 		return new String(
@@ -223,26 +223,26 @@ public final class ShaderManager {
 	}
 	
 	public final int createShaderProgram(
-			final AbstractEngine   engine,
-			final String   vertexShaderPath,
-			final String   fragmentShaderPath,
-			final String[] attribNames,
-			final String[] fragDataNames,
-			final String   uniNameMatModelView,
-			final String   uniNameMatNormal,
-			final String   uniNameMatProjection,
-			final String   uniNameColor,
-			final String   uniNameTexture,
-			final String   uniNameDirLights,
-			final String   uniNameDirLightCount,
-			final String   uniNamePointLights,
-			final String   uniNamePointLightCount) {
+			final AbstractEngine engine,
+			final String         vertexShaderPath,
+			final String         fragmentShaderPath,
+			final String[]       attribNames,
+			final String[]       fragDataNames,
+			final String         uniNameMatModelView,
+			final String         uniNameMatNormal,
+			final String         uniNameMatProjection,
+			final String         uniNameColor,
+			final String         uniNameTexture,
+			final String         uniNameDirLights,
+			final String         uniNameDirLightCount,
+			final String         uniNamePointLights,
+			final String         uniNamePointLightCount) {
 		
 		final int program = glCreateProgram();
 
-		final boolean vsSuccess = createShader(
+		final boolean vsSuccess = _createShader(
 			engine, GL_VERTEX_SHADER, program, vertexShaderPath);
-		final boolean fsSuccess = createShader(
+		final boolean fsSuccess = _createShader(
 			engine, GL_FRAGMENT_SHADER, program, fragmentShaderPath);
 		
 		if(!vsSuccess || !fsSuccess) return -1;

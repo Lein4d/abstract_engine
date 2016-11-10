@@ -7,7 +7,7 @@ import ae.util.CachedObject;
 public class MeshBuilder {
 	
 	private final CachedObject<Mesh> _lastValidMesh =
-		new CachedObject<Mesh>(null, (object) -> createCachedMesh());
+		new CachedObject<Mesh>(null, (object) -> _createCachedMesh());
 	
 	// Metainformationen
 	private Mesh.PrimitiveType _primitiveType    = PrimitiveType.TRIANGLE;
@@ -22,7 +22,7 @@ public class MeshBuilder {
 	private float[][] _normals   = null;
 	private float[][] _texCoords = null;
 	
-	private final void checkNewPositionArrayPossible(
+	private final void _checkNewPositionArrayPossible(
 			final int vertexCount) {
 		
 		if(_normals != null && _normals.length != vertexCount)
@@ -34,26 +34,26 @@ public class MeshBuilder {
 				"Tex-coord array with different size already specified");
 	}
 	
-	private final void checkPositionArrayExists() {
+	private final void _assertPositionsNotNull() {
 		
 		if(_positions == null)
 			throw new UnsupportedOperationException("No positions specified");
 	}
 	
-	private final void checkTexCoordArrayExists() {
+	private final void _assertTexCoordsNotNull() {
 		
 		if(_texCoords == null)
 			throw new UnsupportedOperationException("No tex-coords specified");
 	}
 	
-	private final boolean compareFloats(
+	private final boolean _compareFloats(
 			final float f1,
 			final float f2) {
 		
 		return Math.abs(f1 - f2) < _precision;
 	}
 	
-	private final void computeFlatNormals(
+	private final void _computeFlatNormals(
 			final boolean normalize) {
 
 		// Der Normalenvektor für alle Punkte des Dreiecks wird hier gespeichert
@@ -66,10 +66,10 @@ public class MeshBuilder {
 			
 			switch(_primitiveType) {
 				case TRIANGLE:
-					computeTriangleNormal(i, i + 1, i + 2, normal, normalize);
+					_computeTriangleNormal(i, i + 1, i + 2, normal, normalize);
 					break;
 				case QUAD:
-					computeQuadNormal(
+					_computeQuadNormal(
 						i, i + 1, i + 2, i + 3, normal, normalize);
 					break;
 			}
@@ -81,19 +81,19 @@ public class MeshBuilder {
 		}
 	}
 	
-	private static final void computeNormal(
+	private static final void _computeNormal(
     		final float[] p0,
     		final float[] p1,
     		final float[] p2,
     		final float[] n,
     		final boolean normalize) {
 		
-		computeNormal(
+		_computeNormal(
 			p0[0], p0[1], p0[2], p1[0], p1[1], p1[2], p2[0], p2[1], p2[2],
 			n, normalize);
 	}
 	
-	private static final void computeNormal(
+	private static final void _computeNormal(
 			final float   p0x,
 			final float   p0y,
 			final float   p0z,
@@ -151,7 +151,7 @@ public class MeshBuilder {
 	}
 */
 	
-	private final void computeQuadNormal(
+	private final void _computeQuadNormal(
     		final int     iP0,
     		final int     iP1,
     		final int     iP2,
@@ -172,53 +172,53 @@ public class MeshBuilder {
 		
 		for(int i = 0; i < 3 && !allDifferent; i++) {
 			
-			if(equP0P1) equP0P1 = compareFloats(p0[i], p1[i]);
-			if(equP1P2) equP1P2 = compareFloats(p1[i], p2[i]);
-			if(equP2P3) equP2P3 = compareFloats(p2[i], p3[i]);
-			if(equP3P0) equP3P0 = compareFloats(p3[i], p0[i]);
+			if(equP0P1) equP0P1 = _compareFloats(p0[i], p1[i]);
+			if(equP1P2) equP1P2 = _compareFloats(p1[i], p2[i]);
+			if(equP2P3) equP2P3 = _compareFloats(p2[i], p3[i]);
+			if(equP3P0) equP3P0 = _compareFloats(p3[i], p0[i]);
 			
 			if(!equP0P1 && !equP1P2 && !equP2P3 && !equP3P0)
 				allDifferent = true;
 		}
 		
 		if(allDifferent || equP0P1) {
-			computeNormal(p1, p2, p3, n, normalize);
+			_computeNormal(p1, p2, p3, n, normalize);
 		} else if(equP1P2) {
-			computeNormal(p0, p2, p3, n, normalize);
+			_computeNormal(p0, p2, p3, n, normalize);
 		} else if(equP2P3) {
-			computeNormal(p0, p1, p3, n, normalize);
+			_computeNormal(p0, p1, p3, n, normalize);
 		} else {
-			computeNormal(p0, p1, p2, n, normalize);
+			_computeNormal(p0, p1, p2, n, normalize);
 		}
 	}
 	
-	private final void computeTriangleNormal(
+	private final void _computeTriangleNormal(
 			final int     iP0,
 			final int     iP1,
 			final int     iP2,
 			final float[] n,
 			final boolean normalize) {
 		
-		computeNormal(
+		_computeNormal(
 			_positions[iP0][0], _positions[iP0][1], _positions[iP0][2],
 			_positions[iP1][0], _positions[iP1][1], _positions[iP1][2],
 			_positions[iP2][0], _positions[iP2][1], _positions[iP2][2],
 			n, normalize);
 	}
 	
-	private final Mesh createCachedMesh() {
+	private final Mesh _createCachedMesh() {
 		
-		checkPositionArrayExists();
+		_assertPositionsNotNull();
 		
 		return new Mesh(
-			_indices != null ? _indices : createDefaultIndices(),
+			_indices != null ? _indices : _createDefaultIndices(),
 			_positions, _normals, _texCoords,
 			_autoNormals, _cullFacing);
 	}
 	
-	private final int[][] createDefaultIndices() {
+	private final int[][] _createDefaultIndices() {
 
-		checkPositionArrayExists();
+		_assertPositionsNotNull();
 		
 		if(!_primitiveTypeSet)
 			throw new UnsupportedOperationException(
@@ -234,7 +234,7 @@ public class MeshBuilder {
 		return newIndices;
 	}
 	
-	private final <T> void resetCompiled(
+	private final <T> void _resetCompiled(
 			final T oldValue,
 			final T newValue) {
 
@@ -245,11 +245,11 @@ public class MeshBuilder {
 			final boolean flat,
 			final boolean normalize) {
 
-		checkPositionArrayExists();
+		_assertPositionsNotNull();
 		
 		if(_indices != null) unwrap();
 		
-		computeFlatNormals(normalize);
+		_computeFlatNormals(normalize);
 		
 		_autoNormals = true;
 
@@ -288,7 +288,7 @@ public class MeshBuilder {
 	
 	public final float[][] createNormalArray() {
 		
-		checkPositionArrayExists();
+		_assertPositionsNotNull();
 		
 		_normals = new float[_positions.length][3];
 		
@@ -298,7 +298,7 @@ public class MeshBuilder {
 	public final float[][] createPositionArray(
 			final int vertexCount) {
 		
-		checkNewPositionArrayPossible(vertexCount);
+		_checkNewPositionArrayPossible(vertexCount);
 		
 		_positions = new float[vertexCount][3];
 		
@@ -307,7 +307,7 @@ public class MeshBuilder {
 	
 	public final float[][] createTexCoordArray() {
 		
-		checkPositionArrayExists();
+		_assertPositionsNotNull();
 		
 		_texCoords = new float[_positions.length][2];
 		
@@ -428,7 +428,7 @@ public class MeshBuilder {
 	public final MeshBuilder setIndices(
 			final int[][] indices) {
 		
-		resetCompiled(_indices, indices);
+		_resetCompiled(_indices, indices);
 
 		_indices = indices;
 		
@@ -446,13 +446,13 @@ public class MeshBuilder {
 			throw new UnsupportedOperationException(
 				"A normal vector must consist of 3 components");
 		
-		checkPositionArrayExists();
+		_assertPositionsNotNull();
 		
 		if(normals != null && normals.length != _positions.length)
 			throw new UnsupportedOperationException(
 				"Normal and position array must have the same length");
 		
-		resetCompiled(_normals, normals);
+		_resetCompiled(_normals, normals);
 
 		_normals     = normals;
 		_autoNormals = false;
@@ -467,9 +467,9 @@ public class MeshBuilder {
 			throw new UnsupportedOperationException(
 				"A position must consist of 3 components");
 		
-		if(positions != null) checkNewPositionArrayPossible(positions.length);
+		if(positions != null) _checkNewPositionArrayPossible(positions.length);
 		
-		resetCompiled(_positions, positions);
+		_resetCompiled(_positions, positions);
 
 		_positions = positions;
 		
@@ -492,13 +492,13 @@ public class MeshBuilder {
 			throw new UnsupportedOperationException(
 				"A tex-coord must consist of 2 components");
 		
-		checkPositionArrayExists();
+		_assertPositionsNotNull();
 		
 		if(texCoords != null && texCoords.length != _positions.length)
 			throw new UnsupportedOperationException(
 				"Tex-coord and position array must have the same length");
 		
-		resetCompiled(_texCoords, texCoords);
+		_resetCompiled(_texCoords, texCoords);
 
 		_texCoords = texCoords;
 		
@@ -526,7 +526,7 @@ public class MeshBuilder {
 	public final MeshBuilder transformPositions(
 			final Matrix4D transform) {
 		
-		checkPositionArrayExists();
+		_assertPositionsNotNull();
 		
 		for(int i = 0; i < _positions.length; i++)
 			transform.applyToPoint(_positions[i]);
@@ -541,7 +541,7 @@ public class MeshBuilder {
 	public final MeshBuilder transformTexCoords(
 			Matrix4D transform) {
 		
-		checkTexCoordArrayExists();
+		_assertTexCoordsNotNull();
 
 		for(int i = 0; i < _texCoords.length; i++)
 			transform.applyToPoint(_texCoords[i]);
@@ -551,7 +551,7 @@ public class MeshBuilder {
 
 	public final MeshBuilder unwrap() {
 
-		checkPositionArrayExists();
+		_assertPositionsNotNull();
 		
 		if(_indices == null)
 			throw new UnsupportedOperationException("No indices specified");

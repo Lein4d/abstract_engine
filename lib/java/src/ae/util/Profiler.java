@@ -33,7 +33,8 @@ public final class Profiler {
 	public final void endWithCorrect() {
 		
 		_tEnd = System.nanoTime();
-		_cost = _costAvg.addValue((int)(_tEnd - _tStart - _OVERHEAD_PROFILER._cost));
+		_cost = _costAvg.addValue(
+			(int)(_tEnd - _tStart - _OVERHEAD_PROFILER._cost));
 	}
 	
 	public final long getCost() {

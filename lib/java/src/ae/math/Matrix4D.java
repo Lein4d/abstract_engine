@@ -10,7 +10,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		private final boolean _isRow;
 		private final int     _rcIndex;
 		
-		private MatrixVector(
+		public MatrixVector(
 				final boolean isRow,
 				final int     rcIndex) {
 			
@@ -99,7 +99,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 
 	// Die Normalenmatrix ist die Inverse der transponierten oberen 3x3 Matrix
 	private final CachedObject<float[]> _dataNmCached = new CachedObject<>(
-		new float[9], (object) -> computeNormalMatrix(object));
+		new float[9], (object) -> _computeNormalMatrix(object));
 	
 	private final Vector4D[] _columnVectors = new Vector4D[4];
 	private final Vector4D[] _rowVectors    = new Vector4D[4];
@@ -133,7 +133,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 	public static final int I_NM32 = 5;
 	public static final int I_NM33 = 8;
 
-	private final float[] computeNormalMatrix(
+	private final float[] _computeNormalMatrix(
 			final float[] dataNm) {
 
 		// Die Werte transponiert aus der Hauptmatrix auslesen
@@ -164,23 +164,23 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		return dataNm;
 	}
 
-	private final void propagateNmChange() {
+	private final void _propagateNmChange() {
 		
 		_dataNmCached.invalidate();
 		propagateChange();
 	}
 	
-	private final void propagateRowColumnChange(
+	private final void _propagateRowColumnChange(
 			final int index) {
 		
 		if(index == 3) {
 			propagateChange();
 		} else {
-			propagateNmChange();
+			_propagateNmChange();
 		}
 	}
 	
-	private final Matrix4D rotate(
+	private final Matrix4D _rotate(
 			final float r11,
 			final float r12,
 			final float r13,
@@ -225,7 +225,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		_data[I_M43] =
 			_temp[I_M41] * r13 + _temp[I_M42] * r23 + _temp[I_M43] * r33;
 
-		propagateNmChange();
+		_propagateNmChange();
 		
 		return this;
 	}
@@ -671,7 +671,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 			_temp[I_M41] * m._data[I_M14] + _temp[I_M42] * m._data[I_M24] +
 			_temp[I_M43] * m._data[I_M34] + _temp[I_M44] * m._data[I_M44];
 
-		propagateNmChange();
+		_propagateNmChange();
 		
 		return this;
 	}
@@ -726,7 +726,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		_data[I_M31] *= a; _data[I_M32] *= b; _data[I_M33] *= c;
 		_data[I_M41] *= a; _data[I_M42] *= b; _data[I_M43] *= c;
 
-		propagateNmChange();
+		_propagateNmChange();
 		
 		return this;
 	}
@@ -826,7 +826,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 			_data[I_M41] *= a; _data[I_M42] *= b; _data[I_M44] = f * m43;
 		}
 
-		propagateNmChange();
+		_propagateNmChange();
 		
 		return this;
 	}
@@ -880,7 +880,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 
 		q.copyStaticValues();
 		
-		return rotate(
+		return _rotate(
 			1 - 2 * (q.c * q.c + q.d * q.d),  // r11
 			    2 * (q.b * q.c + q.a * q.d),  // r12
 			    2 * (q.b * q.d - q.a * q.c),  // r13
@@ -913,7 +913,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		_data[I_M33] = _data[I_M33] * c - _temp[2] * s;
 		_data[I_M43] = _data[I_M43] * c - _temp[3] * s;
 
-		propagateNmChange();
+		_propagateNmChange();
 		
 		return this;
 	}
@@ -939,7 +939,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		_data[I_M33] = _temp[2] * s + _data[I_M33] * c;
 		_data[I_M43] = _temp[3] * s + _data[I_M43] * c;
 
-		propagateNmChange();
+		_propagateNmChange();
 		
 		return this;
 	}
@@ -965,7 +965,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		_data[I_M32] = _data[I_M32] * c - _temp[2] * s;
 		_data[I_M42] = _data[I_M42] * c - _temp[3] * s;
 
-		propagateNmChange();
+		_propagateNmChange();
 		
 		return this;
 	}
@@ -974,7 +974,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 
 		for(int i = 0; i < 16; i++) _data[i] = (float)Math.round(_data[i]);
 
-		propagateNmChange();
+		_propagateNmChange();
 		
 		return this;
 	}
@@ -985,7 +985,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		for(int i = 0; i < 16; i++)
 			_data[i] = (float)Math.round(_data[i] / interval) * interval;
 
-		propagateNmChange();
+		_propagateNmChange();
 		
 		return this;
 	}
@@ -1006,7 +1006,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		_data[I_M31] *= x; _data[I_M32] *= y; _data[I_M33] *= z;
 		_data[I_M41] *= x; _data[I_M42] *= y; _data[I_M43] *= z;
 
-		propagateNmChange();
+		_propagateNmChange();
 		
 		return this;
 	}
@@ -1017,7 +1017,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		
 		src.getData(_data, cIndex * 4);
 
-		propagateRowColumnChange(cIndex);
+		_propagateRowColumnChange(cIndex);
 		
 		return this;
 	}
@@ -1036,7 +1036,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		
 		System.arraycopy(src, offset, _data, cIndex * 4, 4);
 		
-		propagateRowColumnChange(cIndex);
+		_propagateRowColumnChange(cIndex);
 		
 		return this;
 	}
@@ -1046,7 +1046,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		
 		src.getData(_data);
 		
-		propagateNmChange();
+		_propagateNmChange();
 		
 		return this;
 	}
@@ -1063,7 +1063,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		
 		System.arraycopy(src, offset, _data, 0, 16);
 		
-		propagateNmChange();
+		_propagateNmChange();
 		
 		return this;
 	}
@@ -1098,7 +1098,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		_data[I_M41] = m41; _data[I_M42] = m42;
 		_data[I_M41] = m43; _data[I_M44] = m44;
 
-		propagateNmChange();
+		_propagateNmChange();
 		
     	return this;
     }
@@ -1111,7 +1111,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		_data[cIndex * 4 + rIndex] = value;
 
 		if(rIndex < 3 && cIndex < 3) {
-			propagateNmChange();
+			_propagateNmChange();
 		} else {
 			propagateChange();
 		}
@@ -1128,7 +1128,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		_data[I_M13 + rIndex] = src.backend.getZ();
 		_data[I_M14 + rIndex] = src.backend.getW();
 
-		propagateRowColumnChange(rIndex);
+		_propagateRowColumnChange(rIndex);
 		
 		return this;
 	}
@@ -1147,7 +1147,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		
 		for(int i = 0; i < 4; i++) _data[i * 4 + rIndex] = src[offset + i];
 		
-		propagateRowColumnChange(rIndex);
+		_propagateRowColumnChange(rIndex);
 		
 		return this;
 	}
@@ -1161,7 +1161,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		_data[I_M31] = _data[I_M32] = _data[I_M34] =
 		_data[I_M41] = _data[I_M42] = _data[I_M43] = 0;
 
-		propagateNmChange();
+		_propagateNmChange();
 		
 		return this;
 	}
