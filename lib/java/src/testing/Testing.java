@@ -13,7 +13,7 @@ import ae.entity.Model;
 import ae.entity.PointLight;
 import ae.math.Vector4D;
 import ae.mesh.Meshes;
-import ae.other.OrganizedObject;
+import ae.util.OrganizedObject;
 
 public final class Testing {
 	

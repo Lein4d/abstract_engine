@@ -3,7 +3,7 @@ package ae.mesh;
 import ae.math.Matrix4D;
 import ae.math.Vector3D;
 import ae.mesh.Mesh.PrimitiveType;
-import ae.other.Functions;
+import ae.util.Functions;
 
 public final class Meshes {
 	

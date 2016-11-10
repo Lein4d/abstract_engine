@@ -3,7 +3,7 @@ package ae.collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import ae.other.OrganizedObject;
+import ae.util.OrganizedObject;
 
 public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 	

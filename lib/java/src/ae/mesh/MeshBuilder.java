@@ -2,7 +2,7 @@ package ae.mesh;
 
 import ae.math.Matrix4D;
 import ae.mesh.Mesh.PrimitiveType;
-import ae.other.CachedObject;
+import ae.util.CachedObject;
 
 public class MeshBuilder {
 	

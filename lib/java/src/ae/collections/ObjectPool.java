@@ -2,7 +2,7 @@ package ae.collections;
 
 import java.util.Iterator;
 
-import ae.other.OrganizedObject;
+import ae.util.OrganizedObject;
 
 // Gepoolte Objekte werden in zwei verketteten Listen gehalten
 // Neue Objekte werden immer am Anfang der Liste eingefügt

@@ -1,4 +1,4 @@
-package ae.other;
+package ae.util;
 
 import ae.collections.ObjectPool;
 

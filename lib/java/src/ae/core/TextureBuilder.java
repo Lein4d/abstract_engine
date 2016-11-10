@@ -2,7 +2,7 @@ package ae.core;
 
 import java.nio.ByteBuffer;
 
-import ae.other.CachedObject;
+import ae.util.CachedObject;
 
 public final class TextureBuilder {
 

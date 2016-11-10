@@ -1,4 +1,4 @@
-package ae.other;
+package ae.util;
 
 public final class MonitoredObject<T extends OrganizedObject<T>> {
 	

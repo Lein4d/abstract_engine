@@ -1,6 +1,6 @@
-package ae.other;
+package ae.util;
 
-import ae.other.Average.Type;
+import ae.util.Average.Type;
 
 public final class Profiler {
 	

@@ -5,7 +5,7 @@ import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;
 import ae.core.SceneGraph;
 import ae.math.Matrix4D;
-import ae.other.OrganizedObject;
+import ae.util.OrganizedObject;
 
 public class Entity<T> {
 	

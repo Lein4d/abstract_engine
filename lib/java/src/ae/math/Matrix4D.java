@@ -1,7 +1,7 @@
 package ae.math;
 
-import ae.other.CachedObject;
-import ae.other.OrganizedObject;
+import ae.util.CachedObject;
+import ae.util.OrganizedObject;
 
 public final class Matrix4D extends OrganizedObject<Matrix4D> {
 	
