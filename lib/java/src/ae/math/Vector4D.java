@@ -1,6 +1,8 @@
 package ae.math;
 
-public final class Vector4D {
+import ae.util.OrganizedObject;
+
+public final class Vector4D extends OrganizedObject<Vector4D> {
 	
 	public static final Vector4D BLACK  = createConst(0,    1);
 	public static final Vector4D GREY   = createConst(0.5f, 1);
@@ -25,21 +27,23 @@ public final class Vector4D {
 		this.backend  = backend;
 		this.xyz      = xyz;
 		this.readOnly = this;
+		
+		backend.addListener(obj -> _propagateChange());
 	}
 	
-	public Vector4D(
-			final ReadOnlyBackend backend) {
+	public Vector4D(final ReadOnlyBackend backend) {
 		
 		this(backend, new Vector3D(backend));
 	}
 	
-	public Vector4D(
-			final VectorBackend backend) {
+	public Vector4D(final VectorBackend backend) {
 		
 		this.backend  = backend;
 		this.xyz      = new Vector3D(backend);
 		this.readOnly =
 			new Vector4D(new ReadOnlyBackend(backend), xyz.readOnly);
+		
+		backend.addListener(obj -> _propagateChange());
 	}
 	
 	public final Vector4D add(

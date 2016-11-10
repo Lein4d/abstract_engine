@@ -1,15 +1,18 @@
 package ae.math;
 
-public final class Quaternion {
+import ae.util.OrganizedObject;
+
+public final class Quaternion extends OrganizedObject<Quaternion> {
 	
 	public final VectorBackend backend;
 	
 	public float a, b, c, d;
 	
-	public Quaternion(
-			final VectorBackend backend) {
+	public Quaternion(final VectorBackend backend) {
 		
 		this.backend = backend;
+
+		backend.addListener(obj -> _propagateChange());
 	}
 
 	public final Quaternion copyStaticValues() {

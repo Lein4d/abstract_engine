@@ -4,6 +4,35 @@ public final class StaticBackend extends VectorBackend {
 	
 	private final float[] _data = new float[4];
 
+	@Override
+	protected final float _getElement(final int index) {return _data[index];}
+	
+	@Override
+	protected final float _getX() {return _data[0];}
+	@Override
+	protected final float _getY() {return _data[1];}
+	@Override
+	protected final float _getZ() {return _data[2];}
+	@Override
+	protected final float _getW() {return _data[3];}
+	
+	@Override
+	protected final void _setElement(
+			final int   index,
+			final float value) {
+		
+		_data[index] = value;
+	}
+	
+	@Override
+	protected final void _setX(final float x) {_data[0] = x;}
+	@Override
+	protected final void _setY(final float y) {_data[1] = y;}
+	@Override
+	protected final void _setZ(final float z) {_data[2] = z;}
+	@Override
+	protected final void _setW(final float w) {_data[3] = w;}
+
 	public StaticBackend(
 			final VectorBackend backend) {
 		
@@ -20,82 +49,5 @@ public final class StaticBackend extends VectorBackend {
 		_data[1] = y;
 		_data[2] = z;
 		_data[3] = w;
-	}
-	
-	@Override
-	public final float getElement(
-			final int index) {
-		
-		return _data[index];
-	}
-	
-	@Override
-	public final float getX() {
-		
-		return _data[0];
-	}
-
-	@Override
-	public final float getY() {
-		
-		return _data[1];
-	}
-
-	@Override
-	public final float getZ() {
-		
-		return _data[2];
-	}
-
-	@Override
-	public final float getW() {
-		
-		return _data[3];
-	}
-
-	@Override
-	public final VectorBackend setElement(
-			final int   index,
-			final float value) {
-		
-		_data[index] = value;
-		
-		return this;
-	}
-	
-	@Override
-	public final VectorBackend setX(
-			final float x) {
-		
-		_data[0] = x;
-		
-		return this;
-	}
-
-	@Override
-	public final VectorBackend setY(
-			final float y) {
-		
-		_data[1] = y;
-		
-		return this;
-	}
-
-	@Override
-	public final VectorBackend setZ(
-			final float z) {
-		
-		_data[2] = z;
-		
-		return this;
-	}
-
-	@Override
-	public final VectorBackend setW(
-			final float w) {
-		
-		_data[3] = w;
-		
-		return this;
 	}
 }

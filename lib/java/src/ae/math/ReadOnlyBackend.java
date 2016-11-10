@@ -4,76 +4,37 @@ public final class ReadOnlyBackend extends VectorBackend {
 	
 	private final VectorBackend _backend;
 	
-	public ReadOnlyBackend(
-			final VectorBackend backend) {
-		
-		_backend = backend;
-	}
-
 	@Override
-	public final float getElement(
-			final int index) {
-		
+	protected final float _getElement(final int index) {
 		return _backend.getElement(index);
 	}
 	
 	@Override
-	public final float getX() {
-		
-		return _backend.getX();
-	}
+	protected final float _getX() {return _backend.getX();}
+	@Override
+	protected final float _getY() {return _backend.getY();}
+	@Override
+	protected final float _getZ() {return _backend.getZ();}
+	@Override
+	protected final float _getW() {return _backend.getW();}
 
 	@Override
-	public final float getY() {
-		
-		return _backend.getY();
-	}
-
-	@Override
-	public final float getZ() {
-		
-		return _backend.getZ();
-	}
-
-	@Override
-	public final float getW() {
-		
-		return _backend.getW();
-	}
-
-	@Override
-	public final VectorBackend setElement(
-			final int   index,
-			final float value) {
-		
-		return this;
-	}
+	protected final void _setElement(
+		final int   index,
+		final float value) {}
 	
 	@Override
-	public final VectorBackend setX(
-			final float x) {
-		
-		return this;
-	}
-
+	protected final void _setX(final float x) {}
 	@Override
-	public final VectorBackend setY(
-			final float y) {
-		
-		return this;
-	}
-
+	protected final void _setY(final float y) {}
 	@Override
-	public final VectorBackend setZ(
-			final float z) {
-		
-		return this;
-	}
-
+	protected final void _setZ(final float z) {}
 	@Override
-	public final VectorBackend setW(
-			final float w) {
+	protected final void _setW(final float w) {}
+
+	public ReadOnlyBackend(
+			final VectorBackend backend) {
 		
-		return this;
+		_backend = backend;
 	}
 }

@@ -1,6 +1,8 @@
 package ae.math;
 
-public final class Vector3D {
+import ae.util.OrganizedObject;
+
+public final class Vector3D extends OrganizedObject<Vector3D> {
 	
 	public static final Vector3D X_POS = createConst( 1,  0,  0);
 	public static final Vector3D X_NEG = createConst(-1,  0,  0);
@@ -19,6 +21,8 @@ public final class Vector3D {
 		
 		this.backend  = backend;
 		this.readOnly = this;
+		
+		backend.addListener(obj -> _propagateChange());
 	}
 
 	public Vector3D(
@@ -26,6 +30,8 @@ public final class Vector3D {
 		
 		this.backend  = backend;
 		this.readOnly = new Vector3D(new ReadOnlyBackend(backend));
+		
+		backend.addListener(obj -> _propagateChange());
 	}
 
 	public final Vector3D add(

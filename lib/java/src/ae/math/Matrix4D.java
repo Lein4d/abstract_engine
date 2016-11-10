@@ -10,84 +10,46 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		private final boolean _isRow;
 		private final int     _rcIndex;
 		
+		@Override
+		protected final float _getElement(final int index) {
+			return _isRow ?
+				Matrix4D.this.getElement(_rcIndex, index) :
+				Matrix4D.this.getElement(index,    _rcIndex);
+		}
+		
+		@Override
+		protected final float _getX() {return getElement(0);}
+		@Override
+		protected final float _getY() {return getElement(1);}
+		@Override
+		protected final float _getZ() {return getElement(2);}
+		@Override
+		protected final float _getW() {return getElement(3);}
+
+		@Override
+		protected final void _setElement(
+				final int   index,
+				final float value) {
+			
+			Matrix4D.this.setElement(
+				_isRow ? _rcIndex : index, _isRow ? index : _rcIndex, value);
+		}
+		
+		@Override
+		protected final void _setX(final float x) {_setElement(0, x);}
+		@Override
+		protected final void _setY(final float y) {_setElement(0, y);}
+		@Override
+		protected final void _setZ(final float z) {_setElement(0, z);}
+		@Override
+		protected final void _setW(final float w) {_setElement(0, w);}
+
 		public MatrixVector(
 				final boolean isRow,
 				final int     rcIndex) {
 			
 			_isRow   = isRow;
 			_rcIndex = rcIndex;
-		}
-
-		@Override
-		public final float getElement(
-				final int index) {
-			
-			return _isRow ?
-				Matrix4D.this.getElement(_rcIndex, index) :
-				Matrix4D.this.getElement(index,    _rcIndex);
-		}
-
-		@Override
-		public final float getX() {
-			
-			return getElement(0);
-		}
-
-		@Override
-		public final float getY() {
-			
-			return getElement(1);
-		}
-
-		@Override
-		public final float getZ() {
-			
-			return getElement(2);
-		}
-
-		@Override
-		public final float getW() {
-			
-			return getElement(3);
-		}
-
-		@Override
-		public final VectorBackend setElement(
-				final int   index,
-				final float value) {
-			
-			Matrix4D.this.setElement(
-				_isRow ? _rcIndex : index, _isRow ? index : _rcIndex, value);
-			
-			return this;
-		}
-		
-		@Override
-		public final VectorBackend setX(
-				final float x) {
-			
-			return setElement(0, x);
-		}
-
-		@Override
-		public final VectorBackend setY(
-				final float y) {
-			
-			return setElement(1, y);
-		}
-
-		@Override
-		public final VectorBackend setZ(
-				final float z) {
-			
-			return setElement(2, z);
-		}
-
-		@Override
-		public final VectorBackend setW(
-				final float w) {
-			
-			return setElement(3, w);
 		}
 	}
 	
@@ -167,14 +129,14 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 	private final void _propagateNmChange() {
 		
 		_dataNmCached.invalidate();
-		propagateChange();
+		_propagateChange();
 	}
 	
 	private final void _propagateRowColumnChange(
 			final int index) {
 		
 		if(index == 3) {
-			propagateChange();
+			_propagateChange();
 		} else {
 			_propagateNmChange();
 		}
@@ -1113,7 +1075,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		if(rIndex < 3 && cIndex < 3) {
 			_propagateNmChange();
 		} else {
-			propagateChange();
+			_propagateChange();
 		}
 		
 		return this;
@@ -1184,7 +1146,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 			_data[I_M41] * x + _data[I_M42] * y +
 			_data[I_M43] * z + _data[I_M44];
 
-		propagateChange();
+		_propagateChange();
 
 		return this;
 	}

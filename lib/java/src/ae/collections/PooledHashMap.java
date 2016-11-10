@@ -24,7 +24,7 @@ public final class PooledHashMap<K, V>
 		}
 	}
 	
-	private final class _KvpIterator implements Iterator<KeyValuePair<K, V>> {
+	private final class KvpIterator implements Iterator<KeyValuePair<K, V>> {
 
 		private int                                _bucketPos = -1;
 		private LinkedListNode<KeyValuePair<K, V>> _node      = null;
@@ -35,7 +35,7 @@ public final class PooledHashMap<K, V>
 				_node = _buckets[++_bucketPos];
 		}
 		
-		private _KvpIterator() {
+		public KvpIterator() {
 			
 			moveToNextBucket();
 		}
@@ -190,7 +190,7 @@ public final class PooledHashMap<K, V>
 	public final Iterator<KeyValuePair<K, V>> iterator() {
 		
 		// TODO: Hier wird ein neues Objekt angelegt
-		return new _KvpIterator();
+		return new KvpIterator();
 	}
 	
 	@SuppressWarnings("unchecked")
