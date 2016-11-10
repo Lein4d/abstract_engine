@@ -14,9 +14,7 @@ public final class Model extends Entity<Model> {
 	public final ConstAttribute<Vector4D> color   =
 		new ConstAttribute<>(Vector4D.WHITE.cloneStatic());
 	
-	public Model(
-			final SceneGraph sceneGraph) {
-		
+	public Model(final SceneGraph sceneGraph) {
 		this(sceneGraph, null);
 	}
 	
@@ -49,19 +47,13 @@ public final class Model extends Entity<Model> {
 		activeMesh.draw();
 	}
 	
-	public final Model setMesh(
-			final Mesh mesh) {
-		
+	public final Model setMesh(final Mesh mesh) {
 		this.mesh.setInternalValue(mesh);
-		
 		return this;
 	}
 	
-	public final Model setTexture(
-			final Texture texture) {
-		
+	public final Model setTexture(final Texture texture) {
 		this.texture.setInternalValue(texture);
-		
 		return this;
 	}
 }

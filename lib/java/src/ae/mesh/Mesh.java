@@ -26,8 +26,7 @@ public final class Mesh {
 			this.size    = primitiveSize;
 		}
 		
-		public static final PrimitiveType fromPrimitiveSize(
-				final int size) {
+		public static final PrimitiveType fromPrimitiveSize(final int size) {
 			
 			switch(size) {
 				case 3: return PrimitiveType.TRIANGLE;
@@ -58,8 +57,7 @@ public final class Mesh {
 	// the bounding box stays valid.
 	//public readonly Rect3D BoundingBox = new Rect3D();
 
-	private final int _initIbo(
-			final int[][] indices) {
+	private final int _initIbo(final int[][] indices) {
 
 		int iboType;
 		int bufferPos = 0;
@@ -205,14 +203,12 @@ public final class Mesh {
 	}
 	
 	public final void draw() {
-		
 		glBindVertexArray(_vao);
 		glDrawElements(primitiveType._glMode, indexCount, _iboType, 0);
 	}
 
 	@Override
 	public final void finalize() {
-
 		glDeleteBuffers(_vbo);
 		glDeleteBuffers(_ibo);
 		glDeleteVertexArrays(_vao);

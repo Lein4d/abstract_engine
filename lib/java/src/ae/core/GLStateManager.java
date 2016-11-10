@@ -14,14 +14,11 @@ public final class GLStateManager {
 		private final int _glValue;
 		private boolean   _state = false;
 		
-		private StateFlag(
-				final int glValue) {
-			
+		private StateFlag(final int glValue) {
 			_glValue = glValue;
 		}
 		
-		public final void set(
-				final boolean state) {
+		public final void set(final boolean state) {
 			
 			if(state == _state) return;
 			

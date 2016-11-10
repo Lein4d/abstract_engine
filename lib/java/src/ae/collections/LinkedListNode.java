@@ -11,9 +11,7 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 		
 		protected LinkedListNode<T> _node;
 		
-		protected NodeIterator(
-				final LinkedListNode<T> node) {
-			
+		protected NodeIterator(final LinkedListNode<T> node) {
 			_node = node;
 		}
 
@@ -21,7 +19,6 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 		
 		@Override
 		public final boolean hasNext() {
-			
 			return _node != null;
 		}
 
@@ -39,30 +36,24 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 	
 	public static final class NodeIteratorForward<T> extends NodeIterator<T> {
 
-		public NodeIteratorForward(
-				final LinkedListNode<T> node) {
-			
+		public NodeIteratorForward(final LinkedListNode<T> node) {
 			super(node);
 		}
 
 		@Override
 		protected final void moveToNext() {
-			
 			_node = _node.next;
 		}
 	}
 
 	public static final class NodeIteratorReverse<T> extends NodeIterator<T> {
 
-		public NodeIteratorReverse(
-				final LinkedListNode<T> node) {
-			
+		public NodeIteratorReverse(final LinkedListNode<T> node) {
 			super(node);
 		}
 
 		@Override
 		protected final void moveToNext() {
-			
 			_node = _node.prev;
 		}
 	}
@@ -73,20 +64,16 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 
 	// Note: linked list nodes will have uninitialized content
 	public static final <T> ObjectPool<LinkedListNode<T>> createObjectPool() {
-		
 		return new ObjectPool<LinkedListNode<T>>(() -> new LinkedListNode<>());
 	}
 	
 	public LinkedListNode() {}
 	
-	public LinkedListNode(
-			final T content) {
-		
+	public LinkedListNode(final T content) {
 		this.content = content;
 	}
 	
-	public final LinkedListNode<T> insertAfter(
-			final LinkedListNode<T> node) {
+	public final LinkedListNode<T> insertAfter(final LinkedListNode<T> node) {
 		
 		if(node == null) return resetList();
 
@@ -97,8 +84,7 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 		return this;
 	}
 	
-	public final LinkedListNode<T> insertBefore(
-			final LinkedListNode<T> node) {
+	public final LinkedListNode<T> insertBefore(final LinkedListNode<T> node) {
 		
 		if(node == null) return resetList();
 		

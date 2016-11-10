@@ -9,9 +9,7 @@ public final class Quaternion extends OrganizedObject<Quaternion> {
 	public float a, b, c, d;
 	
 	public Quaternion(final VectorBackend backend) {
-		
 		this.backend = backend;
-
 		backend.addListener(obj -> _propagateChange());
 	}
 

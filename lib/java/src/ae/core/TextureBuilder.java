@@ -73,7 +73,6 @@ public final class TextureBuilder {
 	}
 	
 	public final Texture createTexture() {
-		
 		return _lastValidTexture.getObject();
 	}
 	
@@ -204,20 +203,18 @@ public final class TextureBuilder {
 	}
 	
 	public static final int[] toIntPixel(
-    		final float[] src,
-    		final int[]   dst) {
-    	
-    	for(int i = 0; i < src.length; i++) dst[i] = Math.round(src[i] * 255);
-    	
-    	return dst;
-    }
+			final float[] src,
+			final int[]   dst) {
+		
+		for(int i = 0; i < src.length; i++) dst[i] = Math.round(src[i] * 255);
+		return dst;
+	}
 	
 	public static final float[] toFloatPixel(
 			final int[]   src,
 			final float[] dst) {
 		
 		for(int i = 0; i < src.length; i++) dst[i] = src[i] / 255f;
-		
 		return dst;
 	}
 }

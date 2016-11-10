@@ -10,10 +10,14 @@ public final class PooledHashSet<T> extends PooledCollection<T, T> {
 			_hashMap.iterator();
 		
 		@Override
-		public final boolean hasNext() {return _it.hasNext();}
+		public final boolean hasNext() {
+			return _it.hasNext();
+		}
 
 		@Override
-		public final T next() {return _it.next().getKey();}
+		public final T next() {
+			return _it.next().getKey();
+		}
 	}
 	
 	// Die Value-Komponente wird immer auf 'null' gesetzt

@@ -102,7 +102,6 @@ public final class Texture {
 	}
 	
 	public final void use() {
-		
 		glBindTexture(GL_TEXTURE_2D, _id);
 	}
 }

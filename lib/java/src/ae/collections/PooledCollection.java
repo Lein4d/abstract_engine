@@ -17,12 +17,10 @@ public abstract class PooledCollection<T, P> implements Iterable<T> {
 	}
 	
 	public final int getSize() {
-		
 		return _size;
 	}
 	
 	public final boolean isEmpty() {
-		
 		return _size == 0;
 	}
 }

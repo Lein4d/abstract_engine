@@ -28,12 +28,10 @@ public final class AbstractEngine {
 	}
 	
 	public interface ResizeCallback {
-		
 		void onResize(AbstractEngine engine);
 	}
 
 	public interface TimeChangeCallback {
-		
 		void update(double time, double delta);
 	}
 	
@@ -124,9 +122,7 @@ public final class AbstractEngine {
 	}
 	
 	private final void _updateViewport() {
-		
 		glViewport(0, 0, _fbWidth, _fbHeight);
-		
 		if(_cbResize != null) _cbResize.onResize(this);
 	}
 	
@@ -151,7 +147,6 @@ public final class AbstractEngine {
 	}
 	
 	final void updateProjectionMatrix() {
-		
 		_sm.setProjectionMatrix(projection);
 	}
 	
@@ -179,9 +174,7 @@ public final class AbstractEngine {
 		_sm.useShaderProgram(_lightShader);
 	}
 	
-	public AbstractEngine(
-			final String title) {
-		
+	public AbstractEngine(final String title) {
 		this(title, System.out, System.err);
 	}
 	
@@ -256,50 +249,39 @@ public final class AbstractEngine {
 	}
 
 	public final int getFramebufferHeight() {
-		
 		return _fbHeight;
 	}
 	
 	public final int getFramebufferWidth() {
-		
 		return _fbWidth;
 	}
 	
 	public final SceneGraph getSceneGraph() {
-		
 		return _sceneGraph;
 	}
 	
 	public final double getSpeed() {
-		
 		return _speed;
 	}
 	
 	public final State getState() {
-		
 		return _state;
 	}
 	
 	public final double getTime() {
-		
 		return _time;
 	}
 
 	public final int getWindowHeight() {
-		
 		return _windowHeight;
 	}
 	
 	public final int getWindowWidth() {
-		
 		return _windowWidth;
 	}
 	
-	public final AbstractEngine setSpeed(
-			final double speed) {
-		
+	public final AbstractEngine setSpeed(final double speed) {
 		_speed = speed;
-		
 		return this;
 	}
 	
@@ -330,12 +312,10 @@ public final class AbstractEngine {
 			final ResizeCallback cbResize) {
 		
 		_cbResize = cbResize;
-		
 		return this;
 	}
 	
-	public final AbstractEngine setSceneGraph(
-			final SceneGraph sceneGraph) {
+	public final AbstractEngine setSceneGraph(final SceneGraph sceneGraph) {
 		
 		if(_sceneGraph == sceneGraph) return this;
 
@@ -351,7 +331,6 @@ public final class AbstractEngine {
 			final TimeChangeCallback cbTimeChange) {
 		
 		_cbTimeChange = cbTimeChange;
-		
 		return this;
 	}
 
@@ -407,7 +386,6 @@ public final class AbstractEngine {
 	}
 	
 	public final void stop() {
-		
 		glfwSetWindowShouldClose(_window, true);
 	}
 	

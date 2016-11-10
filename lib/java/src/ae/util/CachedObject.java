@@ -3,7 +3,6 @@ package ae.util;
 public class CachedObject<T> {
 	
 	public interface Updater<T> {
-		
 		// It may create a new object or renew the existing object
 		T update(T object);
 	}
@@ -32,7 +31,6 @@ public class CachedObject<T> {
 	}
 	
 	public final void invalidate() {
-		
 		_valid = false;
 	}
 }

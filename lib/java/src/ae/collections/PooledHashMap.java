@@ -30,19 +30,16 @@ public final class PooledHashMap<K, V>
 		private LinkedListNode<KeyValuePair<K, V>> _node      = null;
 		
 		private final void moveToNextBucket() {
-			
 			while(_node == null && _bucketPos < _buckets.length - 1)
 				_node = _buckets[++_bucketPos];
 		}
 		
 		public KvpIterator() {
-			
 			moveToNextBucket();
 		}
 		
 		@Override
 		public final boolean hasNext() {
-			
 			return _node != null;
 		}
 
@@ -61,15 +58,13 @@ public final class PooledHashMap<K, V>
 			
 			return result;
 		}
-		
 	}
 	
 	private LinkedListNode<KeyValuePair<K, V>>[] _buckets;
 	private float                                _maxLoadFactor = 0.5f;
 	private int                                  _resizeFactor  = 2;
 	
-	private final KeyValuePair<K, V> _getKeyValuePair(
-			final K key) {
+	private final KeyValuePair<K, V> _getKeyValuePair(final K key) {
 		
 		LinkedListNode<KeyValuePair<K, V>> node = _buckets[_getBufferPos(key)];
 		
@@ -78,26 +73,19 @@ public final class PooledHashMap<K, V>
 		return node != null ? node.content : null;
 	}
 	
-	private final int _getBufferPos(
-			final K key) {
-		
+	private final int _getBufferPos(final K key) {
 		return (key.hashCode() & 0x7FFFFFFF) % _buckets.length;
 	}
 	
-	private final float _getLoadFactor(
-			final float kvpCount) {
-		
+	private final float _getLoadFactor(final float kvpCount) {
 		return kvpCount / _buckets.length;
 	}
 
 	public PooledHashMap() {
-		
 		this(10);
 	}
 	
-	public PooledHashMap(
-			final int bucketCount) {
-		
+	public PooledHashMap(final int bucketCount) {
 		this(PooledHashMap.<K, V>createNodePool(), false, bucketCount);
 	}
 
@@ -127,8 +115,7 @@ public final class PooledHashMap<K, V>
 			new ObjectPool<>(() -> new LinkedListNode<>(new KeyValuePair<>()));
 	}
 	
-	public final boolean deleteKey(
-			final K key) {
+	public final boolean deleteKey(final K key) {
 		
 		final int                          bufferPos = _getBufferPos(key);
 		LinkedListNode<KeyValuePair<K, V>> node      = _buckets[bufferPos];
@@ -158,44 +145,34 @@ public final class PooledHashMap<K, V>
 	}
 	
 	public final float getLoadFactor() {
-		
 		return _getLoadFactor(_nodePool.getSize());
 	}
 	
 	public final float getMaxLoadFactor() {
-		
 		return _maxLoadFactor;
 	}
 	
 	public final int getResizeFactor() {
-		
 		return _resizeFactor;
 	}
 
-	public final V getValue(
-			final K key) {
-		
+	public final V getValue(final K key) {
 		final KeyValuePair<K, V> kvp = _getKeyValuePair(key);
-		
 		return kvp != null ? kvp._value : null;
 	}
 	
-	public final boolean hasKey(
-			final K key) {
-		
+	public final boolean hasKey(final K key) {
 		return _getKeyValuePair(key) != null;
 	}
 
 	@Override
 	public final Iterator<KeyValuePair<K, V>> iterator() {
-		
 		// TODO: Hier wird ein neues Objekt angelegt
 		return new KvpIterator();
 	}
 	
 	@SuppressWarnings("unchecked")
-	public final void rehash(
-			final int newBufferSize) {
+	public final void rehash(final int newBufferSize) {
 		
 		if(newBufferSize <= _buckets.length)
 			throw new IllegalArgumentException();
@@ -223,8 +200,7 @@ public final class PooledHashMap<K, V>
 		}
 	}
 	
-	public final void setMaxLoadFactor(
-			final float maxLoadFactor) {
+	public final void setMaxLoadFactor(final float maxLoadFactor) {
 		
 		if(maxLoadFactor <= 0 || maxLoadFactor >= 1)
 			throw new IllegalArgumentException();
@@ -232,8 +208,7 @@ public final class PooledHashMap<K, V>
 		_maxLoadFactor = maxLoadFactor;
 	}
 	
-	public final void setResizeFactor(
-			final int resizeFactor) {
+	public final void setResizeFactor(final int resizeFactor) {
 		
 		if(resizeFactor <= 1) throw new IllegalArgumentException();
 		

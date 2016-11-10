@@ -14,7 +14,6 @@ public class Entity<T> {
 	}
 	
 	public interface Updater<T> {
-		
 		void update(T entity, double time, double delta);
 	}
 	
@@ -25,9 +24,7 @@ public class Entity<T> {
 		
 		protected T _value;
 		
-		public ConstAttribute(
-				final T internalValue) {
-			
+		public ConstAttribute(final T internalValue) {
 			_value = internalValue;
 		}
 		
@@ -43,13 +40,10 @@ public class Entity<T> {
 		}
 		
 		public final T getValue() {
-			
 			return _value;
 		}
 		
-		public final void setExternalValue(
-				final T externalValue) {
-			
+		public final void setExternalValue(final T externalValue) {
 			_extValueDir = externalValue;
 		}
 		
@@ -63,19 +57,14 @@ public class Entity<T> {
 	public static final class Attribute<T> extends ConstAttribute<T> {
 		
 		public Attribute() {
-			
 			this(null);
 		}
 		
-		public Attribute(
-				final T internalValue) {
-			
+		public Attribute(final T internalValue) {
 			super(internalValue);
 		}
 		
-		public final void setInternalValue(
-				final T interalvalue) {
-			
+		public final void setInternalValue(final T interalvalue) {
 			_value = interalvalue;
 		}
 	}
@@ -97,27 +86,22 @@ public class Entity<T> {
 		private Instance _nextSibling;
 		
 		public final Entity<?> getEntity() {
-			
 			return _entity;
 		}
 		
 		public final Instance getFirstChild() {
-			
 			return _firstChild;
 		}
 		
 		public final int getLevel() {
-			
 			return _level;
 		}
 		
 		public final Instance getNextSibling() {
-			
 			return _nextSibling;
 		}
 		
 		public final Instance getParent() {
-			
 			return _parent;
 		}
 	}
@@ -163,8 +147,7 @@ public class Entity<T> {
 		this(sceneGraph, Type.NONE, name);
 	}
 	
-	public final void addChild(
-			final Entity<?> entity) {
+	public final void addChild(final Entity<?> entity) {
 		
 		if(entity.sceneGraph != sceneGraph)
 			throw new UnsupportedOperationException(
@@ -193,16 +176,12 @@ public class Entity<T> {
 	}
 	
 	@Override
-	public final boolean equals(
-			final Object obj) {
-		
+	public final boolean equals(final Object obj) {
 		if(!(obj instanceof Entity<?>)) return false;
-		
 		return name.equals(((Entity<?>)obj).name);
 	}
 	
 	public final PooledCollection<Entity<?>, ?> getChildren() {
-		
 		return _childrenByOrder;
 	}
 	
@@ -220,15 +199,11 @@ public class Entity<T> {
 
 	@Override
 	public final int hashCode() {
-		
 		return name.hashCode();
 	}
 	
-	public final T setUpdater(
-			final Updater<T> updater) {
-		
+	public final T setUpdater(final Updater<T> updater) {
 		_updater = updater;
-		
 		return downCasted;
 	}
 	

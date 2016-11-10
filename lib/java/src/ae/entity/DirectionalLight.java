@@ -13,9 +13,7 @@ public class DirectionalLight extends Entity<DirectionalLight> {
 	public final ConstAttribute<float[]>  dotBias   =
 		new ConstAttribute<>(new float[]{1, 0});
 
-	public DirectionalLight(
-			final SceneGraph sceneGraph) {
-		
+	public DirectionalLight(final SceneGraph sceneGraph) {
 		this(sceneGraph, null);
 	}
 	

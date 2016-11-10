@@ -22,7 +22,7 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 		this.backend  = backend;
 		this.readOnly = this;
 		
-		backend.addListener(obj -> _propagateChange());
+		backend.addListener((obj) -> _propagateChange());
 	}
 
 	public Vector3D(
@@ -31,7 +31,7 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 		this.backend  = backend;
 		this.readOnly = new Vector3D(new ReadOnlyBackend(backend));
 		
-		backend.addListener(obj -> _propagateChange());
+		backend.addListener((obj) -> _propagateChange());
 	}
 
 	public final Vector3D add(

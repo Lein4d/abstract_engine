@@ -4,6 +4,15 @@ public final class Functions {
 	
 	private Functions() {}
 
+	public static final void assertNotNull(
+			final Object obj,
+			final String msg) {
+		
+		if(obj == null)
+			throw new NullPointerException(
+				msg != null ? msg : "Object is null");
+	}
+	
 	public static final int[][] cloneArray2D(
 			final int[][] array) {
 		

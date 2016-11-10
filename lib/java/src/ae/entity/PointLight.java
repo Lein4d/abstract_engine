@@ -11,9 +11,7 @@ public class PointLight extends Entity<PointLight> {
 	public final ConstAttribute<float[]>  attenuation =
 		new ConstAttribute<>(new float[]{1, 1});
 	
-	public PointLight(
-			final SceneGraph sceneGraph) {
-		
+	public PointLight(final SceneGraph sceneGraph) {
 		this(sceneGraph, null);
 	}
 	
@@ -25,28 +23,20 @@ public class PointLight extends Entity<PointLight> {
 	}
 	
 	public final PointLight makeLinear() {
-		
 		return setAttenuationExponent(1);
 	}
 
 	public final PointLight makeQuadratic() {
-		
 		return setAttenuationExponent(2);
 	}
 	
-	public final PointLight setAttenuationExponent(
-			final float exponent) {
-		
+	public final PointLight setAttenuationExponent(final float exponent) {
 		attenuation.getValue()[1] = exponent;
-		
 		return this;
 	}
 	
-	public final PointLight setRange(
-			final float range) {
-		
+	public final PointLight setRange(final float range) {
 		attenuation.getValue()[0] = range;
-		
 		return this;
 	}
 }

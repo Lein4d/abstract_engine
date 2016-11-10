@@ -10,16 +10,13 @@ public final class ObjectPool<T extends OrganizedObject<T>>
 		implements Iterable<T> {
 	
 	public interface ObjectCreator<T extends OrganizedObject<T>> {
-		
 		T createObject();
 	}
 
 	public static final class ListNode<T extends OrganizedObject<T>>
 			extends LinkedListNode<T> {
 		
-		private ListNode(
-				final ObjectCreator<T> creator) {
-			
+		private ListNode(final ObjectCreator<T> creator) {
 			content = creator.createObject();
 			content.setPoolNode(this);
 		}
@@ -31,10 +28,9 @@ public final class ObjectPool<T extends OrganizedObject<T>>
 		
 		@Override
 		public final boolean hasNext() {
-			
 			return node != null;
 		}
-
+		
 		@Override
 		public final T next() {
 			
@@ -55,14 +51,11 @@ public final class ObjectPool<T extends OrganizedObject<T>>
 	private int _size     = 0;
 	private int _capacity = 0;
 
-	public ObjectPool(
-			final ObjectCreator<T> creator) {
-		
+	public ObjectPool(final ObjectCreator<T> creator) {
 		_creator = creator;
 	}
 	
-	public final void free(
-			T object) {
+	public final void free(T object) {
 		
 		final ListNode<T> node = object.getPoolNode();
 		
@@ -75,18 +68,15 @@ public final class ObjectPool<T extends OrganizedObject<T>>
 	}
 	
 	public final int getCapacity() {
-		
 		return _capacity;
 	}
 	
 	public final int getSize() {
-		
 		return _size;
 	}
 	
 	@Override
 	public final Iterator<T> iterator() {
-		
 		// TODO: Hier wird ein neues Objekt angelegt
 		return new LinkedListNode.NodeIteratorForward<T>(_used);
 	}

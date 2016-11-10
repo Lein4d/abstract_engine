@@ -17,8 +17,7 @@ public final class FloatingAverage extends Average {
 	}
 
 	@Override
-	public final int addValue(
-			final int value) {
+	public final int addValue(final int value) {
 		
 		if(_slotsInt == null) throw new UnsupportedOperationException();
 		
@@ -39,8 +38,7 @@ public final class FloatingAverage extends Average {
 	}
 
 	@Override
-	public final long addValue(
-			final long value) {
+	public final long addValue(final long value) {
 		
 		if(_slotsLong == null) throw new UnsupportedOperationException();
 		
@@ -59,8 +57,7 @@ public final class FloatingAverage extends Average {
 	}
 
 	@Override
-	public final float addValue(
-			final float value) {
+	public final float addValue(final float value) {
 		
 		if(_slotsFloat == null) throw new UnsupportedOperationException();
 		
@@ -79,8 +76,7 @@ public final class FloatingAverage extends Average {
 	}
 
 	@Override
-	public final double addValue(
-			final double value) {
+	public final double addValue(final double value) {
 		
 		if(_slotsDouble == null) throw new UnsupportedOperationException();
 		

@@ -175,9 +175,7 @@ public final class Meshes {
 		}
 	}
 
-	private static final int _computeDiscQuadCount(
-			final int subdivisions) {
-		
+	private static final int _computeDiscQuadCount(final int subdivisions) {
 		return (int)Math.ceil((subdivisions - 2.0) / 2.0);
 	}
 	
@@ -308,8 +306,7 @@ public final class Meshes {
 			transformPositions(new Matrix4D().scale(rx, height, rz));
 	}
 	
-	public static final MeshBuilder createDisc(
-			final int subdivisions) {
+	public static final MeshBuilder createDisc(final int subdivisions) {
 		
 		final MeshBuilder mb = new MeshBuilder();
 		

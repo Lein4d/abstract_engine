@@ -3,6 +3,7 @@ package ae.mesh;
 import ae.math.Matrix4D;
 import ae.mesh.Mesh.PrimitiveType;
 import ae.util.CachedObject;
+import ae.util.Functions;
 
 public class MeshBuilder {
 	
@@ -21,9 +22,16 @@ public class MeshBuilder {
 	private float[][] _positions = null;
 	private float[][] _normals   = null;
 	private float[][] _texCoords = null;
+
+	private final void _assertPositionsNotNull() {
+		Functions.assertNotNull(_positions, "No positions specified");
+	}
 	
-	private final void _checkNewPositionArrayPossible(
-			final int vertexCount) {
+	private final void _assertTexCoordsNotNull() {
+		Functions.assertNotNull(_positions, "No tex-coords specified");
+	}
+	
+	private final void _checkNewPositionArrayPossible(final int vertexCount) {
 		
 		if(_normals != null && _normals.length != vertexCount)
 			throw new UnsupportedOperationException(
@@ -34,18 +42,6 @@ public class MeshBuilder {
 				"Tex-coord array with different size already specified");
 	}
 	
-	private final void _assertPositionsNotNull() {
-		
-		if(_positions == null)
-			throw new UnsupportedOperationException("No positions specified");
-	}
-	
-	private final void _assertTexCoordsNotNull() {
-		
-		if(_texCoords == null)
-			throw new UnsupportedOperationException("No tex-coords specified");
-	}
-	
 	private final boolean _compareFloats(
 			final float f1,
 			final float f2) {
@@ -53,8 +49,7 @@ public class MeshBuilder {
 		return Math.abs(f1 - f2) < _precision;
 	}
 	
-	private final void _computeFlatNormals(
-			final boolean normalize) {
+	private final void _computeFlatNormals(final boolean normalize) {
 
 		// Der Normalenvektor für alle Punkte des Dreiecks wird hier gespeichert
 		final float[] normal = new float[3];
@@ -271,7 +266,6 @@ public class MeshBuilder {
 	}
 
 	public final Mesh createMesh() {
-		
 		return _lastValidMesh.getObject();
 	}
 	
@@ -295,8 +289,7 @@ public class MeshBuilder {
 		return _normals;
 	}
 	
-	public final float[][] createPositionArray(
-			final int vertexCount) {
+	public final float[][] createPositionArray(final int vertexCount) {
 		
 		_checkNewPositionArrayPossible(vertexCount);
 		
@@ -314,29 +307,23 @@ public class MeshBuilder {
 		return _texCoords;
 	}
 	
-	public final void enableCullFacingSupport(
-			final boolean enable) {
-		
+	public final void enableCullFacingSupport(final boolean enable) {
 		_cullFacing = enable;
 	}
 	
 	public final int[][] getIndices() {
-		
 		return _indices;
 	}
 	
 	public final float[][] getNormals() {
-		
 		return _normals;
 	}
 
 	public final float[][] getPositions() {
-		
 		return _positions;
 	}
 	
 	public final float[][] getTexCoords() {
-		
 		return _texCoords;
 	}
 	
@@ -425,8 +412,7 @@ public class MeshBuilder {
 	}
 	*/
 
-	public final MeshBuilder setIndices(
-			final int[][] indices) {
+	public final MeshBuilder setIndices(final int[][] indices) {
 		
 		_resetCompiled(_indices, indices);
 
@@ -439,8 +425,7 @@ public class MeshBuilder {
 		return this;
 	}
 	
-	public final MeshBuilder setNormalArray(
-			final float[][] normals) {
+	public final MeshBuilder setNormalArray(final float[][] normals) {
 		
 		if(normals != null && normals[0].length != 3)
 			throw new UnsupportedOperationException(
@@ -460,8 +445,7 @@ public class MeshBuilder {
 		return this;
 	}
 	
-	public final MeshBuilder setPositionArray(
-			final float[][] positions) {
+	public final MeshBuilder setPositionArray(final float[][] positions) {
 		
 		if(positions != null && positions[0].length != 3)
 			throw new UnsupportedOperationException(
@@ -485,8 +469,7 @@ public class MeshBuilder {
 		return this;
 	}
 	
-	public final MeshBuilder setTexCoordArray(
-			final float[][] texCoords) {
+	public final MeshBuilder setTexCoordArray(final float[][] texCoords) {
 		
 		if(texCoords != null && texCoords[0].length != 2)
 			throw new UnsupportedOperationException(
@@ -519,12 +502,10 @@ public class MeshBuilder {
 	}
 
 	public final boolean supportsCullFacing() {
-		
 		return _cullFacing;
 	}
 	
-	public final MeshBuilder transformPositions(
-			final Matrix4D transform) {
+	public final MeshBuilder transformPositions(final Matrix4D transform) {
 		
 		_assertPositionsNotNull();
 		
@@ -538,8 +519,7 @@ public class MeshBuilder {
 		return this;
 	}
 
-	public final MeshBuilder transformTexCoords(
-			Matrix4D transform) {
+	public final MeshBuilder transformTexCoords(Matrix4D transform) {
 		
 		_assertTexCoordsNotNull();
 

@@ -133,19 +133,15 @@ public class SceneGraph {
 		}
 	}
 	
-	final void setEngine(
-			final AbstractEngine engine) {
-		
+	final void setEngine(final AbstractEngine engine) {
 		_engine = engine;
 	}
 	
 	public SceneGraph() {
-		
 		root = new Entity<Entity<?>>(this, "root");
 	}
 
-	public final void addEntity(
-			final Entity<?> entity) {
+	public final void addEntity(final Entity<?> entity) {
 		
 		if(_entities.hasKey(entity.name))
 			throw new UnsupportedOperationException(
@@ -166,17 +162,14 @@ public class SceneGraph {
 	}
 	
 	public final AbstractEngine getEngine() {
-		
 		return _engine;
 	}
 	
 	public final void ivalidateGraphStructure() {
-		
 		_rootInstance = null;
 	}
 	
-	public final boolean removeEntity(
-			final Entity<?> entity) {
+	public final boolean removeEntity(final Entity<?> entity) {
 		
 		if(entity.sceneGraph != this)
 			throw new UnsupportedOperationException(

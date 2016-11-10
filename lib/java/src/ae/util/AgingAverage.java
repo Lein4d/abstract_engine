@@ -4,9 +4,7 @@ public final class AgingAverage extends Average {
 	
 	private int _fillCounter = 0;
 	
-	public AgingAverage(
-			final Type type) {
-		
+	public AgingAverage(final Type type) {
 		this(type, 20);
 	}
 	
@@ -17,8 +15,7 @@ public final class AgingAverage extends Average {
 		super(type, slotCount);
 	}
 	
-	public int addValue(
-			final int value) {
+	public int addValue(final int value) {
 		
 		if(_slotsInt == null) throw new UnsupportedOperationException();
 		
@@ -52,8 +49,7 @@ public final class AgingAverage extends Average {
 		return 0;
 	}
 
-	public long addValue(
-			final long value) {
+	public long addValue(final long value) {
 		
 		if(_slotsLong == null) throw new UnsupportedOperationException();
 		
@@ -89,14 +85,12 @@ public final class AgingAverage extends Average {
 
 	@Override
 	public float addValue(float value) {
-		
 		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
 	public double addValue(double value) {
-		
 		// TODO Auto-generated method stub
 		return 0;
 	}

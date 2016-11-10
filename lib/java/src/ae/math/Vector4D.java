@@ -28,7 +28,7 @@ public final class Vector4D extends OrganizedObject<Vector4D> {
 		this.xyz      = xyz;
 		this.readOnly = this;
 		
-		backend.addListener(obj -> _propagateChange());
+		backend.addListener((obj) -> _propagateChange());
 	}
 	
 	public Vector4D(final ReadOnlyBackend backend) {
@@ -43,7 +43,7 @@ public final class Vector4D extends OrganizedObject<Vector4D> {
 		this.readOnly =
 			new Vector4D(new ReadOnlyBackend(backend), xyz.readOnly);
 		
-		backend.addListener(obj -> _propagateChange());
+		backend.addListener((obj) -> _propagateChange());
 	}
 	
 	public final Vector4D add(

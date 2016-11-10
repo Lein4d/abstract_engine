@@ -95,8 +95,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 	public static final int I_NM32 = 5;
 	public static final int I_NM33 = 8;
 
-	private final float[] _computeNormalMatrix(
-			final float[] dataNm) {
+	private final float[] _computeNormalMatrix(final float[] dataNm) {
 
 		// Die Werte transponiert aus der Hauptmatrix auslesen
 		final float a0 = _data[I_M11], a3 = _data[I_M21], a6 = _data[I_M31];
@@ -127,14 +126,11 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 	}
 
 	private final void _propagateNmChange() {
-		
 		_dataNmCached.invalidate();
 		_propagateChange();
 	}
 	
-	private final void _propagateRowColumnChange(
-			final int index) {
-		
+	private final void _propagateRowColumnChange(final int index) {
 		if(index == 3) {
 			_propagateChange();
 		} else {
@@ -193,19 +189,14 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 	}
 
 	public Matrix4D() {
-		
 		toIdentity();
 	}
 	
-	public final Vector3D applyToDirVector(
-			final Vector3D v) {
-		
+	public final Vector3D applyToDirVector(final Vector3D v) {
 		return v.setData(applyToDirVector(v.getData(_temp)));
 	}
 
-	public final float[] applyToDirVector(
-			final float[] v) {
-		
+	public final float[] applyToDirVector(final float[] v) {
 		return applyToDirVector(v, 0);
 	}
 	
@@ -233,21 +224,15 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		return v;
 	}
 
-	public final Vector3D applyToPoint(
-			final Vector3D p) {
-		
+	public final Vector3D applyToPoint(final Vector3D p) {
 		return p.setData(applyToPoint(p.getData(_temp), (byte)3));
 	}
 
-	public final Vector4D applyToPoint(
-			final Vector4D p) {
-		
+	public final Vector4D applyToPoint(final Vector4D p) {
 		return p.setData(applyToPoint(p.getData(_temp), (byte)4));
 	}
 
-	public final float[] applyToPoint(
-			final float[] p) {
-		
+	public final float[] applyToPoint(final float[] p) {
 		return applyToPoint(p, 0, (byte)p.length);
 	}
 	
@@ -331,8 +316,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 			_data[I_M11] * _data[I_M22] * _data[I_M33] * _data[I_M44];
 	}
 
-	public final Vector4D getColumn(
-			final int cIndex) {
+	public final Vector4D getColumn(final int cIndex) {
 		
 		if(_columnVectors[cIndex] == null)
 			_columnVectors[cIndex] =
@@ -361,19 +345,14 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 			final int     offset) {
 		
 		System.arraycopy(_data, cIndex * 4, dst, offset, 4);
-		
 		return dst;
 	}
 	
-	public final Matrix4D getData(
-			final Matrix4D dst) {
-		
+	public final Matrix4D getData(final Matrix4D dst) {
 		return dst.setData(_data);
 	}
 	
-	public final float[] getData(
-			final float[] dst) {
-		
+	public final float[] getData(final float[] dst) {
 		return getData(dst, 0);
 	}
 	
@@ -382,7 +361,6 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
     		final int     offset) {
 		
 		System.arraycopy(_data, 0, dst, offset, 16);
-		
 		return dst;
     }
 
@@ -393,9 +371,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		return _data[cIndex * 4 + rIndex];
 	}
 	
-	public final float[] getNmData(
-			final float[] dst) {
-		
+	public final float[] getNmData(final float[] dst) {
 		return getNmData(dst, 0);
 	}
 	
@@ -404,12 +380,10 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 			final int     offset) {
 		
 		System.arraycopy(_dataNmCached.getObject(), 0, dst, offset, 9);
-		
 		return dst;
     }
 
-	public final Vector4D getRow(
-			final int rIndex) {
+	public final Vector4D getRow(final int rIndex) {
 		
 		if(_rowVectors[rIndex] == null)
 			_rowVectors[rIndex] = new Vector4D(new MatrixVector(true, rIndex));
@@ -439,7 +413,6 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 			final int     offset) {
 		
 		for(int i = 0; i < 4; i++) dst[offset + i] = _data[i * 4 + rIndex];
-		
 		return dst;
 	}
 
@@ -570,8 +543,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		return setData(_temp);
 	}
 	
-	public final Matrix4D multWithMatrix(
-			final Matrix4D m) {
+	public final Matrix4D multWithMatrix(final Matrix4D m) {
 		
 		// this = this * m;
 
@@ -837,8 +809,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 			(float)(height * vpWidth / vpHeight), (float)height, near, far);
 	}
 	
-	public final Matrix4D rotate(
-			final Quaternion q) {
+	public final Matrix4D rotate(final Quaternion q) {
 
 		q.copyStaticValues();
 		
@@ -854,8 +825,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 			1 - 2 * (q.b * q.b + q.c * q.c)); // r33
 	}
 	
-	public final Matrix4D rotateX(
-			final float angle) {
+	public final Matrix4D rotateX(final float angle) {
 		
 		final float s = (float)Math.sin(angle * RAD_FACTOR);
 		final float c = (float)Math.cos(angle * RAD_FACTOR);
@@ -880,8 +850,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		return this;
 	}
 
-	public final Matrix4D rotateY(
-			final float angle) {
+	public final Matrix4D rotateY(final float angle) {
 
 		final float s = (float)Math.sin(angle * RAD_FACTOR);
 		final float c = (float)Math.cos(angle * RAD_FACTOR);
@@ -906,8 +875,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		return this;
 	}
 
-	public final Matrix4D rotateZ(
-			final float angle) {
+	public final Matrix4D rotateZ(final float angle) {
 
 		final float s = (float)Math.sin(angle * RAD_FACTOR);
 		final float c = (float)Math.cos(angle * RAD_FACTOR);
@@ -941,8 +909,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		return this;
 	}
 
-	public Matrix4D round(
-			final float interval) {
+	public Matrix4D round(final float interval) {
 
 		for(int i = 0; i < 16; i++)
 			_data[i] = (float)Math.round(_data[i] / interval) * interval;
@@ -952,9 +919,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		return this;
 	}
 
-	public final Matrix4D scale(
-			final float factor) {
-
+	public final Matrix4D scale(final float factor) {
 		return scale(factor, factor, factor);
 	}
 
@@ -1003,8 +968,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		return this;
 	}
 	
-	public final Matrix4D setData(
-			final Matrix4D src) {
+	public final Matrix4D setData(final Matrix4D src) {
 		
 		src.getData(_data);
 		
@@ -1013,9 +977,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		return this;
 	}
 	
-	public final Matrix4D setData(
-			final float[] src) {
-		
+	public final Matrix4D setData(final float[] src) {
 		return setData(src, 0);
 	}
 	

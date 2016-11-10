@@ -81,11 +81,8 @@ public final class ShaderManager {
 		
 		private T _value;
 		
-		public UniformVariable(
-				final int uniformId) {
-			
+		public UniformVariable(final int uniformId) {
 			_uniformId = uniformId;
-			
 			for(int i = 0; i < _validity.length; i++) _validity[i] = false;
 		}
 		
@@ -98,8 +95,7 @@ public final class ShaderManager {
 			_validity[_curShaderId] = true;
 		}
 		
-		public final void setValue(
-				final T value) {
+		public final void setValue(final T value) {
 			
 			_value = value;
 			
@@ -277,11 +273,8 @@ public final class ShaderManager {
 		return _shaderCount++;
 	}
 
-	public final ShaderManager setColor(
-			final Vector4D color) {
-		
+	public final ShaderManager setColor(final Vector4D color) {
 		_uniColor.setValue(color);
-		
 		return this;
 	}
 	
@@ -361,21 +354,15 @@ public final class ShaderManager {
 			final Matrix4D projectionMatrix) {
 		
 		_uniMatProjection.setValue(projectionMatrix);
-		
 		return this;
 	}
 
-	public final ShaderManager setTexture(
-			final int texture) {
-		
+	public final ShaderManager setTexture(final int texture) {
 		_uniTexture.setValue(texture);
-		
 		return this;
 	}
 	
-	public final void useShaderProgram(
-			final int programId) {
-		
+	public final void useShaderProgram(final int programId) {
 		useShaderProgram(programId, false);
 	}
 	
