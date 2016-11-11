@@ -188,7 +188,7 @@ public final class Meshes {
 		
 		mb.setPrimitiveType(PrimitiveType.QUAD);
 		mb.computeNormals(true, true);
-		mb.enableCullFacingSupport(true);
+		mb.cullFacing = true;
 		
 		return mb;
 	}
@@ -236,8 +236,8 @@ public final class Meshes {
 		_computeCylinderShellData(
 			subdivisions, 2 * quadCount, 2 * subdivisions,
 			indices, positions, normals, texCoords);
-		
-		mb.enableCullFacingSupport(true);
+
+		mb.cullFacing = true;
 		
 		return mb;
 	}
@@ -279,8 +279,8 @@ public final class Meshes {
 		
 		_computeCylinderShellData(
 			subdivisions, 0, 0, indices, positions, normals, texCoords);
-		
-		mb.enableCullFacingSupport(true);
+
+		mb.cullFacing = true;
 		
 		return mb;
 	}
@@ -320,8 +320,8 @@ public final class Meshes {
 		
 		_computeDiscData(
 			subdivisions, 0, 0, 0, 0, indices, positions, normals, texCoords);
-		
-		mb.enableCullFacingSupport(true);
+
+		mb.cullFacing = true;
 		
 		return mb;
 	}
@@ -353,7 +353,7 @@ public final class Meshes {
 		
 		mb.setPrimitiveType(PrimitiveType.QUAD);
 		mb.computeNormals(true, true);
-		mb.enableCullFacingSupport(true);
+		mb.cullFacing = true;
 		
 		return mb;
 	}
@@ -452,8 +452,8 @@ public final class Meshes {
 		}
 		
 		if(flat) mb.computeNormals(true, true);
-		
-		mb.enableCullFacingSupport(true);
+
+		mb.cullFacing = true;
 		
 		return mb;
 	}
@@ -544,8 +544,8 @@ public final class Meshes {
     	}
     	
     	if(flat) mb.computeNormals(true, true);
-    	
-    	mb.enableCullFacingSupport(true);
+
+		mb.cullFacing = true;
     	
     	return mb;
     }

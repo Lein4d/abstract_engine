@@ -21,9 +21,30 @@ public final class PooledHashSet<T> extends PooledCollection<T, T> {
 	}
 	
 	// Die Value-Komponente wird immer auf 'null' gesetzt
-	private final PooledHashMap<T, Object> _hashMap = new PooledHashMap<>();
+	private final PooledHashMap<T, Object> _hashMap;
 	
-	public PooledHashSet() {super(null, false);}
+	public PooledHashSet() {
+		this(new PooledHashMap<>());
+	}
+	
+	public PooledHashSet(final PooledHashMap<T, Object> backend) {
+		super(null, false);
+		_hashMap = backend;
+	}
+	
+	public PooledHashSet(final Iterable<T> elements){
+		this(elements, new PooledHashMap<>());
+	}
+	
+	public PooledHashSet(
+			final Iterable<T>              elements,
+			final PooledHashMap<T, Object> backend) {
+		
+		super(null, false);
+		
+		_hashMap = backend;
+		for(T i : elements) insert(i);
+	}
 	
 	public final boolean exists(final T element) {
 		return _hashMap.hasKey(element);

@@ -36,7 +36,7 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 	}
 
 	public PooledLinkedList() {
-		super(LinkedListNode.<T>createObjectPool(), false);
+		this(LinkedListNode.<T>createObjectPool(), false);
 	}
 	
 	public PooledLinkedList(
@@ -44,6 +44,19 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 			final boolean                       poolSharing) {
 		
 		super(nodePool, poolSharing);
+	}
+	
+	public PooledLinkedList(final Iterable<T> elements) {
+		this(elements, LinkedListNode.<T>createObjectPool(), false);
+	}
+	
+	public PooledLinkedList(
+			final Iterable<T>                   elements,
+			final ObjectPool<LinkedListNode<T>> nodePool,
+			final boolean                       poolSharing) {
+		
+		super(LinkedListNode.<T>createObjectPool(), false);
+		for(T i : elements) insertAtEnd(i);
 	}
 	
 	public static final <T> ObjectPool<LinkedListNode<T>> createNodePool() {

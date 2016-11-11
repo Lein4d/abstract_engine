@@ -7,15 +7,16 @@ import ae.util.Functions;
 
 public class MeshBuilder {
 	
+	private static final int[][] _QUAD_TO_TRI_MAP = {{0,1,2},{2,3,0}};
+	
 	private final CachedObject<Mesh> _lastValidMesh =
 		new CachedObject<Mesh>(null, (object) -> _createCachedMesh());
 	
 	// Metainformationen
-	private Mesh.PrimitiveType _primitiveType    = PrimitiveType.TRIANGLE;
-	private boolean            _primitiveTypeSet = false;
-	private boolean            _autoNormals      = false;
-	private boolean            _cullFacing       = false;
-	private float              _precision        = 0.00001f;
+	private PrimitiveType _primitiveType    = PrimitiveType.TRIANGLE;
+	private boolean       _primitiveTypeSet = false;
+	private boolean       _autoNormals      = false;
+	private float         _precision        = 0.00001f;
 	
 	// Geometriedaten
 	private int[][]   _indices   = null;
@@ -23,8 +24,19 @@ public class MeshBuilder {
 	private float[][] _normals   = null;
 	private float[][] _texCoords = null;
 
+	public boolean cullFacing = false;
+	
+	private final void _assertIndicesNotNull() {
+		Functions.assertNotNull(_indices, "No indices specified");
+	}
+	
 	private final void _assertPositionsNotNull() {
 		Functions.assertNotNull(_positions, "No positions specified");
+	}
+	
+	private final void _assertPrimitiveTypeSet() {
+		if(!_primitiveTypeSet)
+			throw new UnsupportedOperationException("Primitive type not set");
 	}
 	
 	private final void _assertTexCoordsNotNull() {
@@ -69,11 +81,67 @@ public class MeshBuilder {
 					break;
 			}
 			
-			//computeNormal(_positions, i, normal, false);
-			
 			for(int j = 0; j < _primitiveType.size; j++)
 				System.arraycopy(normal, 0, _normals[i + j], 0, 3);
 		}
+	}
+	
+	private static final boolean[] computeMergedAttributesExistence(
+			final MeshBuilder[] meshes,
+			final boolean       conservative) {
+		
+		boolean hasIndices   = false;
+		boolean hasNormals   = conservative;
+		boolean hasTexCoords = conservative;
+		
+		// Check, which attributes are specified
+		// In conservative mode, an attribute has to be specified in all meshes
+		// to be part of the merged mesh.
+		// In progessive mode, missing attributes are initialized with default
+		// values.
+		for(MeshBuilder i : meshes) {
+			
+			i._assertPositionsNotNull();
+			
+			// Indices are always treated in progressive manner
+			if(i._indices != null) hasIndices = true;
+			
+			if(conservative) {
+				if(i._normals   == null) hasNormals   = false;
+    			if(i._texCoords == null) hasTexCoords = false;
+			} else {
+    			if(i._normals   != null) hasNormals   = true;
+    			if(i._texCoords != null) hasTexCoords = true;
+			}
+		}
+		
+		return new boolean[]{hasIndices, hasNormals, hasTexCoords};
+	}
+	
+	private static final int[] _computeMergedMeshArraySizes(
+			final MeshBuilder[] meshes,
+			final boolean       hasIndices) {
+		
+		int indexCount  = 0;
+		int vertexCount = 0;
+		
+		for(int i = 0; i < meshes.length; i++) {
+			indexCount  += hasIndices ?
+				meshes[i]._indices.length : meshes[i]._positions.length;
+			vertexCount += meshes[i]._positions.length;
+		}
+		
+		return new int[]{indexCount, vertexCount};
+	}
+	
+	private static PrimitiveType _computeMergedPrimitiveType(
+			final MeshBuilder[] meshes) {
+		
+		for(MeshBuilder i : meshes)
+			if(i._primitiveType == PrimitiveType.TRIANGLE)
+				return PrimitiveType.TRIANGLE;
+		
+		return PrimitiveType.QUAD;
 	}
 	
 	private static final void _computeNormal(
@@ -127,24 +195,6 @@ public class MeshBuilder {
 		n[1] /= length;
 		n[2] /= length;
 	}
-/*
-	private void ComputeSmoothNormals(
-			bool normalize) {
-		
-		float[,] areaNormals = new float[_indexCount / 3, 3];
-		int      triangle;
-
-		for(int i = 0; i < _indexCount; i += 3) {
-
-			triangle = i / 3;
-
-			ComputeNormal(
-				positions, indices[i], indices[i + 1], indices[i + 2],
-				out areaNormals[triangle, 0], out areaNormals[triangle, 1], out areaNormals[triangle, 2],
-				true);
-		}
-	}
-*/
 	
 	private final void _computeQuadNormal(
     		final int     iP0,
@@ -159,10 +209,10 @@ public class MeshBuilder {
 		final float[] p2 = _positions[iP2];
 		final float[] p3 = _positions[iP3];
 		
-		boolean equP0P1 = true;
-		boolean equP1P2 = true;
-		boolean equP2P3 = true;
-		boolean equP3P0 = true;
+		boolean equP0P1      = true;
+		boolean equP1P2      = true;
+		boolean equP2P3      = true;
+		boolean equP3P0      = true;
 		boolean allDifferent = false;
 		
 		for(int i = 0; i < 3 && !allDifferent; i++) {
@@ -186,7 +236,13 @@ public class MeshBuilder {
 			_computeNormal(p0, p1, p2, n, normalize);
 		}
 	}
-	
+	/*
+	private final void _computeSmoothNormals(final boolean normalize) {
+		
+		// Perform screening, to determine the edges for each vertex
+		
+	}
+	*/
 	private final void _computeTriangleNormal(
 			final int     iP0,
 			final int     iP1,
@@ -201,6 +257,22 @@ public class MeshBuilder {
 			n, normalize);
 	}
 	
+	private final void _copyVertex(
+			final float[][] srcPositions,
+			final float[][] srcNormals,
+			final float[][] srcTexCoords,
+			final int       srcPos,
+			final int       dstPos) {
+		
+		System.arraycopy(srcPositions[srcPos], 0, _positions[dstPos], 0, 3);
+		
+		if(srcNormals != null)
+			System.arraycopy(srcNormals[srcPos], 0, _normals[dstPos], 0, 3);
+		
+		if(srcTexCoords != null)
+			System.arraycopy(srcTexCoords[srcPos], 0, _texCoords[dstPos], 0, 2);
+	}
+	
 	private final Mesh _createCachedMesh() {
 		
 		_assertPositionsNotNull();
@@ -208,7 +280,7 @@ public class MeshBuilder {
 		return new Mesh(
 			_indices != null ? _indices : _createDefaultIndices(),
 			_positions, _normals, _texCoords,
-			_autoNormals, _cullFacing);
+			_autoNormals, cullFacing);
 	}
 	
 	private final int[][] _createDefaultIndices() {
@@ -229,11 +301,99 @@ public class MeshBuilder {
 		return newIndices;
 	}
 	
+	private static final void _mergeUnifiedMeshData(
+			final MeshBuilder[] src,
+			final MeshBuilder   dst,
+			final boolean       hasIndices,
+			final boolean       hasNormals,
+			final boolean       hasTexCoords) {
+		
+		int indexPos  = 0;
+		int vertexPos = 0;
+		
+		// Copy every mesh's data to the result mesh
+		for(MeshBuilder i : src) {
+
+			// Justify the indices while copying
+			if(hasIndices) {
+				
+				for(int j = 0; j < i._indices.length; j++)
+					for(int k = 0; k < i._primitiveType.size; k++)
+						dst._indices[indexPos + j][k] =
+							i._indices[j][k] + vertexPos;
+				
+				indexPos += i._indices.length;
+			}
+			
+			// vertex data can be copyied without modification
+			Functions.copyArray2D(
+				i  ._positions, 0,
+				dst._positions, vertexPos,
+				3, i._positions.length);
+			
+			if(hasNormals)
+				Functions.copyArray2D(
+					i  ._normals, 0,
+					dst._normals, vertexPos,
+					3, i._normals.length);
+			
+			if(hasTexCoords)
+				Functions.copyArray2D(
+					i  ._texCoords, 0,
+					dst._texCoords, vertexPos,
+					2, i._texCoords.length);
+			
+			vertexPos += i._positions.length;
+		}
+	}
+	
+	private final void _renewVertexArrays(final int vertexCount) {
+		
+		final boolean hasNormals   = _normals   != null;
+		final boolean hasTexCoords = _texCoords != null;
+		
+		_positions = _normals = _texCoords = null;
+		
+		createPositionArray(_indices.length * _primitiveType.size);
+		
+		if(hasNormals)   createNormalArray();
+		if(hasTexCoords) createTexCoordArray();
+	}
+	
 	private final <T> void _resetCompiled(
 			final T oldValue,
 			final T newValue) {
 
 		if(oldValue != null || newValue != null) _lastValidMesh.invalidate();
+	}
+	
+	private static final MeshBuilder[] _unifyMeshes(
+			final MeshBuilder[] src,
+			final MeshBuilder   dst,
+			final boolean       hasIndices,
+			final boolean       hasNormals,
+			final boolean       hasTexCoords) {
+		
+		final MeshBuilder[] srcCopies = new MeshBuilder[src.length];
+		
+		for(int i = 0; i < src.length; i++) {
+
+			srcCopies[i] = src[i].createFlatCopy();
+			
+			if(dst._primitiveType == PrimitiveType.TRIANGLE)
+				srcCopies[i].splitQuads();
+			
+			if(hasIndices && srcCopies[i]._indices == null)
+				srcCopies[i]._createDefaultIndices();
+			
+			if(hasNormals && srcCopies[i]._normals == null)
+				srcCopies[i].createNormalArray();
+			
+			if(hasTexCoords && srcCopies[i]._texCoords == null)
+				srcCopies[i].createTexCoordArray();
+		}
+		
+		return srcCopies;
 	}
 	
 	public final MeshBuilder computeNormals(
@@ -255,12 +415,15 @@ public class MeshBuilder {
 
 		MeshBuilder mesh = new MeshBuilder();
 
-		mesh._indices     = _indices;
-		mesh._positions   = _positions;
-		mesh._normals     = _normals;
-		mesh._texCoords   = _texCoords;
-		mesh._autoNormals = _autoNormals;
-		mesh._cullFacing  = _cullFacing;
+		mesh._primitiveType    = _primitiveType;
+		mesh._primitiveTypeSet = _primitiveTypeSet;
+		mesh._autoNormals      = _autoNormals;
+		mesh._precision        = _precision;
+		mesh._indices          = _indices;
+		mesh._positions        = _positions;
+		mesh._normals          = _normals;
+		mesh._texCoords        = _texCoords;
+		mesh.cullFacing        = cullFacing;
 
 		return mesh;
 	}
@@ -281,34 +444,18 @@ public class MeshBuilder {
 	}
 	
 	public final float[][] createNormalArray() {
-		
 		_assertPositionsNotNull();
-		
-		_normals = new float[_positions.length][3];
-		
-		return _normals;
+		return _normals = new float[_positions.length][3];
 	}
 	
 	public final float[][] createPositionArray(final int vertexCount) {
-		
 		_checkNewPositionArrayPossible(vertexCount);
-		
-		_positions = new float[vertexCount][3];
-		
-		return _positions;
+		return _positions = new float[vertexCount][3];
 	}
 	
 	public final float[][] createTexCoordArray() {
-		
 		_assertPositionsNotNull();
-		
-		_texCoords = new float[_positions.length][2];
-		
-		return _texCoords;
-	}
-	
-	public final void enableCullFacingSupport(final boolean enable) {
-		_cullFacing = enable;
+		return _texCoords = new float[_positions.length][2];
 	}
 	
 	public final int[][] getIndices() {
@@ -327,91 +474,50 @@ public class MeshBuilder {
 		return _texCoords;
 	}
 	
-	/*
 	public static final MeshBuilder merge(
+			final boolean         conservative,
 			final MeshBuilder ... meshes) {
 		
-		// Check some preconditions to speed up the funktion in these cases
-		if(meshes.Length == 0) {
-			return new MeshData();
-		} else if(meshes.Length == 1) {
-			return meshes[0].CreateFlatCopy();
+		// Check some preconditions to speed up the function in these cases
+		if(meshes.length == 0) {
+			return new MeshBuilder();
+		} else if(meshes.length == 1) {
+			return meshes[0].createFlatCopy();
 		}
 		
-		MeshBuilder   mesh         = new MeshBuilder();
-		MeshBuilder[] meshCopies   = new MeshBuilder[meshes.length];
-		boolean    hasIndices   = false;
-		boolean    hasNormals   = false;
-		boolean    hasTexCoords = false;
-		int        indexCount   = 0;
-		int        vertexCount  = 0;
-		int        indexPos     = 0;
-		int        vertexPos    = 0;
+		final MeshBuilder mesh = new MeshBuilder();
 		
-		// Check, which attributes are specified
-		for(MeshBuilder i : meshes) {
-			
-			i.checkPositions();
-			
-			if(i._indices   != null) hasIndices   = true;
-			if(i._normals   != null) hasNormals   = true;
-			if(i._texCoords != null) hasTexCoords = true;
-		}
-
-		// Unify all meshes
-		for(int i = 0; i < meshes.length; i++) {
-
-			meshCopies[i] = meshes[i].createFlatCopy();
-
-			if(hasIndices && meshCopies[i]._indices == null)
-				meshCopies[i].createDefaultIndices();
-
-			// TODO: Verbessern
-			if(hasNormals && meshCopies[i]._normals == null)
-				meshCopies[i]._normals = new float[meshCopies[i]._vertexCount][3];
-
-			if(hasTexCoords && meshCopies[i]._texCoords == null)
-				meshCopies[i]._texCoords = new float[meshCopies[i]._vertexCount][2];
-
-			indexCount  += meshCopies[i]._indexCount;
-			vertexCount += meshCopies[i]._vertexCount;
-		}
+		mesh.setPrimitiveType(_computeMergedPrimitiveType(meshes));
 		
+		final boolean[] attributes   =
+			computeMergedAttributesExistence(meshes, conservative);
+		final boolean   hasIndices   = attributes[0];
+		final boolean   hasNormals   = attributes[1];
+		final boolean   hasTexCoords = attributes[2];
+		
+		final MeshBuilder[] meshCopies =
+			_unifyMeshes(meshes, mesh, hasIndices, hasNormals, hasTexCoords);
+		
+		final int[] arraySizes  =
+			_computeMergedMeshArraySizes(meshCopies, hasIndices);
+		final int   indexCount  = arraySizes[0];
+		final int   vertexCount = arraySizes[1];
+
 		// Create array for index data
-		if(hasIndices) mesh._indices = new int[indexCount];
+		if(hasIndices)
+			mesh._indices = new int[indexCount][mesh._primitiveType.size];
 		
 		// Create arrays for vertex data
-		mesh._positions = new float[vertexCount][3];
-		if(hasNormals)   mesh._normals   = new float[vertexCount][3];
-		if(hasTexCoords) mesh._texCoords = new float[vertexCount][2];
-
-		// Copy every mesh's data to the result mesh
-		for(MeshBuilder i : meshCopies) {
-
-			// Justify the indices while copying
-			if(hasIndices)
-				for(int j = 0; j < i._indexCount; j++)
-					mesh._indices[indexPos + j] = i._indices[j] + vertexPos;
-
-			// vertex data can be copyied without modification
-			Functions.copyArray2D(
-				i._positions, 0, mesh._positions, vertexPos, 3, i._vertexCount);
-			if(hasNormals)
-				Functions.copyArray2D(
-					i._normals, 0, mesh._normals, vertexPos, 3, i._vertexCount);
-			if(hasTexCoords)
-				Functions.copyArray2D(
-					i._texCoords, 0, mesh._texCoords, vertexPos,
-					2, i._vertexCount);
-
-			indexPos  += i._indexCount;
-			vertexPos += i._vertexCount;
-		}
+		mesh.createPositionArray(vertexCount);
+		if(hasNormals)   mesh.createNormalArray();
+		if(hasTexCoords) mesh.createTexCoordArray();
+		
+		_mergeUnifiedMeshData(
+			meshCopies, mesh, hasIndices, hasNormals, hasTexCoords);
 
 		return mesh;
 	}
-	*/
-
+	
 	public final MeshBuilder setIndices(final int[][] indices) {
 		
 		_resetCompiled(_indices, indices);
@@ -489,20 +595,96 @@ public class MeshBuilder {
 	}
 	
 	public final MeshBuilder spliceUnusedVertices() {
-		/*
-		IDictionary<uint, uint> mapping = new Dictionary<uint, uint>();
-		uint                    mapPos = 0;
+		
+		if(_indices == null) return this;
+		
+		_assertPositionsNotNull();
+		
+		// The index map assigns each vertex a mapped index
+		final int[] indexMap       = new int[_positions.length];
+		int         curMappedIndex = 0;
+		
+		// Initialize the map with -1, saying that all vertices should be
+		// spliced
+		for(int i = 0; i < indexMap.length; i++) indexMap[i] = -1;
+		
+		// After having looped all indices, 'curMappedIndex' contains the number
+		// of actual referenced vertices
+		for(int[] i : _indices)
+			for(int j : i)
+				if(indexMap[j] == -1) indexMap[j] = curMappedIndex++;
 
-		for(int i : new HashSet<uint>(indices))
-			mapping.Add(i, mapPos++);
-
-		// TODO
-		*/
+		// Store the old vertex data
+		final float[][] oldPositions = _positions;
+		final float[][] oldNormals   = _normals;
+		final float[][] oldTexCoords = _texCoords;
+		
+		_renewVertexArrays(_indices.length * _primitiveType.size);
+		
+		// Set the new indices based on the previous computed mapping
+		for(int i = 0; i < _indices.length; i++)
+			for(int j = 0; j < _primitiveType.size; j++)
+				_indices[i][j] = indexMap[_indices[i][j]];
+		
+		// Copy all vertices to their new positions
+		for(int i = 0; i < oldPositions.length; i++) {
+			
+			final int newIndex = indexMap[i];
+			
+			// Skip vertices that should be spliced
+			if(newIndex == -1) continue;
+			
+			System.arraycopy(oldPositions[i], 0, _positions[newIndex], 0, 3);
+			
+			if(_normals != null)
+				System.arraycopy(oldNormals[i], 0, _normals[newIndex], 0, 3);
+			
+			if(_texCoords != null)
+				System.arraycopy(
+					oldTexCoords[i], 0, _texCoords[newIndex], 0, 2);
+		}
+		
 		return this;
 	}
-
-	public final boolean supportsCullFacing() {
-		return _cullFacing;
+	
+	public final MeshBuilder splitQuads() {
+		
+		_assertPrimitiveTypeSet();
+		
+		if(_primitiveType == PrimitiveType.TRIANGLE) return this;
+		
+		if(_indices != null) {
+			
+			final int[][] oldIndices = _indices;
+			
+			_indices = new int[oldIndices.length * 2][3];
+			
+			for(int i = 0; i < oldIndices.length; i++) // All quads
+				for(int j = 0; j < 2; j++) // The 2 new triangles
+					for(int k = 0; k < 3; k++) // the 3 vertices of each
+						_indices[i * 2 + j][k] =
+							oldIndices[i][_QUAD_TO_TRI_MAP[j][k]];
+			
+		} else {
+			
+			_assertPositionsNotNull();
+			
+			final float[][] oldPositions = _positions;
+			final float[][] oldNormals   = _normals;
+			final float[][] oldTexCoords = _texCoords;
+			final int       quadCount    = _positions.length / 4;
+			
+			_renewVertexArrays(_positions.length * 2);
+			
+			for(int i = 0; i < quadCount; i++) // All quads
+				for(int j = 0; j < 2; j++) // The 2 new triangles
+					for(int k = 0; k < 3; k++) // the 3 vertices of each
+						_copyVertex(
+							oldPositions, oldNormals, oldTexCoords,
+							i * 4 + _QUAD_TO_TRI_MAP[j][k], i * 6 + j * 3 + k);
+		}
+		
+		return this;
 	}
 	
 	public final MeshBuilder transformPositions(final Matrix4D transform) {
@@ -530,30 +712,21 @@ public class MeshBuilder {
 	}
 
 	public final MeshBuilder unwrap() {
-
-		_assertPositionsNotNull();
 		
-		if(_indices == null)
-			throw new UnsupportedOperationException("No indices specified");
+		_assertIndicesNotNull();
+		_assertPositionsNotNull();
 		
 		final float[][] oldPositions = _positions;
 		final float[][] oldNormals   = _normals;
 		final float[][] oldTexCoords = _texCoords;
-
-		int vPosOld, vPosNew;
 		
-		_positions = _normals = _texCoords = null;
-		
-		createPositionArray(_indices.length * _primitiveType.size);
-		
-		if(oldNormals   != null) createNormalArray();
-		if(oldTexCoords != null) createTexCoordArray();
+		_renewVertexArrays(_indices.length * _primitiveType.size);
 		
 		for(int i = 0; i < _indices.length; i++) {
 			for(int j = 0; j < _primitiveType.size; j++) {
 				
-				vPosOld = _indices[i][j];
-				vPosNew = i * _primitiveType.size + j;
+				final int vPosOld = _indices[i][j];
+				final int vPosNew = i * _primitiveType.size + j;
 				
 				System.arraycopy(
 					oldPositions[vPosOld], 0, _positions[vPosNew], 0, 3);
