@@ -2,10 +2,12 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="C:/Users/Daniel/Repositories/Abstract-Engine/3rd_party/lwjgl/jar/lwjgl.jar">
-		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="C:/Users/Daniel/Repositories/Abstract-Engine/3rd_party/lwjgl/native"/>
-		</attributes>
-	</classpathentry>
+	<classpathentry kind="lib" path="C:/Users/Daniel/Repositories/Abstract-Engine/3rd_party/lwjgl/lwjgl/lwjgl.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Daniel/Repositories/Abstract-Engine/3rd_party/lwjgl/lwjgl-glfw/lwjgl-glfw.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Daniel/Repositories/Abstract-Engine/3rd_party/lwjgl/lwjgl-glfw/lwjgl-glfw-natives-windows.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Daniel/Repositories/Abstract-Engine/3rd_party/lwjgl/lwjgl-opengl/lwjgl-opengl.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Daniel/Repositories/Abstract-Engine/3rd_party/lwjgl/lwjgl/lwjgl-natives-windows.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Daniel/Repositories/Abstract-Engine/3rd_party/lwjgl/lwjgl-stb/lwjgl-stb.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Daniel/Repositories/Abstract-Engine/3rd_party/lwjgl/lwjgl-stb/lwjgl-stb-natives-windows.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
