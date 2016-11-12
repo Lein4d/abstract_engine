@@ -2,12 +2,14 @@ package ae.core;
 
 import java.nio.ByteBuffer;
 
+import org.lwjgl.stb.STBImage;
+
 import ae.util.CachedObject;
 
 public final class TextureBuilder {
 
 	public enum PixelFormat {
-		RGB(0, 1, 2),     BGR(2, 1, 0),
+		RGB (0, 1, 2),    BGR (2, 1, 0),
 		RGBA(0, 1, 2, 3), BGRA(2, 1, 0, 3), ARGB(1, 2, 3, 0), ABGR(3, 2, 1, 0);
 		
 		public final int[] mapping;
@@ -74,6 +76,34 @@ public final class TextureBuilder {
 	
 	public final Texture createTexture() {
 		return _lastValidTexture.getObject();
+	}
+	
+	public final TextureBuilder setData(final String fileName) {
+		
+		final int[] width  = new int[1];
+		final int[] height = new int[1];
+		final int[] comp   = new int[1];
+		
+		_data   = STBImage.stbi_load(fileName, width, height, comp, 0);
+		_width  = width[0];
+		_height = height[0];
+		
+		switch(comp[0]) {
+			case 1: case 2: throw new UnsupportedOperationException();
+			case 3: _alpha = false; break;
+			case 4: _alpha = true;  break;
+		}
+		
+		return this;
+	}
+	
+	public final TextureBuilder setData(
+    		final int         width,
+    		final int         height,
+    		final byte[]      pixels,
+    		final PixelFormat format) {
+		
+		return setData(width, height, pixels, format, false, false);
 	}
 	
 	public final TextureBuilder setData(
