@@ -156,7 +156,7 @@ public final class Testing {
 			"Testing complete: " + successCount + " of " + testCount +
 			" tests successful!");
 		
-		final AbstractEngine     engine = new AbstractEngine("Engine Test");
+		final AbstractEngine     engine = new AbstractEngine("Engine Test", 8, 8);
 		final SceneGraph sceneGraph     = new SceneGraph();
 		final Texture    checkerTexture =
 			Texture.createCheckerTexture(Vector4D.WHITE, Vector4D.GREY);
@@ -172,7 +172,7 @@ public final class Testing {
 		
 		final Material testMaterial = new Material(
 			engine,
-			"TMix", null, null, null, null,
+			null, "TMix", null, null, null,
 			(material, time, delta) -> {
 				
 				material.setParameter(
@@ -195,7 +195,6 @@ public final class Testing {
 			new SwizzleNode("T2RGB", "T2", "rgb"),
 			FunctionNode.mix("TMix", "T1RGB", "T2RGB", "MixFactor"));
 		
-		// new ParameterNode("MixFactor", 1.0),
 		final Model quad = new Model(sceneGraph).
 			setMesh(Meshes.createQuad(8, true).createMesh()).
 			setTexture(checkerTexture).

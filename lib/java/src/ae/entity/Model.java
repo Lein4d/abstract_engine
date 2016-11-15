@@ -47,7 +47,7 @@ public final class Model extends Entity<Model> {
 		} else {
 			glDisable(GL_CULL_FACE);
 		}
-		material.use(curTransformation, sceneGraph.getEngine().projection, null, 0, null, 0);
+		
 		activeMesh.draw();
 	}
 	

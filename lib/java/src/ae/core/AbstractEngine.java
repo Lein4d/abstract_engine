@@ -9,7 +9,6 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
 import ae.collections.PooledLinkedList;
-import ae.entity.Entity;
 import ae.material.Material;
 import ae.math.Matrix4D;
 import ae.math.Vector3D;
@@ -36,17 +35,10 @@ public final class AbstractEngine {
 		void update(double time, double delta);
 	}
 	
-	private final long          _window;
-	private final ShaderManager _sm = new ShaderManager(10, 8, 8);
-	private final int           _colorShader;
-	private final int           _lightShader;
+	private final long _window;
 	
 	private final PooledLinkedList<Material> _materials   =
 		new PooledLinkedList<>();
-	private final Entity.Instance[]          _dirLights   =
-		new Entity.Instance[_sm.maxDirLightCount];
-	private final Entity.Instance[]          _pointLights =
-		new Entity.Instance[_sm.maxPointLightCount];
 	
 	private State   _state        = State.CREATED;
 	private boolean _isFullscreen = false;
@@ -91,6 +83,9 @@ public final class AbstractEngine {
 	
 	public static final Path SOURCE_PATH;
 	
+	public final int maxDirLightCount;
+	public final int maxPointLightCount;
+	
 	public final PrintStream out;
 	public final PrintStream err;
 	
@@ -129,65 +124,27 @@ public final class AbstractEngine {
 		if(_cbResize != null) _cbResize.onResize(this);
 	}
 	
-	final void setDirectionalLights(
-			final PooledLinkedList<Entity.Instance> lights) {
+	public AbstractEngine(
+    		final String title,
+    		final int    maxDirLightCount,
+    		final int    maxPointLightCount) {
 		
-		int pos = 0;
-		
-		for(Entity.Instance i : lights) _dirLights[pos++] = i;
-		
-		_sm.setDirectionalLights(_dirLights, lights.getSize());
-	}
-
-	final void setPointLights(
-			final PooledLinkedList<Entity.Instance> lights) {
-		
-		int pos = 0;
-		
-		for(Entity.Instance i : lights) _pointLights[pos++] = i;
-		
-		_sm.setPointLights(_pointLights, lights.getSize());
-	}
-	
-	final void updateProjectionMatrix() {
-		_sm.setProjectionMatrix(projection);
-	}
-	
-	final void useColorShader(
-    		final Matrix4D modelViewMatrix,
-    		final Vector4D color) {
-		
-		_sm.useShaderProgram(-1);
-		
-		_sm.setModelViewMatrix(modelViewMatrix);
-		_sm.setColor(color);
-		
-		_sm.useShaderProgram(_colorShader);
-	}
-	
-	final void useLightShader(
-    		final Matrix4D modelViewMatrix,
-    		final Vector4D color) {
-		
-		_sm.useShaderProgram(-1);
-		
-		_sm.setModelViewMatrix(modelViewMatrix);
-		_sm.setColor(color);
-		
-		_sm.useShaderProgram(_lightShader);
-	}
-	
-	public AbstractEngine(final String title) {
-		this(title, System.out, System.err);
+		this(
+			title, maxDirLightCount, maxPointLightCount,
+			System.out, System.err);
 	}
 	
 	public AbstractEngine(
 			final String      title,
+			final int         maxDirLightCount,
+			final int         maxPointLightCount,
 			final PrintStream out,
 			final PrintStream err) {
 		
-		this.out = out;
-		this.err = err;
+		this.maxDirLightCount   = maxDirLightCount;
+		this.maxPointLightCount = maxPointLightCount;
+		this.out                = out;
+		this.err                = err;
 		
 		if(!glfwInit())
 			throw new IllegalStateException("Unable to initialize GLFW");
@@ -232,23 +189,6 @@ public final class AbstractEngine {
 
 		defaultTexture =
 			Texture.createCheckerTexture(Vector4D.WHITE, Vector4D.WHITE);
-		
-		_colorShader = _sm.createShaderProgram(
-			this, "color.vert", "color.frag",
-			new String[]{"in_position", null, "in_texCoord"},
-			new String[]{"out_color"},
-			"u_matModelView", null, "u_matProjection",
-			"u_color", "u_texture",
-			null, null, null, null);
-
-		_lightShader = _sm.createShaderProgram(
-			this, "light.vert", "light.frag",
-			new String[]{"in_position", "in_normal", "in_texCoord"},
-			new String[]{"out_color"},
-			"u_matModelView", "u_matNormal", "u_matProjection",
-			"u_color", "u_texture",
-			"u_dirLights",   "u_dirLightCount",
-			"u_pointLights", "u_pointLightCount");
 	}
 
 	public final void addMaterial(final Material material) {
@@ -365,8 +305,6 @@ public final class AbstractEngine {
 		
 		glCullFace(GL_BACK);
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		
-		_sm.setTexture(0);
 		
 		while(!glfwWindowShouldClose(_window)) {
 

@@ -5,7 +5,9 @@ import ae.collections.PooledLinkedList;
 import ae.collections.PooledQueue;
 import ae.core.AbstractEngine;
 import ae.core.Texture;
+import ae.entity.DirectionalLight;
 import ae.entity.Entity;
+import ae.entity.PointLight;
 import ae.math.Matrix4D;
 import ae.util.Functions;
 
@@ -79,6 +81,7 @@ public final class Material {
 	
 	private final float[] _temp9  = new float[9];
 	private final float[] _temp16 = new float[16];
+	private final float[] _lightData;
 	
 	private boolean _builtInNormal   = false;
 	private boolean _builtInTexCoord = false;
@@ -161,7 +164,9 @@ public final class Material {
     		_appendLine(source, 1, "lowp    int  i;");
     		_appendLine(source, 1, "highp   vec4 l1;");
     		_appendLine(source, 1, "lowp    vec4 l2;");
-    		_appendLine(source, 1, "lowp    vec3 fragDiffuse = vec3(0, 0, 0);");
+    		_appendLine(source, 1, perFragLight ?
+    			"lowp    vec3 fragDiffuse = vec3(0, 0, 0);" :
+    			"lowp    vec3 fragDiffuse = var_vertLight;");
     		_appendLine(source, 1, "mediump vec3 normal      = normalize(var_normal);");
     		_appendLine(source, 1, "mediump vec3 lightVec;");
     		_appendEmptyLine(source);
@@ -187,6 +192,14 @@ public final class Material {
     		_appendLine(source, 3, "max(dot(normalize(lightVec), normal), 0.0);");        // Intensity
     		_appendLine(source, 1, "}");
     		_appendEmptyLine(source);
+		}
+
+		if(diffuseNode != null) {
+			source.append('\t');
+			source.append("fragDiffuse *= ");
+			diffuseNode.toSourceString(source);
+			source.append(";\n");
+			_appendEmptyLine(source);
 		}
 		
 		source.append('\t');
@@ -370,6 +383,64 @@ public final class Material {
 		return program;
 	}
 	
+	private final void _setDirLightData(
+			final PooledLinkedList<Entity.Instance> lights) {
+		
+		int offset = 0;
+		
+		for(Entity.Instance i : lights) {
+			
+			final DirectionalLight light   = (DirectionalLight)i.getEntity();
+			final float[]          dotBias = light.dotBias.getActiveValue();
+			
+			// Apply the transformation to the light direction and copy it into
+			// the data array
+			light.direction.getActiveValue().getData(_lightData, offset);
+			i.transformation.applyToDirVector(_lightData, offset);
+			
+			// Copy the color to the data array
+			light.color.getActiveValue().getData(_lightData, offset + 4);
+			
+			// Split the bias data and copy it to the data array
+			_lightData[offset + 3] = dotBias[0];
+			_lightData[offset + 7] = dotBias[1];
+
+			offset += 8;
+		}
+		
+		glUniform4fv(_uniDirLights,     _lightData);
+		glUniform1i (_uniDirLightCount, lights.getSize());
+	}
+
+	private final void _setPointLightData(
+			final PooledLinkedList<Entity.Instance> lights) {
+		
+		int offset = 0;
+		
+		for(Entity.Instance i : lights) {
+			
+			final PointLight light       = (PointLight)i.getEntity();
+			final float[]    attenuation = light.attenuation.getActiveValue();
+			
+			// Apply the transformation to the light position and copy it into
+			// the data array
+			for(int j = 0; j < 3; j++) _lightData[offset + j] = 0;
+			i.transformation.applyToPoint(_lightData, offset, (byte)3);
+			
+			// Copy the color to the data array
+			light.color.getActiveValue().getData(_lightData, offset + 4);
+			
+			// Split the attenuation data and copy it to the data array
+			_lightData[offset + 3] = attenuation[0];
+			_lightData[offset + 7] = attenuation[1];
+
+			offset += 8;
+		}
+		
+		glUniform4fv(_uniPointLights,     _lightData);
+		glUniform1i (_uniPointLightCount, lights.getSize());
+	}
+	
 	public Material(
 			final AbstractEngine engine,
     		final String         absColor,
@@ -394,8 +465,10 @@ public final class Material {
 		
 		engine.addMaterial(this);
 		
-		this._updater = updater;
-		this.engine   = engine;
+		this._updater   = updater;
+		this._lightData = new float[
+			Math.max(engine.maxDirLightCount, engine.maxPointLightCount) * 8];
+		this.engine     = engine;
 		
 		final PooledQueue<Node> notTyped = new PooledQueue<>();
 		
@@ -475,7 +548,7 @@ public final class Material {
 		glUseProgram(0);
 	}
 
-	public static final BuiltInNode createNormalNode(final String name) {
+	public static final BuiltInNode builtInNormal(final String name) {
 		return new BuiltInNode(name, BuiltInValue.NORMAL);
 	}
 	
@@ -509,12 +582,10 @@ public final class Material {
 	}
 	
 	public final void use(
-			final Matrix4D          matModelView,
-			final Matrix4D          matProjection,
-			final Entity.Instance[] dirLights,
-			final int               dirLightCount,
-			final Entity.Instance[] pointLights,
-			final int               pointLightCount) {
+			final Matrix4D                          matModelView,
+			final Matrix4D                          matProjection,
+			final PooledLinkedList<Entity.Instance> dirLights,
+			final PooledLinkedList<Entity.Instance> pointLights) {
 		
 		glUseProgram(_shaderProgram);
 		
@@ -528,15 +599,14 @@ public final class Material {
 		
 		if(_uniMatNormal != -1)
 			glUniformMatrix3fv(
-				_uniMatNormal, false, matProjection.getNmData(_temp9));
+				_uniMatNormal, false, matModelView.getNmData(_temp9));
 		
-		// TODO: Lichter
+		_setDirLightData  (dirLights);
+		_setPointLightData(pointLights);
 		
 		for(ParameterNode i : _parameters) i.applyToShaderProgram();
 		
 		int curSlot = 0;
 		for(TextureNode i : _textures) i.useTexture(curSlot++);
-		
-		// TODO: Parameter
 	}
 }
