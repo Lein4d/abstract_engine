@@ -4,13 +4,15 @@ public final class Functions {
 	
 	private Functions() {}
 
-	public static final void assertNotNull(
-			final Object obj,
+	public static final <T> T assertNotNull(
+			final T      obj,
 			final String msg) {
 		
 		if(obj == null)
 			throw new NullPointerException(
 				msg != null ? msg : "Object is null");
+		
+		return obj;
 	}
 	
 	public static final int[][] cloneArray2D(

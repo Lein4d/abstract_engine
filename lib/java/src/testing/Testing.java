@@ -11,6 +11,9 @@ import ae.core.Texture;
 import ae.entity.DirectionalLight;
 import ae.entity.Model;
 import ae.entity.PointLight;
+import ae.material.Material;
+import ae.material.SwizzleNode;
+import ae.material.TextureNode;
 import ae.math.Vector4D;
 import ae.mesh.Meshes;
 import ae.util.OrganizedObject;
@@ -149,10 +152,16 @@ public final class Testing {
 			"Testing complete: " + successCount + " of " + testCount +
 			" tests successful!");
 		
-		final AbstractEngine     engine         = new AbstractEngine("Engine Test");
+		final AbstractEngine     engine = new AbstractEngine("Engine Test");
 		final SceneGraph sceneGraph     = new SceneGraph();
 		final Texture    checkerTexture =
 			Texture.createCheckerTexture(Vector4D.WHITE, Vector4D.GREY);
+		
+		new Material(
+			"CheckerRGB", null, null, null, null,
+			Material.createTexCoordNode("TexCoord"),
+			new TextureNode("Checker", "TexCoord"),
+			new SwizzleNode("CheckerRGB", "Checker", "rgb"));
 		
 		final Model quad = new Model(sceneGraph).
 			setMesh(Meshes.createQuad(8, true).createMesh()).
