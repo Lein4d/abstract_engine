@@ -64,17 +64,26 @@ public final class PooledHashMap<K, V>
 	private float                                _maxLoadFactor = 0.5f;
 	private int                                  _resizeFactor  = 2;
 	
+	private final boolean _areKeysEqual(
+			final K key1,
+			final K key2) {
+		
+		return key1 == null || key2 == null ? key1 == key2 : key1.equals(key2);
+	}
+	
 	private final KeyValuePair<K, V> _getKeyValuePair(final K key) {
 		
 		LinkedListNode<KeyValuePair<K, V>> node = _buckets[_getBufferPos(key)];
 		
-		while(node != null && !node.content._key.equals(key)) node = node.next;
+		while(node != null && !_areKeysEqual(node.content._key, key))
+			node = node.next;
 		
 		return node != null ? node.content : null;
 	}
 	
 	private final int _getBufferPos(final K key) {
-		return (key.hashCode() & 0x7FFFFFFF) % _buckets.length;
+		return
+			key != null ? (key.hashCode() & 0x7FFFFFFF) % _buckets.length : 0;
 	}
 	
 	private final float _getLoadFactor(final float kvpCount) {
@@ -244,5 +253,16 @@ public final class PooledHashMap<K, V>
 		kvp._value = value;
 		
 		return !replace;
+	}
+	
+	public final boolean tryGetValue(
+			final K   key,
+			final V[] value) {
+		
+		final KeyValuePair<K, V> kvp = _getKeyValuePair(key);
+		
+		value[0] = kvp != null ? kvp._value : null;
+		
+		return kvp != null;
 	}
 }
