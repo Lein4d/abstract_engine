@@ -10,6 +10,7 @@ import org.lwjgl.opengl.GL;
 
 import ae.collections.PooledLinkedList;
 import ae.entity.Entity;
+import ae.material.Material;
 import ae.math.Matrix4D;
 import ae.math.Vector3D;
 import ae.math.Vector4D;
@@ -40,9 +41,11 @@ public final class AbstractEngine {
 	private final int           _colorShader;
 	private final int           _lightShader;
 	
-	private final Entity.Instance[] _dirLights =
+	private final PooledLinkedList<Material> _materials   =
+		new PooledLinkedList<>();
+	private final Entity.Instance[]          _dirLights   =
 		new Entity.Instance[_sm.maxDirLightCount];
-	private final Entity.Instance[] _pointLights =
+	private final Entity.Instance[]          _pointLights =
 		new Entity.Instance[_sm.maxPointLightCount];
 	
 	private State   _state        = State.CREATED;
@@ -248,6 +251,15 @@ public final class AbstractEngine {
 			"u_pointLights", "u_pointLightCount");
 	}
 
+	public final void addMaterial(final Material material) {
+		
+		if(material.engine != null)
+			throw new UnsupportedOperationException(
+				"Material is added to the engine automatically");
+		
+		_materials.insertAtEnd(material);
+	}
+	
 	public final int getFramebufferHeight() {
 		return _fbHeight;
 	}
@@ -365,6 +377,8 @@ public final class AbstractEngine {
 			_absTime = absTimeNew;
 			
 			if(_cbTimeChange != null) _cbTimeChange.update(_time, delta);
+			
+			for(Material i : _materials) i.update(_time, delta);
 			
 			background.copyStaticValues();
 			glClearColor(background.x, background.y, background.z, 1);

@@ -2,6 +2,8 @@ package ae.entity;
 
 import ae.core.SceneGraph;
 import ae.core.Texture;
+import ae.material.Material;
+import ae.math.Matrix4D;
 import ae.math.Vector4D;
 import ae.mesh.Mesh;
 
@@ -14,6 +16,8 @@ public final class Model extends Entity<Model> {
 	public final ConstAttribute<Vector4D> color   =
 		new ConstAttribute<>(Vector4D.WHITE.cloneStatic());
 	
+	public Material material;
+	
 	public Model(final SceneGraph sceneGraph) {
 		this(sceneGraph, null);
 	}
@@ -25,25 +29,25 @@ public final class Model extends Entity<Model> {
 		super(sceneGraph, Type.MODEL, name);
 	}
 	
-	public final void draw() {
+	public final void draw(final Matrix4D curTransformation) {
 		
 		final Mesh    activeMesh    = mesh.getActiveValue();
 		final Texture activeTexture = texture.getActiveValue();
 		
 		if(activeMesh == null) return;
 		
-		if(activeMesh.textured && activeTexture != null) {
-			activeTexture.use();
-		} else {
-			sceneGraph.getEngine().defaultTexture.use();
-		}
+		//if(activeMesh.textured && activeTexture != null) {
+		//	activeTexture.use();
+		//} else {
+		//	sceneGraph.getEngine().defaultTexture.use();
+		//}
 		
 		if(activeMesh.cullFacing) {
 			glEnable(GL_CULL_FACE);
 		} else {
 			glDisable(GL_CULL_FACE);
 		}
-		
+		material.use(curTransformation, sceneGraph.getEngine().projection, null, 0, null, 0);
 		activeMesh.draw();
 	}
 	

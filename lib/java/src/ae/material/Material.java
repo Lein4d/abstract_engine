@@ -3,8 +3,15 @@ package ae.material;
 import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;
 import ae.collections.PooledQueue;
+import ae.core.AbstractEngine;
 import ae.core.Texture;
+import ae.entity.Entity;
+import ae.math.Matrix4D;
 import ae.util.Functions;
+
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL30.*;
 
 public final class Material {
 	
@@ -22,6 +29,10 @@ public final class Material {
 			_glslName  = glslName;
 			_dimension = dimension;
 		}
+	}
+
+	public interface Updater {
+		void update(Material material, double time, double delta);
 	}
 	
 	public static final class BuiltInNode extends Node {
@@ -48,12 +59,31 @@ public final class Material {
 		}
 	}
 	
-	private final PooledHashMap<String, Node>   _nodes = new PooledHashMap<>();
-	private final PooledLinkedList<TextureNode> _textures =
+	private final PooledHashMap<String, Node> _nodes = new PooledHashMap<>();
+	
+	private final PooledLinkedList<ParameterNode> _parameters =
+		new PooledLinkedList<>();
+	private final PooledLinkedList<TextureNode>   _textures   =
 		new PooledLinkedList<>();
 
+	private final int _shaderProgram;
+	private final int _uniMatModelView;
+	private final int _uniMatProjection;
+	private final int _uniMatNormal;
+	private final int _uniDirLights;
+	private final int _uniDirLightCount;
+	private final int _uniPointLights;
+	private final int _uniPointLightCount;
+	
+	private final Updater _updater;
+	
+	private final float[] _temp9  = new float[9];
+	private final float[] _temp16 = new float[16];
+	
 	private boolean _builtInNormal   = false;
 	private boolean _builtInTexCoord = false;
+	
+	public final AbstractEngine engine;
 	
 	private final StringBuilder _appendEmptyLine(final StringBuilder dst) {
 		return _appendLine(dst, 0, "");
@@ -69,17 +99,15 @@ public final class Material {
 	}
 	
 	private final String _assembleFragmentShaderSource(
-    		final Node absColorNode,
-    		final Node diffuseNode,
-    		final Node fragNormalNode,
-    		final Node specularNode,
-    		final Node emissiveNode) {
+    		final Node    absColorNode,
+    		final Node    diffuseNode,
+    		final Node    fragNormalNode,
+    		final Node    specularNode,
+    		final Node    emissiveNode,
+    		final boolean light,
+			final boolean perFragLight) {
 		
-		final StringBuilder source       = new StringBuilder();
-		final boolean       light        =
-			diffuseNode  != null || specularNode   != null;
-		final boolean       perFragLight =
-			specularNode != null || fragNormalNode != null;
+		final StringBuilder source = new StringBuilder();
 
 		_appendLine(source, 0, "#version 330");
 		_appendEmptyLine(source);
@@ -96,6 +124,11 @@ public final class Material {
 
 		for(TextureNode i : _textures)
 			_appendLine(source, 0, "uniform sampler2D " + i.uniName + ";");
+		_appendEmptyLine(source);
+		
+		for(ParameterNode i : _parameters)
+			_appendLine(
+				source, 0, "uniform " + i.uniType + " " + i.uniName + ";");
 		_appendEmptyLine(source);
 		
 		if(light)
@@ -174,7 +207,6 @@ public final class Material {
 	
 	private final String _assembleVertexShaderSource(
 			final boolean absColor,
-			final boolean texture,
 			final boolean light,
 			final boolean perFragLight) {
 		
@@ -264,38 +296,89 @@ public final class Material {
 		
 		return node;
 	}
+
+	private final boolean _createShader(
+			final int    shaderType,
+			final int    program,
+			final String shaderSource) {
+		System.out.println(shaderSource);
+		final int shader = glCreateShader(shaderType);
+		
+		glShaderSource (shader, shaderSource);
+		glCompileShader(shader);
+		
+		engine.out.println(glGetShaderInfoLog(shader));
+		
+		// Abort if the shader has not been compiled
+		if(glGetShaderi(shader, GL_COMPILE_STATUS) == GL_FALSE) return false;
+		
+		glAttachShader(program, shader);
+		glDeleteShader(shader);
+		
+		return true;
+	}
 	
-	private final void _createShaderProgram(
+	private final int _createShaderProgram(
     		final Node absColorNode,
     		final Node diffuseNode,
     		final Node fragNormalNode,
     		final Node specularNode,
     		final Node emissiveNode) {
-		
+
+		final int program = glCreateProgram();
+
+		// Derive some additional properties of the material
 		final boolean hasLight        =
 			diffuseNode  != null || specularNode   != null;
 		final boolean hasPerFragLight =
 			specularNode != null || fragNormalNode != null;
+
+		// Create the vertex shader
+		final boolean vsSuccess = _createShader(
+			GL_VERTEX_SHADER,
+			program,
+			_assembleVertexShaderSource(
+				absColorNode != null, hasLight, hasPerFragLight));
 		
-		final String vertexShaderSource = _assembleVertexShaderSource(
-			absColorNode != null,
-			!_textures.isEmpty(),
-			hasLight, hasPerFragLight);
+		// Create the fragment shader
+		final boolean fsSuccess = _createShader(
+			GL_FRAGMENT_SHADER,
+			program,
+			_assembleFragmentShaderSource(
+				absColorNode,
+				diffuseNode, fragNormalNode, specularNode, emissiveNode,
+				hasLight, hasPerFragLight));
 		
-		final String fragmentShaderSource = _assembleFragmentShaderSource(
-			absColorNode, diffuseNode, fragNormalNode, specularNode, emissiveNode);
+		// If one of shader components failed, no program will be used
+		if(!vsSuccess || !fsSuccess) return 0;
+
+		// Bind the vertex attribute locations
+		                     glBindAttribLocation(program, 0, "in_position");
+		if(hasLight)         glBindAttribLocation(program, 1, "in_normal");
+		if(_builtInTexCoord) glBindAttribLocation(program, 2, "in_texCoord");
 		
-		System.out.println(vertexShaderSource);
-		System.out.println(fragmentShaderSource);
+		// Bind fragment data locations
+		glBindFragDataLocation(program, 0, "out_color");
+
+		// Link the whole program
+		glLinkProgram(program);
+		engine.out.println(glGetProgramInfoLog(program));
+		
+		// If the linking has failed, no program will be used
+		if(glGetProgrami(program, GL_LINK_STATUS) == GL_FALSE) return 0;
+		
+		return program;
 	}
 	
 	public Material(
-    		final String   absColor,
-    		final String   diffuse,
-    		final String   fragNormal,
-    		final String   specular,
-    		final String   emissive,
-    		final Node ... nodes) {
+			final AbstractEngine engine,
+    		final String         absColor,
+    		final String         diffuse,
+    		final String         fragNormal,
+    		final String         specular,
+    		final String         emissive,
+    		final Updater        updater,
+    		final Node ...       nodes) {
 
 		if(fragNormal != null)
 			throw new UnsupportedOperationException(
@@ -308,6 +391,11 @@ public final class Material {
 		if(emissive != null)
 			throw new UnsupportedOperationException(
 				"Emissive component not supported yet");
+		
+		engine.addMaterial(this);
+		
+		this._updater = updater;
+		this.engine   = engine;
 		
 		final PooledQueue<Node> notTyped = new PooledQueue<>();
 		
@@ -335,8 +423,10 @@ public final class Material {
 		// Look for special nodes, e.g. textures and parameters
 		for(Node i : nodes) {
 			
-			if(i instanceof ParameterNode) ;
-			if(i instanceof TextureNode) _textures.insertAtEnd((TextureNode)i);
+			if(i instanceof ParameterNode)
+				_parameters.insertAtEnd((ParameterNode)i);
+			if(i instanceof TextureNode)
+				_textures  .insertAtEnd((TextureNode)i);
 			
 			if(i instanceof BuiltInNode) {
 				switch(((BuiltInNode)i)._value) {
@@ -346,24 +436,62 @@ public final class Material {
 			}
 		}
 		
-		_createShaderProgram(
+		_shaderProgram = _createShaderProgram(
 			_checkComponentNode(absColor,   3),
 			_checkComponentNode(diffuse,    3),
 			_checkComponentNode(fragNormal, 3),
 			_checkComponentNode(specular,   3),
 			_checkComponentNode(emissive,   3));
+		
+		glUseProgram(_shaderProgram);
+		
+		// Get the locations of the built-in uniform variables
+		_uniMatModelView    =
+			glGetUniformLocation(_shaderProgram, "u_matModelView");
+		_uniMatProjection   =
+			glGetUniformLocation(_shaderProgram, "u_matProjection");
+		_uniMatNormal       =
+			glGetUniformLocation(_shaderProgram, "u_matNormal");
+		_uniDirLights       =
+			glGetUniformLocation(_shaderProgram, "u_dirLights");
+		_uniDirLightCount   =
+			glGetUniformLocation(_shaderProgram, "u_dirLightCount");
+		_uniPointLights     =
+			glGetUniformLocation(_shaderProgram, "u_pointLights");
+		_uniPointLightCount =
+			glGetUniformLocation(_shaderProgram, "u_pointLightCount");
+		
+		// Get the locations of the parameter uniform variables
+		for(ParameterNode i : _parameters)
+			i.setUniformLocation(
+				glGetUniformLocation(_shaderProgram, i.uniName));
+		
+		// Get the locations of the texture uniform variables
+		for(TextureNode i : _textures)
+			i.setUniformLocation(
+				glGetUniformLocation(_shaderProgram, i.uniName));
+		
+		// Unbind the shader program to prevent further changes
+		glUseProgram(0);
 	}
 
 	public static final BuiltInNode createNormalNode(final String name) {
 		return new BuiltInNode(name, BuiltInValue.NORMAL);
 	}
 	
-	public static final BuiltInNode createTexCoordNode(final String name) {
+	public static final BuiltInNode builtInTexCoord(final String name) {
 		return new BuiltInNode(name, BuiltInValue.TEXCOORD);
 	}
 	
 	public final Node getNode(final String name) {
 		return _nodes.getValue(name);
+	}
+	
+	public final void setParameter(
+			final String    nodeName,
+			final float ... value) {
+		
+		((ParameterNode)getNode(nodeName)).setValue(value);
 	}
 	
 	public final void setTexture(
@@ -373,10 +501,42 @@ public final class Material {
 		((TextureNode)getNode(nodeName)).setTexture(texture);
 	}
 	
-	public final void use() {
+	public final void update(
+			final double time,
+			final double delta) {
+		
+		if(_updater != null) _updater.update(this, time, delta);
+	}
+	
+	public final void use(
+			final Matrix4D          matModelView,
+			final Matrix4D          matProjection,
+			final Entity.Instance[] dirLights,
+			final int               dirLightCount,
+			final Entity.Instance[] pointLights,
+			final int               pointLightCount) {
+		
+		glUseProgram(_shaderProgram);
+		
+		if(_uniMatModelView != -1)
+			glUniformMatrix4fv(
+				_uniMatModelView, false, matModelView.getData(_temp16));
+		
+		if(_uniMatProjection != -1)
+			glUniformMatrix4fv(
+				_uniMatProjection, false, matProjection.getData(_temp16));
+		
+		if(_uniMatNormal != -1)
+			glUniformMatrix3fv(
+				_uniMatNormal, false, matProjection.getNmData(_temp9));
+		
+		// TODO: Lichter
+		
+		for(ParameterNode i : _parameters) i.applyToShaderProgram();
 		
 		int curSlot = 0;
-		
 		for(TextureNode i : _textures) i.useTexture(curSlot++);
+		
+		// TODO: Parameter
 	}
 }

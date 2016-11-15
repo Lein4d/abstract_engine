@@ -4,10 +4,12 @@ import ae.core.Texture;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
+import static org.lwjgl.opengl.GL20.*;
 
 public final class TextureNode extends Node {
 	
-	private Texture _texture = null;
+	private Texture _texture     = null;
+	private int     _uniLocation = -1;
 	
 	public final String uniName;
 	
@@ -35,6 +37,11 @@ public final class TextureNode extends Node {
 		return this;
 	}
 	
+	public final TextureNode setUniformLocation(final int location) {
+		if(_uniLocation == -1 && location != -1) _uniLocation = location;
+		return this;
+	}
+	
 	@Override
 	public final void toSourceString(final StringBuilder dst) {
 		dst.append("texture(").append(uniName).append(", ");
@@ -51,5 +58,7 @@ public final class TextureNode extends Node {
 		} else {
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
+		
+		glUniform1i(_uniLocation, slot);
 	}
 }

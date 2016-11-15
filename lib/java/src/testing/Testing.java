@@ -8,10 +8,14 @@ import ae.core.AbstractEngine;
 import ae.core.InputListener;
 import ae.core.SceneGraph;
 import ae.core.Texture;
+import ae.core.TextureBuilder;
 import ae.entity.DirectionalLight;
 import ae.entity.Model;
 import ae.entity.PointLight;
+import ae.material.AddNode;
+import ae.material.FunctionNode;
 import ae.material.Material;
+import ae.material.ParameterNode;
 import ae.material.SwizzleNode;
 import ae.material.TextureNode;
 import ae.math.Vector4D;
@@ -157,12 +161,41 @@ public final class Testing {
 		final Texture    checkerTexture =
 			Texture.createCheckerTexture(Vector4D.WHITE, Vector4D.GREY);
 		
-		new Material(
-			"CheckerRGB", null, null, null, null,
-			Material.createTexCoordNode("TexCoord"),
-			new TextureNode("Checker", "TexCoord"),
-			new SwizzleNode("CheckerRGB", "Checker", "rgb"));
+		final Texture seamless1 = new TextureBuilder().
+			setData("data/seamless1.jpg").
+			setFiltering(true, true, true, true, 16).
+			createTexture();
+		final Texture seamless2 = new TextureBuilder().
+			setData("data/seamless2.jpg").
+			setFiltering(true, true, true, true, 16).
+			createTexture();
 		
+		final Material testMaterial = new Material(
+			engine,
+			"TMix", null, null, null, null,
+			(material, time, delta) -> {
+				
+				material.setParameter(
+					"MixFactor", (float)Math.sin(time / 1000) * 0.5f + 0.5f);
+				
+				material.setParameter(
+					"TOffset", (float)(time / 4000), (float)(time / 2000));
+			},
+			
+			Material.builtInTexCoord("TexCoord"),
+			
+			new ParameterNode("MixFactor", 1),
+			new ParameterNode("TOffset", 2),
+			
+			new TextureNode("T1", "TexCoordMod"),
+			new TextureNode("T2", "TexCoord"),
+			
+			new AddNode("TexCoordMod", "TexCoord", "TOffset"),
+			new SwizzleNode("T1RGB", "T1", "rgb"),
+			new SwizzleNode("T2RGB", "T2", "rgb"),
+			FunctionNode.mix("TMix", "T1RGB", "T2RGB", "MixFactor"));
+		
+		// new ParameterNode("MixFactor", 1.0),
 		final Model quad = new Model(sceneGraph).
 			setMesh(Meshes.createQuad(8, true).createMesh()).
 			setTexture(checkerTexture).
@@ -226,6 +259,12 @@ public final class Testing {
 					translate(2, 1, 0);
 			}).
 			setRange(4).makeLinear();
+		
+		quad.material = testMaterial;
+		cube.material = testMaterial;
+		torus.material = testMaterial;
+		testMaterial.setTexture("T1", seamless1);
+		testMaterial.setTexture("T2", seamless2);
 		
 		cube.color.getValue().setData(1, 1, 0, 1);
 		

@@ -29,7 +29,7 @@ public final class AddNode extends Node {
 		dst.append('(');
 		_getInputNode(0).toSourceString(dst);
 		dst.append(" + ");
-		_getInputNode(0).toSourceString(dst);
+		_getInputNode(1).toSourceString(dst);
 		dst.append(')');
 	}
 }

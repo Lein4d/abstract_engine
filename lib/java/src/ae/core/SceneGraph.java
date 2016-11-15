@@ -127,9 +127,9 @@ public class SceneGraph {
 			
 			final Model model = (Model)i.getEntity();
 			
-			_engine.useLightShader(
-				i.transformation, model.color.getActiveValue());
-			model.draw();
+			//_engine.useLightShader(
+			//	i.transformation, model.color.getActiveValue());
+			model.draw(i.transformation);
 		}
 	}
 	

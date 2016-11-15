@@ -2,14 +2,14 @@ package ae.material;
 
 public final class MergeNode extends Node {
 	
-    private final int componentCount;
+    private final int _componentCount;
 	
 	public MergeNode(
 			final String     name,
 			final String ... components) {
 		
 		super(name, components);
-		componentCount = components.length;
+		_componentCount = components.length;
 	}
 	
 	@Override
@@ -17,7 +17,7 @@ public final class MergeNode extends Node {
 		
 		int absComponentCount = 0;
 		
-		for(int i = 0; i < componentCount; i++)
+		for(int i = 0; i < _componentCount; i++)
 			absComponentCount += _getInputDimension(i);
 		
 		if(absComponentCount > 4)
