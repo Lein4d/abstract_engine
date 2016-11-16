@@ -123,7 +123,9 @@ public class SceneGraph {
 			
 			final Model model = (Model)i.getEntity();
 			
-			model.material.use(
+			if(!model.isComplete()) continue;
+			
+			model.material.getActiveValue().use(
 				i.transformation, getEngine().projection,
 				_dirLights, _pointLights);
 			model.draw(i.transformation);

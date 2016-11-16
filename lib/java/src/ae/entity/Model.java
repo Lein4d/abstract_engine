@@ -1,22 +1,16 @@
 package ae.entity;
 
 import ae.core.SceneGraph;
-import ae.core.Texture;
 import ae.material.Material;
 import ae.math.Matrix4D;
-import ae.math.Vector4D;
 import ae.mesh.Mesh;
 
 import static org.lwjgl.opengl.GL11.*;
 
 public final class Model extends Entity<Model> {
 	
-	public final Attribute<Mesh>          mesh    = new Attribute<>();
-	public final Attribute<Texture>       texture = new Attribute<>();
-	public final ConstAttribute<Vector4D> color   =
-		new ConstAttribute<>(Vector4D.WHITE.cloneStatic());
-	
-	public Material material;
+	public final Attribute<Mesh>     mesh     = new Attribute<>();
+	public final Attribute<Material> material = new Attribute<>();
 	
 	public Model(final SceneGraph sceneGraph) {
 		this(sceneGraph, null);
@@ -31,16 +25,9 @@ public final class Model extends Entity<Model> {
 	
 	public final void draw(final Matrix4D curTransformation) {
 		
-		final Mesh    activeMesh    = mesh.getActiveValue();
-		final Texture activeTexture = texture.getActiveValue();
+		final Mesh activeMesh = mesh.getActiveValue();
 		
 		if(activeMesh == null) return;
-		
-		//if(activeMesh.textured && activeTexture != null) {
-		//	activeTexture.use();
-		//} else {
-		//	sceneGraph.getEngine().defaultTexture.use();
-		//}
 		
 		if(activeMesh.cullFacing) {
 			glEnable(GL_CULL_FACE);
@@ -51,13 +38,18 @@ public final class Model extends Entity<Model> {
 		activeMesh.draw();
 	}
 	
+	public final boolean isComplete() {
+		return
+			mesh.getActiveValue() != null && material.getActiveValue() != null;
+	}
+	
 	public final Model setMesh(final Mesh mesh) {
 		this.mesh.setInternalValue(mesh);
 		return this;
 	}
 	
-	public final Model setTexture(final Texture texture) {
-		this.texture.setInternalValue(texture);
+	public final Model setMaterial(final Material material) {
+		this.material.setInternalValue(material);
 		return this;
 	}
 }

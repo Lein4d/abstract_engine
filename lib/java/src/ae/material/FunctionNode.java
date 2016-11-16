@@ -102,6 +102,50 @@ public final class FunctionNode extends Node {
 		_type = type;
 	}
 
+	public static final FunctionNode abs(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.ABS, x);
+	}
+
+	public static final FunctionNode acos(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.ACOS, x);
+	}
+
+	public static final FunctionNode asin(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.ASIN, x);
+	}
+
+	public static final FunctionNode atan(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.ATAN, x);
+	}
+
+	public static final FunctionNode ceil(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.CEIL, x);
+	}
+
+	public static final FunctionNode clamp(
+			final String name,
+			final String x,
+			final String min,
+			final String max) {
+		
+		return new FunctionNode(name, FunctionType.CLAMP, x, min, max);
+	}
+	
 	@Override
 	public final void computeTypes() {
 		
@@ -115,6 +159,125 @@ public final class FunctionNode extends Node {
 		_typingSuccessful();
 	}
 
+	public static final FunctionNode cos(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.COS, x);
+	}
+
+	public static final FunctionNode cross(
+			final String name,
+			final String v1,
+			final String v2) {
+		
+		return new FunctionNode(name, FunctionType.CROSS, v1, v2);
+	}
+
+	public static final FunctionNode degrees(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.DISTANCE, x);
+	}
+
+	public static final FunctionNode distance(
+			final String name,
+			final String p1,
+			final String p2) {
+		
+		return new FunctionNode(name, FunctionType.DISTANCE, p1, p2);
+	}
+
+	public static final FunctionNode dot(
+			final String name,
+			final String v1,
+			final String v2) {
+		
+		return new FunctionNode(name, FunctionType.DOT, v1, v2);
+	}
+
+	public static final FunctionNode exp(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.EXP, x);
+	}
+
+	public static final FunctionNode exp2(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.EXP2, x);
+	}
+
+	public static final FunctionNode faceforward(
+			final String name,
+			final String n,
+			final String i,
+			final String nRef) {
+		
+		return new FunctionNode(name, FunctionType.FACEFORWARD, n, i, nRef);
+	}
+	
+	public static final FunctionNode floor(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.FLOOR, x);
+	}
+
+	public static final FunctionNode fract(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.FRACT, x);
+	}
+
+	public static final FunctionNode inversesqrt(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.INVERSESQRT, x);
+	}
+
+	public static final FunctionNode length(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.LENGTH, x);
+	}
+
+	public static final FunctionNode log(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.LOG, x);
+	}
+
+	public static final FunctionNode log2(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.LOG2, x);
+	}
+
+	public static final FunctionNode max(
+			final String name,
+			final String x1,
+			final String x2) {
+		
+		return new FunctionNode(name, FunctionType.MAX, x1, x2);
+	}
+
+	public static final FunctionNode min(
+			final String name,
+			final String x1,
+			final String x2) {
+		
+		return new FunctionNode(name, FunctionType.ABS, x1, x2);
+	}
+	
 	public static final FunctionNode mix(
 			final String name,
 			final String op1,
@@ -122,6 +285,98 @@ public final class FunctionNode extends Node {
 			final String x) {
 		
 		return new FunctionNode(name, FunctionType.MIX, op1, op2, x);
+	}
+
+	public static final FunctionNode mod(
+			final String name,
+			final String x,
+			final String y) {
+		
+		return new FunctionNode(name, FunctionType.MOD, x, y);
+	}
+	
+	public static final FunctionNode normalize(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.NORMALIZE, x);
+	}
+
+	public static final FunctionNode pow(
+			final String name,
+			final String x,
+			final String y) {
+		
+		return new FunctionNode(name, FunctionType.POW, x, y);
+	}
+	
+	public static final FunctionNode radians(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.RADIANS, x);
+	}
+
+	public static final FunctionNode reflect(
+			final String name,
+			final String i,
+			final String n) {
+		
+		return new FunctionNode(name, FunctionType.REFLECT, i, n);
+	}
+
+	public static final FunctionNode refract(
+			final String name,
+			final String i,
+			final String n,
+			final String eta) {
+		
+		return new FunctionNode(name, FunctionType.REFRACT, i, n, eta);
+	}
+	
+	public static final FunctionNode sign(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.SIGN, x);
+	}
+	
+	public static final FunctionNode sin(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.SIN, x);
+	}
+
+	public static final FunctionNode smoothstep(
+			final String name,
+			final String edge1,
+			final String edge2,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.SMOOTHSTEP, edge1, edge2, x);
+	}
+	
+	public static final FunctionNode sqrt(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.SQRT, x);
+	}
+
+	public static final FunctionNode step(
+			final String name,
+			final String edge,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.STEP, edge, x);
+	}
+	
+	public static final FunctionNode tan(
+			final String name,
+			final String x) {
+		
+		return new FunctionNode(name, FunctionType.TAN, x);
 	}
 	
 	@Override

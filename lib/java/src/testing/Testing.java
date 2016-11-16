@@ -18,7 +18,6 @@ import ae.material.Material;
 import ae.material.ParameterNode;
 import ae.material.SwizzleNode;
 import ae.material.TextureNode;
-import ae.math.Vector4D;
 import ae.mesh.Meshes;
 import ae.util.OrganizedObject;
 
@@ -156,10 +155,8 @@ public final class Testing {
 			"Testing complete: " + successCount + " of " + testCount +
 			" tests successful!");
 		
-		final AbstractEngine     engine = new AbstractEngine("Engine Test", 8, 8);
-		final SceneGraph sceneGraph     = new SceneGraph();
-		final Texture    checkerTexture =
-			Texture.createCheckerTexture(Vector4D.WHITE, Vector4D.GREY);
+		final AbstractEngine engine     = new AbstractEngine("Engine Test", 8, 8);
+		final SceneGraph     sceneGraph = new SceneGraph();
 		
 		final Texture seamless1 = new TextureBuilder().
 			setData("data/seamless1.jpg").
@@ -197,7 +194,6 @@ public final class Testing {
 		
 		final Model quad = new Model(sceneGraph).
 			setMesh(Meshes.createQuad(8, true).createMesh()).
-			setTexture(checkerTexture).
 			setUpdater((model, time, delta) -> {
 				model.transformation.getValue().
 					toIdentity().
@@ -208,7 +204,6 @@ public final class Testing {
 		
 		final Model cube = new Model(sceneGraph).
 			setMesh(Meshes.createCube(2, true).createMesh()).
-			setTexture(checkerTexture).
 			setUpdater((model, time, delta) -> {
 				model.transformation.getValue().
 					toIdentity().
@@ -219,7 +214,6 @@ public final class Testing {
 		final Model torus = new Model(sceneGraph).
 			setMesh(
 				Meshes.createTorus(64, 32, 1, 0.5f, 0.5f, false).createMesh()).
-			setTexture(checkerTexture).
 			setUpdater((model, time, delta) -> {
 				model.transformation.getValue().
 					toIdentity().
@@ -259,13 +253,11 @@ public final class Testing {
 			}).
 			setRange(4).makeLinear();
 		
-		quad.material = testMaterial;
-		cube.material = testMaterial;
-		torus.material = testMaterial;
+		quad .setMaterial(testMaterial);
+		cube .setMaterial(testMaterial);
+		torus.setMaterial(testMaterial);
 		testMaterial.setTexture("T1", seamless1);
 		testMaterial.setTexture("T2", seamless2);
-		
-		cube.color.getValue().setData(1, 1, 0, 1);
 		
 		ambLight.color.getValue().setData(0.1f, 0.1f, 0.1f);
 		ambLight.direction.getValue().setData(0, 1, 0);
