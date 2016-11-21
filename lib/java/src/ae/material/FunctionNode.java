@@ -155,8 +155,7 @@ public final class FunctionNode extends Node {
 		for(int i = 0; i < _type._argCount; i++)
 			signature[i + 1] = _getInputDimension(i);
 		
-		_addOutput(null, _type._resolveSignature(signature));
-		_typingSuccessful();
+		_outputDim = _type._resolveSignature(signature);
 	}
 
 	public static final FunctionNode cos(

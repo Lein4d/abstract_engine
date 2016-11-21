@@ -16,8 +16,7 @@ public final class Nodes {
 		
 		@Override
 		public final void computeTypes() {
-			_addOutput(null, _values.length);
-			_typingSuccessful();
+			_outputDim = _values.length;
 		}
 
 		@Override
@@ -56,8 +55,7 @@ public final class Nodes {
 			if(_absComponentCount > 4)
 				throw new UnsupportedOperationException();
 			
-			_addOutput(null, _absComponentCount);
-			_typingSuccessful();
+			_outputDim = _absComponentCount;
 		}
 		
 		@Override
@@ -98,8 +96,7 @@ public final class Nodes {
 				throw new UnsupportedOperationException(
 					"Normal map needs at least 3 dimensional input");
 			
-			_addOutput(null, 3);
-			_typingSuccessful();
+			_outputDim = 3;
 		}
 
 		@Override
@@ -125,8 +122,7 @@ public final class Nodes {
 
 		@Override
 		public final void computeTypes() {
-			_addOutput(null, _swizzleMask.length());
-			_typingSuccessful();
+			_outputDim = _swizzleMask.length();
 		}
 		
 		@Override

@@ -28,8 +28,7 @@ public final class TextureNode extends Node {
 			throw new UnsupportedOperationException(
 				"Input tex-coord must be of dimension 2");
 		
-		_addOutput(null, 4);
-		_typingSuccessful();
+		_outputDim = 4;
 	}
 	
 	public final TextureNode setTexture(final Texture texture) {

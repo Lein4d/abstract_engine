@@ -36,8 +36,7 @@ public final class ParameterNode extends Node {
 	
 	@Override
 	public final void computeTypes() {
-		_addOutput(null, dimension);
-		_typingSuccessful();
+		_outputDim = dimension;
 	}
 
 	public final ParameterNode setUniformLocation(final int location) {

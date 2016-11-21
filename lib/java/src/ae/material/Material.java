@@ -51,8 +51,7 @@ public final class Material {
 
 		@Override
 		public final void computeTypes() {
-			_addOutput(null, _value._dimension);
-			_typingSuccessful();
+			_outputDim = _value._dimension;
 		}
 
 		@Override
@@ -340,7 +339,7 @@ public final class Material {
 			getNode(compName),
 			"Component doesn't refer to a valid node ('" + compName + "')");
 		
-		if(node._getOutputDimension(null) != dimension)
+		if(node._outputDim != dimension)
 			throw new UnsupportedOperationException(
 				"Component has invalid dimension");
 		

@@ -32,8 +32,7 @@ public final class BinaryOperator extends Node {
 		if(dimOp2 != dimOp1 && dimOp2 != 1)
 			throw new UnsupportedOperationException();
 		
-		_addOutput(null, dimOp1);
-		_typingSuccessful();
+		_outputDim = dimOp1;
 	}
 
 	public static final BinaryOperator div(
