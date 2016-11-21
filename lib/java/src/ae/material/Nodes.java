@@ -37,10 +37,11 @@ public final class Nodes {
 	private static final class Merge extends Node {
 		
 	    private final int _componentCount;
+	    private       int _absComponentCount = 0;
 		
 		public Merge(
-				final String     name,
-				final String ... components) {
+				final String   name,
+				final String[] components) {
 			
 			super(name, components);
 			_componentCount = components.length;
@@ -49,22 +50,35 @@ public final class Nodes {
 		@Override
 		public final void computeTypes() {
 			
-			int absComponentCount = 0;
-			
 			for(int i = 0; i < _componentCount; i++)
-				absComponentCount += _getInputDimension(i);
+				_absComponentCount += _getInputDimension(i);
 			
-			if(absComponentCount > 4)
+			if(_absComponentCount > 4)
 				throw new UnsupportedOperationException();
 			
-			_addOutput(null, absComponentCount);
+			_addOutput(null, _absComponentCount);
 			_typingSuccessful();
 		}
 		
 		@Override
 		public final void toSourceString(final StringBuilder dst) {
 			
-			// TODO
+			if(_absComponentCount == 1) {
+				
+				_getInputNode(0).toSourceString(dst);
+				
+			} else {
+				
+				dst.append("vec").append(_absComponentCount).append('(');
+				
+				for(int i = 0; i < _componentCount - 1; i++) {
+					_getInputNode(i).toSourceString(dst);
+					dst.append(", ");
+				}
+				
+				_getInputNode(_componentCount - 1).toSourceString(dst);
+				dst.append(')');
+			}
 		}
 	}
 	
@@ -136,6 +150,13 @@ public final class Nodes {
     		final float ... values) {
 		
 		return new Constant(name, values);
+	}
+	
+	public static final Node merge(
+    		final String     name,
+    		final String ... components) {
+		
+		return new Merge(name, components);
 	}
 	
 	public static final Node normalMap(
