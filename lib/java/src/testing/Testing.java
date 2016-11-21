@@ -12,12 +12,11 @@ import ae.core.TextureBuilder;
 import ae.entity.DirectionalLight;
 import ae.entity.Model;
 import ae.entity.PointLight;
-import ae.material.AddNode;
-import ae.material.ConstantNode;
+import ae.material.Nodes;
+import ae.material.BinaryOperator;
 import ae.material.FunctionNode;
 import ae.material.Material;
 import ae.material.ParameterNode;
-import ae.material.SwizzleNode;
 import ae.material.TextureNode;
 import ae.math.Matrix4D;
 import ae.mesh.Meshes;
@@ -202,18 +201,18 @@ public final class Testing {
 			new TextureNode("T2", "TexCoord"),
 			new TextureNode("TBump", "TexCoord"),
 			
-			new AddNode("TexCoordMod", "TexCoord", "TOffset"),
-			new SwizzleNode("T1RGB", "T1", "rgb"),
-			new SwizzleNode("T2RGB", "T2", "rgb"),
+			BinaryOperator.add("TexCoordMod", "TexCoord", "TOffset"),
+			Nodes.colorTexture("T1RGB", "T1"),
+			Nodes.colorTexture("T2RGB", "T2"),
 			FunctionNode.mix("TMix", "T1RGB", "T2RGB", "MixFactor"),
 
 			new TextureNode("TD", "TexCoord"),
-			new SwizzleNode("TDRGB", "TD", "rgb"),
+			Nodes.swizzle("TDRGB", "TD", "rgb"),
 			new TextureNode("TN", "TexCoord"),
-			new SwizzleNode("TNXYZ", "TN", "xyz"),
-			new ConstantNode("White", 1, 1, 1),
+			Nodes.normalMap("TNXYZ", "TN"),
+			Nodes.constant("White", 1, 1, 1),
 			
-			new ConstantNode("Normal", 0.5f, 0.5f, 1));
+			Nodes.constant("Normal", 0.5f, 0.5f, 1));
 		
 		final Model quad = new Model(sceneGraph).
 			setMesh(Meshes.createQuad(8, true).createMesh()).

@@ -95,6 +95,7 @@ public final class Material {
 	public final boolean emissive;
 	public final boolean light;
 	public final boolean normalMapping;
+	public final boolean parallaxMapping = true;
 	public final boolean perFragLight;
 	
 	private final StringBuilder _appendEmptyLine(final StringBuilder dst) {
@@ -161,11 +162,19 @@ public final class Material {
 		_appendLine(source, 0, "void main(void) {");
 		_appendEmptyLine(source);
 		
+		if(parallaxMapping) {
+			
+		} else {
+			
+		}
+		
+		//_appendLine(source, 1, "vec3 eye = vec3(dot(normalize(var_uTangent), -var_pos), dot(normalize(var_vTangent), -var_pos), dot(normalize(var_normal), -var_pos));");
+		
 		if(normalMapping) {
 			source.append('\t');
 			source.append("mediump vec3 tsNormal = ");
 			fragNormalNode.toSourceString(source);
-			source.append(" * 2 - 1;\n");
+			source.append(";\n");
 			_appendLine(source, 1, "mediump vec3 normal   = normalize(mat3(normalize(var_uTangent), normalize(var_vTangent), normalize(var_normal)) * tsNormal);");
 			_appendEmptyLine(source);
 		} else if(light) {
