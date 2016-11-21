@@ -12,22 +12,43 @@ public class MeshBuilder {
 	private final CachedObject<Mesh> _lastValidMesh =
 		new CachedObject<Mesh>(null, (object) -> _createCachedMesh());
 	
-	// Metainformationen
+	// Meta information
 	private PrimitiveType _primitiveType    = PrimitiveType.TRIANGLE;
 	private boolean       _primitiveTypeSet = false;
 	private boolean       _autoNormals      = false;
 	private float         _precision        = 0.00001f;
 	
-	// Geometriedaten
+	// Geometry data
 	private int[][]   _indices   = null;
 	private float[][] _positions = null;
 	private float[][] _normals   = null;
+	private float[][] _uTangents = null;
+	private float[][] _vTangents = null;
 	private float[][] _texCoords = null;
-
+	
 	public boolean cullFacing = false;
 	
 	private final void _assertIndicesNotNull() {
 		Functions.assertNotNull(_indices, "No indices specified");
+	}
+	
+	private final float[][] _assertNewTangentArrayIsValid(
+			final float[][] oldTangents,
+			final float[][] newTangents) {
+		
+		if(newTangents != null && newTangents[0].length != 3)
+			throw new UnsupportedOperationException(
+				"A tangent must consist of 3 components");
+		
+		_assertPositionsNotNull();
+		
+		if(newTangents != null && newTangents.length != _positions.length)
+			throw new UnsupportedOperationException(
+				"Tangent and position array must have the same length");
+		
+		_resetCompiled(oldTangents, newTangents);
+		
+		return newTangents;
 	}
 	
 	private final void _assertPositionsNotNull() {
@@ -279,7 +300,7 @@ public class MeshBuilder {
 		
 		return new Mesh(
 			_indices != null ? _indices : _createDefaultIndices(),
-			_positions, _normals, _texCoords,
+			_positions, _normals, _uTangents, _vTangents, _texCoords,
 			_autoNormals, cullFacing);
 	}
 	
@@ -457,6 +478,16 @@ public class MeshBuilder {
 		_assertPositionsNotNull();
 		return _texCoords = new float[_positions.length][2];
 	}
+
+	public final float[][] createUTangentArray() {
+		_assertPositionsNotNull();
+		return _uTangents = new float[_positions.length][3];
+	}
+
+	public final float[][] createVTangentArray() {
+		_assertPositionsNotNull();
+		return _vTangents = new float[_positions.length][3];
+	}
 	
 	public final int[][] getIndices() {
 		return _indices;
@@ -472,6 +503,14 @@ public class MeshBuilder {
 	
 	public final float[][] getTexCoords() {
 		return _texCoords;
+	}
+
+	public final float[][] getUTangents() {
+		return _uTangents;
+	}
+
+	public final float[][] getVTangents() {
+		return _vTangents;
 	}
 	
 	public static final MeshBuilder merge(
@@ -531,7 +570,7 @@ public class MeshBuilder {
 		return this;
 	}
 	
-	public final MeshBuilder setNormalArray(final float[][] normals) {
+	public final MeshBuilder setNormals(final float[][] normals) {
 		
 		if(normals != null && normals[0].length != 3)
 			throw new UnsupportedOperationException(
@@ -551,7 +590,7 @@ public class MeshBuilder {
 		return this;
 	}
 	
-	public final MeshBuilder setPositionArray(final float[][] positions) {
+	public final MeshBuilder setPositions(final float[][] positions) {
 		
 		if(positions != null && positions[0].length != 3)
 			throw new UnsupportedOperationException(
@@ -575,7 +614,7 @@ public class MeshBuilder {
 		return this;
 	}
 	
-	public final MeshBuilder setTexCoordArray(final float[][] texCoords) {
+	public final MeshBuilder setTexCoords(final float[][] texCoords) {
 		
 		if(texCoords != null && texCoords[0].length != 2)
 			throw new UnsupportedOperationException(
@@ -591,6 +630,16 @@ public class MeshBuilder {
 
 		_texCoords = texCoords;
 		
+		return this;
+	}
+
+	public final MeshBuilder setUTangents(final float[][] uTangents) {
+		_uTangents = _assertNewTangentArrayIsValid(_uTangents, uTangents);
+		return this;
+	}
+
+	public final MeshBuilder setVTangents(final float[][] vTangents) {
+		_vTangents = _assertNewTangentArrayIsValid(_vTangents, vTangents);
 		return this;
 	}
 	

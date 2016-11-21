@@ -8,11 +8,24 @@ import ae.util.Functions;
 public final class Meshes {
 	
 	private static final float[][] _QUAD_POSITIONS = {
-		{0,0,0},{1,0,0},{1,0,1},{0,0,1}};
+		{0,0,0},{1,0,0},{1,0,1},{0,0,1},
+		{0,0,0},{0,0,1},{1,0,1},{1,0,0}};
 	
-	private static final float[][] _QUAD_TEXCOORDS = {{0,0},{0,1},{1,1},{1,0}};
+	private static final float[][] _QUAD_NORMALS = {
+		{ 0,-1, 0},{ 0,-1, 0},{ 0,-1, 0},{ 0,-1, 0},
+		{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0}};
+
+	private static final float[][] _QUAD_UTANGENTS = {
+		{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},
+		{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0}};
+
+	private static final float[][] _QUAD_VTANGENTS = {
+		{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},
+		{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1}};
 	
-	private static final int[][] _QUAD_INDICES = {{0,1,2,3},{3,2,1,0}};
+	private static final float[][] _QUAD_TEXCOORDS = {
+		{0,0},{1,0},{1,1},{0,1},
+		{0,0},{0,1},{1,1},{1,0}};
 	
 	private static final float[][] _CUBE_POSITIONS = {
 		{0,0,0},{0,1,0},{1,1,0},{1,0,0},  // front
@@ -22,12 +35,36 @@ public final class Meshes {
 		{0,0,0},{1,0,0},{1,0,1},{0,0,1},  // bottom
 		{0,1,0},{0,1,1},{1,1,1},{1,1,0}}; // top
 
+	private static final float[][] _CUBE_NORMALS = {
+		{ 0, 0,-1},{ 0, 0,-1},{ 0, 0,-1},{ 0, 0,-1},
+		{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},
+		{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},
+		{-1, 0, 0},{-1, 0, 0},{-1, 0, 0},{-1, 0, 0},
+		{ 0,-1, 0},{ 0,-1, 0},{ 0,-1, 0},{ 0,-1, 0},
+		{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0}};
+
+	private static final float[][] _CUBE_UTANGENTS = {
+		{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},
+		{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},
+		{-1, 0, 0},{-1, 0, 0},{-1, 0, 0},{-1, 0, 0},
+		{ 0, 0,-1},{ 0, 0,-1},{ 0, 0,-1},{ 0, 0,-1},
+		{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},
+		{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0}};
+
+	private static final float[][] _CUBE_VTANGENTS = {
+		{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},
+		{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},
+		{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},
+		{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},
+		{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},
+		{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1}};
+	
 	private static final float[][] _CUBE_TEXCOORDS = {
 		{0,0},{0,1},{1,1},{1,0},
 		{0,0},{0,1},{1,1},{1,0},
 		{0,0},{0,1},{1,1},{1,0},
 		{0,0},{0,1},{1,1},{1,0},
-		{0,0},{0,1},{1,1},{1,0},
+		{0,0},{1,0},{1,1},{0,1},
 		{0,0},{0,1},{1,1},{1,0}};
 
 	private Meshes() {}
@@ -183,11 +220,13 @@ public final class Meshes {
 		
 		final MeshBuilder mb = new MeshBuilder();
 		
-		mb.setPositionArray(Functions.cloneArray2D(_CUBE_POSITIONS));
-		mb.setTexCoordArray(Functions.cloneArray2D(_CUBE_TEXCOORDS));
+		mb.setPositions(Functions.cloneArray2D(_CUBE_POSITIONS));
+		mb.setNormals  (Functions.cloneArray2D(_CUBE_NORMALS));
+		mb.setUTangents(Functions.cloneArray2D(_CUBE_UTANGENTS));
+		mb.setVTangents(Functions.cloneArray2D(_CUBE_VTANGENTS));
+		mb.setTexCoords(Functions.cloneArray2D(_CUBE_TEXCOORDS));
 		
 		mb.setPrimitiveType(PrimitiveType.QUAD);
-		mb.computeNormals(true, true);
 		mb.cullFacing = true;
 		
 		return mb;
@@ -347,12 +386,13 @@ public final class Meshes {
 		
 		final MeshBuilder mb = new MeshBuilder();
 		
-		mb.setIndices      (Functions.cloneArray2D(_QUAD_INDICES));
-		mb.setPositionArray(Functions.cloneArray2D(_QUAD_POSITIONS));
-		mb.setTexCoordArray(Functions.cloneArray2D(_QUAD_TEXCOORDS));
+		mb.setPositions(Functions.cloneArray2D(_QUAD_POSITIONS));
+		mb.setNormals  (Functions.cloneArray2D(_QUAD_NORMALS));
+		mb.setUTangents(Functions.cloneArray2D(_QUAD_UTANGENTS));
+		mb.setVTangents(Functions.cloneArray2D(_QUAD_VTANGENTS));
+		mb.setTexCoords(Functions.cloneArray2D(_QUAD_TEXCOORDS));
 		
 		mb.setPrimitiveType(PrimitiveType.QUAD);
-		mb.computeNormals(true, true);
 		mb.cullFacing = true;
 		
 		return mb;
@@ -401,6 +441,8 @@ public final class Meshes {
 			subdivisionsHor * subdivisionsVer, PrimitiveType.QUAD);
 		final float[][] positions = mb.createPositionArray(
 			ringSizeHor * ringSizeVer);
+		final float[][] uTangents = flat ? null : mb.createUTangentArray();
+		final float[][] vTangents = flat ? null : mb.createVTangentArray();
 		final float[][] normals   = flat ? null : mb.createNormalArray();
 		final float[][] texCoords = mb.createTexCoordArray();
 		
@@ -434,16 +476,25 @@ public final class Meshes {
 				positions[vPos][2] =
 					(float)(Math.cos(angleHor) * (radius - Math.cos(angleVer)));
 				
-				// The normals are computed similary to the positions, except
-				// that the radius is assumed as 0 and thus removed from  the
+				// The normals are computed similar to the positions, except
+				// that the radius is assumed as 0 and thus removed from the
 				// formula
 				if(!flat) {
-    				normals[vPos][0] =
+    				
+					normals[vPos][0] =
     					(float)(Math.sin(angleHor) * -Math.cos(angleVer));
     				normals[vPos][1] =
     					(float) Math.sin(angleVer);
     				normals[vPos][2] =
     					(float)(Math.cos(angleHor) * -Math.cos(angleVer));
+    				
+    				uTangents[vPos][0] = (float) Math.cos(angleHor);
+    				uTangents[vPos][1] = 0;
+    				uTangents[vPos][2] = (float)-Math.sin(angleHor);
+    				
+    				vTangents[vPos][0] = (float)(Math.sin(angleHor) * Math.sin(angleVer));
+        			vTangents[vPos][1] = (float) Math.cos(angleVer);
+            		vTangents[vPos][2] = (float)(Math.cos(angleHor) * Math.sin(angleVer));
 				}
 				
 				texCoords[vPos][0] = (float)j / subdivisionsHor;

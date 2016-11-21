@@ -1,13 +1,18 @@
 package ae.mesh;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.opengl.GL33.*;
 
 import java.nio.ByteBuffer;
 
-import ae.core.AbstractEngine;
+import org.lwjgl.BufferUtils;
+
+import ae.math.Vector3D;
+import ae.util.Functions;
 
 public final class Mesh {
 	
@@ -38,13 +43,14 @@ public final class Mesh {
 		}
 	}
 	
-	private static final float[] DEFAULT_NORMAL   = {0, 0, 0};
-	private static final float[] DEFAULT_TEXCOORD = {0, 0};
-
+	private static final int _VERTEX_SIZE = 32;
+	
 	private final int _vbo;
 	private final int _ibo;
 	private final int _iboType;
 	private final int _vao;
+
+	private final Vector3D _tempV = Vector3D.createStatic(0, 0, 0);
 	
 	public final int           vertexCount;
 	public final int           indexCount;
@@ -56,7 +62,44 @@ public final class Mesh {
 	// If the bounding box vertices are transformed as well,
 	// the bounding box stays valid.
 	//public readonly Rect3D BoundingBox = new Rect3D();
-
+	
+	/*
+	private final float _compressTangent(
+			final float[] normal,
+			final float[] tangent) {
+		
+		_tempN  .setData(normal);
+		_tempAux.setData(normal);
+		_tempT  .setData(tangent);
+		
+		// Ensure all values of the new vector are positive
+		_tempAux.applyUnaryOp((x) -> Math.abs(x));
+		_tempAux.copyStaticValues();
+		
+		// Add 1 to the smaller components of 'x' and 'y'
+		// This should make the new vector different from the original normal
+		// vector
+		if(_tempAux.x < _tempAux.y) {
+			_tempAux.backend.setX(_tempAux.x + 1);
+		} else {
+			_tempAux.backend.setY(_tempAux.y + 1);
+		}
+		
+		// V1 and V2 span a plane perpendicular to the normal vector
+		Vector3D.cross(_tempN, _tempAux, _tempV1);
+		Vector3D.cross(_tempN, _tempV1,  _tempV2);
+		
+		// Create the matrix for the (V1|V2|N)-space
+		_tempV1V2N.setColumns(_tempV1, _tempV2, _tempN);
+		
+		// Transform the tangent into the (V1|V2|N)-space
+		_tempV1V2N.invert().apply(_tempT);
+		
+		// Project the tangent onto the V1-V2-plane by discarding the
+		// N-component and compute the angle relative to V1
+		return (float)Math.atan2(_tempT.backend.getY(), _tempT.backend.getX());
+	}
+	*/
 	private final int _initIbo(final int[][] indices) {
 
 		int iboType;
@@ -121,53 +164,82 @@ public final class Mesh {
 	private final void _initVbo(
 			final float[][] positions,
 			final float[][] normals,
+			final float[][] uTangents,
+			final float[][] vTangents,
 			final float[][] texCoords) {
 
-		final float[] vboData = new float[8 * vertexCount];
+		final ByteBuffer vboData = BufferUtils.createByteBuffer(vertexCount * 32);
 		
-		// Die Daten "interleaved" in den Puffer kopieren
+		// Pack the data interleaved into the VBO buffer
 		for(int i = 0; i < vertexCount; i++) {
 			
-			System.arraycopy(positions[i], 0, vboData, i * 8, 3);
+			// positions
+			for(int j = 0; j < 3; j++) vboData.putFloat(positions[i][j]);
 			
-			System.arraycopy(
-				normals   != null ? normals[i]   : DEFAULT_NORMAL,   0,
-				vboData, i * 8 + 3, 3);
+			// normals and tangents
+			vboData.putInt(
+				normals   != null ? _packDirVector(normals[i])   : 0);
+			vboData.putInt(
+				uTangents != null ? _packDirVector(uTangents[i]) : 0);
+			vboData.putInt(
+				vTangents != null ? _packDirVector(vTangents[i]) : 0);
 			
-			System.arraycopy(
-				texCoords != null ? texCoords[i] : DEFAULT_TEXCOORD, 0,
-				vboData, i * 8 + 6, 2);
+			// tex-coords
+			for(int j = 0; j < 2; j++)
+				vboData.putFloat(texCoords != null ? texCoords[i][j] : 0);
+			
 		}
+		vboData.rewind();
 		
-		// Das VBO initialisieren
+		// Initialize the VBO
 		glBindBuffer(GL_ARRAY_BUFFER, _vbo);
 		glBufferData(GL_ARRAY_BUFFER, vboData, GL_STATIC_DRAW);
 	}
 
+	private final int _packDirVector(final float[] v) {
+		
+		_tempV.setData(v).normalize();
+		
+		return
+			Functions.packNormalizedFloatInInt(_tempV.backend.getZ(), 10)       |
+			Functions.packNormalizedFloatInInt(_tempV.backend.getY(), 10) << 10 |
+			Functions.packNormalizedFloatInInt(_tempV.backend.getX(), 10) << 20;
+	}
+	
 	private final void _setVertexAttributes() {
 		
-		final int vertexSize = (3 + 3 + 2) * AbstractEngine.SIZE_FLOAT;
-		
-		// Positions
+		// positions
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(
-			0, 3, GL_FLOAT, false, vertexSize, 0);
+			0, 3, GL_FLOAT, false, _VERTEX_SIZE, 0);
 		
-		// Normals
+		// normals
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(
-			1, 3, GL_FLOAT, false, vertexSize, 3 * AbstractEngine.SIZE_FLOAT);
+			1, GL_BGRA, GL_INT_2_10_10_10_REV, true, _VERTEX_SIZE, 12);
 
-		// Tex-coords
+		// u-tangents
 		glEnableVertexAttribArray(2);
 		glVertexAttribPointer(
-			2, 2, GL_FLOAT, false, vertexSize, 6 * AbstractEngine.SIZE_FLOAT);
+			2, GL_BGRA, GL_INT_2_10_10_10_REV, true, _VERTEX_SIZE, 16);
+
+		// v-tangents
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(
+			3, GL_BGRA, GL_INT_2_10_10_10_REV, true, _VERTEX_SIZE, 20);
+
+		// tex-coords
+		glEnableVertexAttribArray(4);
+		glVertexAttribPointer(
+			4, 2, GL_FLOAT, false, _VERTEX_SIZE, 24);
 	}
 
 	public Mesh(
 			final int[][]   indices,
 			final float[][] positions,
 			final float[][] normals,
+			final float[][] uTangents,
+			final float[][] vTangents,
 			final float[][] texCoords,
 			final boolean   autoNormals,
 			final boolean   cullFacing) {
@@ -187,7 +259,7 @@ public final class Mesh {
 		glBindVertexArray(_vao);
 		
 		// Fill the vbo
-		_initVbo(positions, normals, texCoords);
+		_initVbo(positions, normals, uTangents, vTangents, texCoords);
 		_setVertexAttributes();
 		
 		// Fill the ibo

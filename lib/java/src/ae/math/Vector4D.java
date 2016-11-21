@@ -3,6 +3,10 @@ package ae.math;
 import ae.util.OrganizedObject;
 
 public final class Vector4D extends OrganizedObject<Vector4D> {
+
+	public interface UnaryOperator {
+		float applyToComponent(float x);
+	}
 	
 	public static final Vector4D BLACK  = createConst(0,    1);
 	public static final Vector4D GREY   = createConst(0.5f, 1);
@@ -53,6 +57,16 @@ public final class Vector4D extends OrganizedObject<Vector4D> {
 		backend.setY(backend.getY() + v.backend.getY());
 		backend.setZ(backend.getZ() + v.backend.getZ());
 		backend.setW(backend.getW() + v.backend.getW());
+		
+		return this;
+	}
+
+	public final Vector4D applyUnaryOp(final UnaryOperator op) {
+		
+		backend.setX(op.applyToComponent(backend.getX()));
+		backend.setY(op.applyToComponent(backend.getY()));
+		backend.setZ(op.applyToComponent(backend.getZ()));
+		backend.setW(op.applyToComponent(backend.getW()));
 		
 		return this;
 	}

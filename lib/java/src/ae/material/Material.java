@@ -88,6 +88,15 @@ public final class Material {
 	
 	public final AbstractEngine engine;
 	
+	public final boolean absColor;
+	public final boolean diffuse;
+	public final boolean perFragNormal;
+	public final boolean specular;
+	public final boolean emissive;
+	public final boolean light;
+	public final boolean normalMapping;
+	public final boolean perFragLight;
+	
 	private final StringBuilder _appendEmptyLine(final StringBuilder dst) {
 		return _appendLine(dst, 0, "");
 	}
@@ -102,20 +111,18 @@ public final class Material {
 	}
 	
 	private final String _assembleFragmentShaderSource(
-    		final Node    absColorNode,
-    		final Node    diffuseNode,
-    		final Node    fragNormalNode,
-    		final Node    specularNode,
-    		final Node    emissiveNode,
-    		final boolean light,
-			final boolean perFragLight) {
+    		final Node absColorNode,
+    		final Node diffuseNode,
+    		final Node fragNormalNode,
+    		final Node specularNode,
+    		final Node emissiveNode) {
 		
 		final StringBuilder source = new StringBuilder();
 
 		_appendLine(source, 0, "#version 330");
 		_appendEmptyLine(source);
 
-		if(light && perFragLight) {
+		if(perFragLight) {
 			_appendLine(source, 0, "uniform highp vec4 u_dirLights[16];");
 			_appendLine(source, 0, "uniform lowp  int  u_dirLightCount;");
 		}
@@ -138,6 +145,10 @@ public final class Material {
 			_appendLine(source, 0, "in highp   vec3 var_pos;");
 		if(light || _builtInNormal)
 			_appendLine(source, 0, "in mediump vec3 var_normal;");
+		if(normalMapping) {
+			_appendLine(source, 0, "in mediump vec3 var_uTangent;");
+			_appendLine(source, 0, "in mediump vec3 var_vTangent;");
+		}
 		if(light && !perFragLight)
 			_appendLine(source, 0, "in lowp    vec3 var_vertLight;");
 		if(_builtInTexCoord)
@@ -150,9 +161,19 @@ public final class Material {
 		_appendLine(source, 0, "void main(void) {");
 		_appendEmptyLine(source);
 		
-		// TODO: Modify normal
+		if(normalMapping) {
+			source.append('\t');
+			source.append("mediump vec3 tsNormal = ");
+			fragNormalNode.toSourceString(source);
+			source.append(" * 2 - 1;\n");
+			_appendLine(source, 1, "mediump vec3 normal   = normalize(mat3(normalize(var_uTangent), normalize(var_vTangent), normalize(var_normal)) * tsNormal);");
+			_appendEmptyLine(source);
+		} else if(light) {
+			_appendLine(source, 1, "mediump vec3 normal = normalize(var_normal);");
+			_appendEmptyLine(source);
+		}
 		
-		if(absColorNode != null) {
+		if(absColor) {
 			source.append('\t');
 			source.append("lowp vec3 absColor = ");
 			absColorNode.toSourceString(source);
@@ -167,16 +188,15 @@ public final class Material {
     		_appendLine(source, 1, perFragLight ?
     			"lowp    vec3 fragDiffuse = vec3(0, 0, 0);" :
     			"lowp    vec3 fragDiffuse = var_vertLight;");
-    		_appendLine(source, 1, "mediump vec3 normal      = normalize(var_normal);");
     		_appendLine(source, 1, "mediump vec3 lightVec;");
     		_appendEmptyLine(source);
 		}
 
-		if(light && perFragLight) {
+		if(perFragLight) {
 			_appendLine(source, 1, "for(i = 0; i < u_dirLightCount; i++) {");
 			_appendLine(source, 2, "l1           = u_dirLights[2 * i];");
 			_appendLine(source, 2, "l2           = u_dirLights[2 * i + 1];");
-			_appendLine(source, 2, "fragDiffuse += l2.rgb * max(dot(var_normal, l1.xyz) * l1.w + l2.w, 0);");
+			_appendLine(source, 2, "fragDiffuse += l2.rgb * max(dot(normal, l1.xyz) * l1.w + l2.w, 0);");
 			_appendLine(source, 1, "}");
 			_appendEmptyLine(source);
 		}
@@ -194,7 +214,7 @@ public final class Material {
     		_appendEmptyLine(source);
 		}
 
-		if(diffuseNode != null) {
+		if(diffuse) {
 			source.append('\t');
 			source.append("fragDiffuse *= ");
 			diffuseNode.toSourceString(source);
@@ -204,10 +224,10 @@ public final class Material {
 		
 		source.append('\t');
 		source.append("out_color = vec4(");
-		if(absColorNode != null)
+		if(absColor)
 			source.append("absColor");
 		if(light) {
-			if(absColorNode != null) source.append(" + ");
+			if(absColor) source.append(" + ");
 			source.append("fragDiffuse");
 		}
 		source.append(", 1);\n");
@@ -218,10 +238,7 @@ public final class Material {
 		return source.toString();
 	}
 	
-	private final String _assembleVertexShaderSource(
-			final boolean absColor,
-			final boolean light,
-			final boolean perFragLight) {
+	private final String _assembleVertexShaderSource() {
 		
 		final StringBuilder source = new StringBuilder();
 		
@@ -243,13 +260,21 @@ public final class Material {
 		_appendLine(source, 0, "in highp   vec3 in_position;");
 		if(light)
 			_appendLine(source, 0, "in mediump vec3 in_normal;");
+		if(normalMapping) {
+			_appendLine(source, 0, "in mediump vec3 in_uTangent;");
+			_appendLine(source, 0, "in mediump vec3 in_vTangent;");
+		}
 		if(_builtInTexCoord)
 			_appendLine(source, 0, "in mediump vec2 in_texCoord;");
 		_appendEmptyLine(source);
 		
-		if(light) {
+		if(light)
 			_appendLine(source, 0, "out highp   vec3 var_pos;");
+		if(light || _builtInNormal)
 			_appendLine(source, 0, "out mediump vec3 var_normal;");
+		if(normalMapping) {
+			_appendLine(source, 0, "out mediump vec3 var_uTangent;");
+			_appendLine(source, 0, "out mediump vec3 var_vTangent;");
 		}
 		if(light && !perFragLight)
 			_appendLine(source, 0, "out lowp    vec3 var_vertLight;");
@@ -267,8 +292,10 @@ public final class Material {
 			_appendLine(source, 1, "var_pos       = eyePos.xyz;");
 		if(light || _builtInNormal)
 			_appendLine(source, 1, "var_normal    = normalize(u_matNormal * in_normal);");
-		if(light && !perFragLight)
-			_appendLine(source, 1, "var_vertLight = vec3(0, 0, 0);");
+		if(normalMapping) {
+			_appendLine(source, 1, "var_uTangent  = normalize(u_matNormal * in_uTangent);");
+			_appendLine(source, 1, "var_vTangent  = normalize(u_matNormal * in_vTangent);");
+		}
 		if(_builtInTexCoord)
 			_appendLine(source, 1, "var_texCoord  = in_texCoord;");
 		_appendEmptyLine(source);
@@ -278,6 +305,7 @@ public final class Material {
 			_appendLine(source, 1, "mediump vec4 l1;");
 			_appendLine(source, 1, "lowp    vec4 l2;");
 			_appendEmptyLine(source);
+			_appendLine(source, 1, "var_vertLight = vec3(0, 0, 0);");
 			_appendLine(source, 1, "for(i = 0; i < u_dirLightCount; i++) {");
 			_appendLine(source, 2, "l1             = u_dirLights[2 * i];");
 			_appendLine(source, 2, "l2             = u_dirLights[2 * i + 1];");
@@ -340,18 +368,11 @@ public final class Material {
 
 		final int program = glCreateProgram();
 
-		// Derive some additional properties of the material
-		final boolean hasLight        =
-			diffuseNode  != null || specularNode   != null;
-		final boolean hasPerFragLight =
-			specularNode != null || fragNormalNode != null;
-
 		// Create the vertex shader
 		final boolean vsSuccess = _createShader(
 			GL_VERTEX_SHADER,
 			program,
-			_assembleVertexShaderSource(
-				absColorNode != null, hasLight, hasPerFragLight));
+			_assembleVertexShaderSource());
 		
 		// Create the fragment shader
 		final boolean fsSuccess = _createShader(
@@ -359,16 +380,17 @@ public final class Material {
 			program,
 			_assembleFragmentShaderSource(
 				absColorNode,
-				diffuseNode, fragNormalNode, specularNode, emissiveNode,
-				hasLight, hasPerFragLight));
+				diffuseNode, fragNormalNode, specularNode, emissiveNode));
 		
 		// If one of shader components failed, no program will be used
 		if(!vsSuccess || !fsSuccess) return 0;
 
 		// Bind the vertex attribute locations
 		                     glBindAttribLocation(program, 0, "in_position");
-		if(hasLight)         glBindAttribLocation(program, 1, "in_normal");
-		if(_builtInTexCoord) glBindAttribLocation(program, 2, "in_texCoord");
+		if(light)            glBindAttribLocation(program, 1, "in_normal");
+		if(normalMapping)    glBindAttribLocation(program, 2, "in_uTangent");
+		if(normalMapping)    glBindAttribLocation(program, 3, "in_vTangent");
+		if(_builtInTexCoord) glBindAttribLocation(program, 4, "in_texCoord");
 		
 		// Bind fragment data locations
 		glBindFragDataLocation(program, 0, "out_color");
@@ -450,10 +472,6 @@ public final class Material {
     		final String         emissive,
     		final Updater        updater,
     		final Node ...       nodes) {
-
-		if(fragNormal != null)
-			throw new UnsupportedOperationException(
-				"Fragment normal not supported yet");
 		
 		if(specular != null)
 			throw new UnsupportedOperationException(
@@ -469,6 +487,16 @@ public final class Material {
 		this._lightData = new float[
 			Math.max(engine.maxDirLightCount, engine.maxPointLightCount) * 8];
 		this.engine     = engine;
+		
+		// Set the public properties of this material
+		this.absColor      = absColor   != null;
+		this.diffuse       = diffuse    != null;
+		this.perFragNormal = fragNormal != null;
+		this.specular      = specular   != null;
+		this.emissive      = emissive   != null;
+		this.light         = this.diffuse       || this.specular;
+		this.normalMapping = this.light         && this.perFragNormal;
+		this.perFragLight  = this.normalMapping || this.specular;
 		
 		final PooledQueue<Node> notTyped = new PooledQueue<>();
 		

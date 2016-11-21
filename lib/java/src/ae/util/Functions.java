@@ -62,4 +62,11 @@ public final class Functions {
 		
 		return dst;
 	}
+	
+	public static final int packNormalizedFloatInInt(
+			final float x,
+			final int   bitCount) {
+		
+		return (int)(x * 0x7FFFFFFF) >>> (32 - bitCount);
+	}
 }

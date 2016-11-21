@@ -13,11 +13,13 @@ import ae.entity.DirectionalLight;
 import ae.entity.Model;
 import ae.entity.PointLight;
 import ae.material.AddNode;
+import ae.material.ConstantNode;
 import ae.material.FunctionNode;
 import ae.material.Material;
 import ae.material.ParameterNode;
 import ae.material.SwizzleNode;
 import ae.material.TextureNode;
+import ae.math.Matrix4D;
 import ae.mesh.Meshes;
 import ae.util.OrganizedObject;
 
@@ -166,10 +168,22 @@ public final class Testing {
 			setData("data/seamless2.jpg").
 			setFiltering(true, true, true, true, 16).
 			createTexture();
+		final Texture diffuse = new TextureBuilder().
+			setData("data/floor_d.jpg").
+			setFiltering(true, true, true, true, 16).
+			createTexture();
+		final Texture normal = new TextureBuilder().
+			setData("data/floor_n.jpg").
+			setFiltering(true, true, true, true, 16).
+			createTexture();
+		final Texture bump = new TextureBuilder().
+			setData("data/floor_h.jpg").
+			setFiltering(true, true, true, true, 16).
+			createTexture();
 		
 		final Material testMaterial = new Material(
 			engine,
-			null, "TMix", null, null, null,
+			null, "TDRGB", "TNXYZ", null, null,
 			(material, time, delta) -> {
 				
 				material.setParameter(
@@ -186,11 +200,20 @@ public final class Testing {
 			
 			new TextureNode("T1", "TexCoordMod"),
 			new TextureNode("T2", "TexCoord"),
+			new TextureNode("TBump", "TexCoord"),
 			
 			new AddNode("TexCoordMod", "TexCoord", "TOffset"),
 			new SwizzleNode("T1RGB", "T1", "rgb"),
 			new SwizzleNode("T2RGB", "T2", "rgb"),
-			FunctionNode.mix("TMix", "T1RGB", "T2RGB", "MixFactor"));
+			FunctionNode.mix("TMix", "T1RGB", "T2RGB", "MixFactor"),
+
+			new TextureNode("TD", "TexCoord"),
+			new SwizzleNode("TDRGB", "TD", "rgb"),
+			new TextureNode("TN", "TexCoord"),
+			new SwizzleNode("TNXYZ", "TN", "xyz"),
+			new ConstantNode("White", 1, 1, 1),
+			
+			new ConstantNode("Normal", 0.5f, 0.5f, 1));
 		
 		final Model quad = new Model(sceneGraph).
 			setMesh(Meshes.createQuad(8, true).createMesh()).
@@ -213,7 +236,8 @@ public final class Testing {
 		
 		final Model torus = new Model(sceneGraph).
 			setMesh(
-				Meshes.createTorus(64, 32, 1, 0.5f, 0.5f, false).createMesh()).
+				Meshes.createTorus(64, 32, 1, 0.5f, 0.5f, false).
+					transformTexCoords(new Matrix4D().scale(2, 1, 1)).createMesh()).
 			setUpdater((model, time, delta) -> {
 				model.transformation.getValue().
 					toIdentity().
@@ -258,6 +282,8 @@ public final class Testing {
 		torus.setMaterial(testMaterial);
 		testMaterial.setTexture("T1", seamless1);
 		testMaterial.setTexture("T2", seamless2);
+		testMaterial.setTexture("TD", diffuse);
+		testMaterial.setTexture("TN", normal);
 		
 		ambLight.color.getValue().setData(0.1f, 0.1f, 0.1f);
 		ambLight.direction.getValue().setData(0, 1, 0);
@@ -300,7 +326,7 @@ public final class Testing {
 				engine.getFramebufferWidth(), engine.getFramebufferHeight(),
 				60, 2);
 		});
-		
+		System.out.println(Math.toDegrees(Math.atan2(1, -1)));
 		engine.start();
 	}
 }
