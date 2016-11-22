@@ -177,7 +177,7 @@ public final class Testing {
 			createTexture();
 		final Texture bump = new TextureBuilder().
 			setData("data/floor_h.jpg").
-			setFiltering(true, true, true, true, 16).
+			setFiltering(true, true, false, false, 0).
 			createTexture();
 		
 		final Material testMaterial = new Material(
@@ -283,6 +283,7 @@ public final class Testing {
 		testMaterial.setTexture("T2", seamless2);
 		testMaterial.setTexture("TD", diffuse);
 		testMaterial.setTexture("TN", normal);
+		testMaterial.setTexture("TBump", bump);
 		
 		ambLight.color.getValue().setData(0.1f, 0.1f, 0.1f);
 		ambLight.direction.getValue().setData(0, 1, 0);

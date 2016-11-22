@@ -37,7 +37,7 @@ public final class Material {
 		void update(Material material, double time, double delta);
 	}
 	
-	public static final class BuiltInNode extends Node {
+	private static final class BuiltInNode extends Node {
 		
 		private final BuiltInValue _value;
 		
@@ -152,7 +152,7 @@ public final class Material {
 		if(light && !perFragLight)
 			_appendLine(source, 0, "in lowp    vec3 var_vertLight;");
 		if(_builtInTexCoord)
-			_appendLine(source, 0, "in mediump vec2 var_texCoord;");
+			_appendLine(source, 0, "in mediump vec2 var_texCoord1;");
 		_appendEmptyLine(source);
 
 		_appendLine(source, 0, "out lowp vec4 out_color;");
@@ -163,11 +163,30 @@ public final class Material {
 		
 		if(parallaxMapping) {
 			
-		} else {
+			_appendLine(source, 1, "vec3 eye = vec3(dot(normalize(var_uTangent), -var_pos), dot(normalize(var_vTangent), -var_pos), dot(normalize(var_normal), -var_pos));");
+			_appendLine(source, 1, "eye.z = max(0.5 * eye.z, length(eye.xy));");
+			_appendLine(source, 1, "vec2 mInv = eye.xy / eye.z;");
+			_appendLine(source, 1, "float height = 0.05;");
 			
+			_appendLine(source, 1, "vec2 t1 = var_texCoord1;");
+			_appendLine(source, 1, "vec2 t2, td, a;");
+			_appendLine(source, 1, "float h1, h2;");
+			_appendLine(source, 1, "float maxA = -height / eye.z;");
+			_appendLine(source, 1, "int j;");
+			_appendLine(source, 1, "for(j = 0; j < 3; j++) {");
+			_appendLine(source, 2, "h1 = height * (texture(u_s2D_TBump, t1).x - 1.0);");
+			_appendLine(source, 2, "t2 = var_texCoord1 + mInv * h1;");
+			_appendLine(source, 2, "h2 = height * (texture(u_s2D_TBump, t2).x - 1.0);");
+			_appendLine(source, 2, "td = var_texCoord1 - t1;");
+			_appendLine(source, 2, "a  = (h2 * td + h1 * h1 * mInv) / (eye.xy * (2 * h1 - h2) + eye.z * td);");
+			_appendLine(source, 2, "t1 = var_texCoord1 + eye.xy * clamp(a, maxA, 0);");
+			_appendLine(source, 1, "}");
+			_appendLine(source, 1, "mediump vec2 var_texCoord = t1;");
+			
+		} else {
+			_appendLine(source, 1, "mediump vec2 var_texCoord = var_texCoord1;");
 		}
-		
-		//_appendLine(source, 1, "vec3 eye = vec3(dot(normalize(var_uTangent), -var_pos), dot(normalize(var_vTangent), -var_pos), dot(normalize(var_normal), -var_pos));");
+		_appendEmptyLine(source);
 		
 		if(normalMapping) {
 			source.append('\t');
@@ -227,6 +246,7 @@ public final class Material {
 			source.append("fragDiffuse *= ");
 			diffuseNode.toSourceString(source);
 			source.append(";\n");
+			//_appendLine(source, 1, "fragDiffuse = vec3(fract(var_texCoord * 10), 0);");
 			_appendEmptyLine(source);
 		}
 		
@@ -287,7 +307,7 @@ public final class Material {
 		if(light && !perFragLight)
 			_appendLine(source, 0, "out lowp    vec3 var_vertLight;");
 		if(_builtInTexCoord)
-			_appendLine(source, 0, "out mediump vec2 var_texCoord;");
+			_appendLine(source, 0, "out mediump vec2 var_texCoord1;");
 		_appendEmptyLine(source);
 		
 		_appendLine(source, 0, "void main(void) {");
@@ -305,7 +325,7 @@ public final class Material {
 			_appendLine(source, 1, "var_vTangent  = normalize(u_matNormal * in_vTangent);");
 		}
 		if(_builtInTexCoord)
-			_appendLine(source, 1, "var_texCoord  = in_texCoord;");
+			_appendLine(source, 1, "var_texCoord1  = in_texCoord;");
 		_appendEmptyLine(source);
 		
 		if(light && !perFragLight) {
@@ -584,11 +604,11 @@ public final class Material {
 		glUseProgram(0);
 	}
 
-	public static final BuiltInNode builtInNormal(final String name) {
+	public static final Node builtInNormal(final String name) {
 		return new BuiltInNode(name, BuiltInValue.NORMAL);
 	}
 	
-	public static final BuiltInNode builtInTexCoord(final String name) {
+	public static final Node builtInTexCoord(final String name) {
 		return new BuiltInNode(name, BuiltInValue.TEXCOORD);
 	}
 	
