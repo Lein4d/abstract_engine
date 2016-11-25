@@ -24,6 +24,21 @@ public final class PooledHashMap<K, V>
 		}
 	}
 	
+	private final class KeyIterator implements Iterator<K> {
+
+		private final Iterator<KeyValuePair<K, V>> _kvpIterator = iterator();
+		
+		@Override
+		public final boolean hasNext() {
+			return _kvpIterator.hasNext();
+		}
+
+		@Override
+		public final K next() {
+			return _kvpIterator.next().getKey();
+		}
+	}
+	
 	private final class KvpIterator implements Iterator<KeyValuePair<K, V>> {
 
 		private int                                _bucketPos = -1;
@@ -59,10 +74,42 @@ public final class PooledHashMap<K, V>
 			return result;
 		}
 	}
+
+	private final class ValueIterator implements Iterator<V> {
+
+		private final Iterator<KeyValuePair<K, V>> _kvpIterator = iterator();
+		
+		@Override
+		public final boolean hasNext() {
+			return _kvpIterator.hasNext();
+		}
+
+		@Override
+		public final V next() {
+			return _kvpIterator.next().getValue();
+		}
+	}
+
+	public final class KeySet implements Iterable<K> {
+		@Override
+		public Iterator<K> iterator() {
+			return new KeyIterator();
+		}
+	}
+	
+	public final class ValueSet implements Iterable<V> {
+		@Override
+		public Iterator<V> iterator() {
+			return new ValueIterator();
+		}
+	}
 	
 	private LinkedListNode<KeyValuePair<K, V>>[] _buckets;
 	private float                                _maxLoadFactor = 0.5f;
 	private int                                  _resizeFactor  = 2;
+	
+	public final KeySet   keys   = new KeySet();
+	public final ValueSet values = new ValueSet();
 	
 	private final boolean _areKeysEqual(
 			final K key1,

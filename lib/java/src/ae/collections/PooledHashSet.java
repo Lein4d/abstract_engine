@@ -4,22 +4,6 @@ import java.util.Iterator;
 
 public final class PooledHashSet<T> extends PooledCollection<T, T> {
 
-	private final class ElementIterator implements Iterator<T> {
-		
-		private final Iterator<PooledHashMap.KeyValuePair<T, Object>> _it =
-			_hashMap.iterator();
-		
-		@Override
-		public final boolean hasNext() {
-			return _it.hasNext();
-		}
-
-		@Override
-		public final T next() {
-			return _it.next().getKey();
-		}
-	}
-	
 	// Die Value-Komponente wird immer auf 'null' gesetzt
 	private final PooledHashMap<T, Object> _hashMap;
 	
@@ -80,8 +64,6 @@ public final class PooledHashSet<T> extends PooledCollection<T, T> {
 
 	@Override
 	public Iterator<T> iterator() {
-
-		// TODO: Hier wird ein neues Objekt angelegt
-		return new ElementIterator();
+		return _hashMap.keys.iterator();
 	}
 }
