@@ -180,8 +180,13 @@ public final class Testing {
 		
 		final MaterialBuilder mb = new MaterialBuilder();
 		
-		final Material testMaterial =
-			mb.setColor(mb.normal()).createMaterial(engine);
+		final Material testMaterial = mb.
+			addTexture("diffuse").
+			addTexture("normal").
+			setColor(mb.mult(
+				mb.phong(mb.normalMapping(mb.normalTexture("normal"))),
+				mb.textureRGB("diffuse"))).
+			createMaterial(engine);
 		/*
 		final Material testMaterial = new Material(
 			engine,
@@ -282,6 +287,8 @@ public final class Testing {
 		quad .setMaterial(testMaterial);
 		cube .setMaterial(testMaterial);
 		torus.setMaterial(testMaterial);
+		testMaterial.setTexture("diffuse", diffuse);
+		testMaterial.setTexture("normal", normal);
 		//testMaterial.setTexture("T1", seamless1);
 		//testMaterial.setTexture("T2", seamless2);
 		//testMaterial.setTexture("TD", diffuse);

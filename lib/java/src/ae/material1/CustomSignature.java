@@ -14,6 +14,11 @@ final class CustomSignature implements Signature {
 	}
 
 	@Override
+	public final int getParamCount() {
+		return _paramTypes.length;
+	}
+	
+	@Override
 	public final GlslType resolveSignature(final GlslType[] signature) {
 
 		if(signature.length != _paramTypes.length) return GlslType.UNDEF;

@@ -80,13 +80,20 @@ public final class Material {
 	
 	static final class BuiltInFunction {
 		
+		private final ShaderProgram.Function _function;
+		final         NodeTemplate           nodeTemplate;
+		
+		private BuiltInFunction(final ShaderProgram.Function function) {
+			
+			this._function    = function;
+			this.nodeTemplate = function.createNodeTemplate();
+		}
 	}
 	
 	static final class BuiltInVariable {
 		
 		private final ShaderProgram.ShaderComponent _component;
-		
-		final NodeTemplate nodeTemplate;
+		final         NodeTemplate                  nodeTemplate;
 		
 		private BuiltInVariable(final ShaderProgram.LocalVariable lVariable) {
 			_component   = lVariable;
@@ -127,8 +134,17 @@ public final class Material {
 		new BuiltInVariable(ShaderProgram.VARY_POSITION);
 	static final BuiltInVariable BUILTIN_VAR_NORMAL   =
 		new BuiltInVariable(ShaderProgram.LVAR_NORMAL);
+	static final BuiltInVariable BUILTIN_VAR_UTANGENT =
+		new BuiltInVariable(ShaderProgram.LVAR_UTANGENT);
+	static final BuiltInVariable BUILTIN_VAR_VTANGENT =
+		new BuiltInVariable(ShaderProgram.LVAR_VTANGENT);
 	static final BuiltInVariable BUILTIN_VAR_TEXCOORD =
 		new BuiltInVariable(ShaderProgram.VARY_TEXCOORD);
+	
+	static final BuiltInFunction BUILTIN_FUNC_NORMALMAPPING =
+		new BuiltInFunction(ShaderProgram.FUNC_NORMALMAPPING);
+	static final BuiltInFunction BUILTIN_FUNC_PHONG =
+		new BuiltInFunction(ShaderProgram.FUNC_PHONG);
 	
 	public final AbstractEngine engine;
 
@@ -193,7 +209,7 @@ public final class Material {
 	Material(
 			final AbstractEngine          engine,
 			final Set<BuiltInVariable>    variables,
-			final Set<BuiltInFunction>    funtions,
+			final Set<BuiltInFunction>    functions,
 			final Iterable<CustomParam>   params,
 			final Iterable<CustomTexture> textures,
 			final Node                    color,
@@ -209,6 +225,7 @@ public final class Material {
 			Math.max(engine.maxDirLightCount, engine.maxPointLightCount) * 8];
 		
 		for(BuiltInVariable i : variables) components.add(i._component);
+		for(BuiltInFunction i : functions) components.add(i._function);
 		for(CustomParam     i : params)    components.add(i._uniform);
 		for(CustomTexture   i : textures)  components.add(i._uniform);
 		

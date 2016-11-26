@@ -53,6 +53,11 @@ final class SignatureGroup implements Signature {
 	}
 
 	@Override
+	public final int getParamCount() {
+		return _paramBaseTypes.length;
+	}
+	
+	@Override
 	public final GlslType resolveSignature(final GlslType[] signature) {
 		
 		if(signature.length != _isParamScalar.length) return GlslType.UNDEF;

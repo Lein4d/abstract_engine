@@ -16,19 +16,7 @@ final class ShaderProgram {
 	
 	// Marker interface
 	interface ShaderComponent {}
-	/*
-	public static abstract class BuiltInVariable implements ShaderComponent {
-		
-		public final NodeTemplate nodeTemplate;
-		
-		protected BuiltInVariable(
-				final String   name,
-				final GlslType type) {
-			
-			nodeTemplate = new NodeTemplate(name, type);
-		}
-	}
-	*/
+	
 	static final class Attribute implements ShaderComponent {
 		
 		private final String _name;
@@ -50,20 +38,6 @@ final class ShaderProgram {
 		}
 	}
 	
-	static final class Function implements ShaderComponent {
-		
-		private final String[] _glslLines;
-		
-		private Function(
-				final String     name,
-				final GlslType   returnType,
-				final GlslType[] paramTypes,
-				final String ... glslLines) {
-			
-			_glslLines = glslLines;
-		}
-	}
-
 	static final class CustomUniformParam extends Uniform {
 		
 		final String   name;
@@ -89,6 +63,41 @@ final class ShaderProgram {
 		CustomUniformTexture(final String name) {
 			super("u_s2D_" + name, "uniform sampler2D u_s2D_" + name + ";");
 			this.name = name;
+		}
+	}
+
+	static final class Function implements ShaderComponent {
+
+		private final GlslType   _returnType;
+		private final GlslType[] _paramTypes;
+		private final String[]   _glslLines;
+		
+		final String glslName;
+		
+		private Function(
+				final String     name,
+				final GlslType   returnType,
+				final GlslType[] paramTypes,
+				final String ... glslLines) {
+			
+			_returnType = returnType;
+			_paramTypes = paramTypes;
+			_glslLines  = glslLines;
+			glslName    = name;
+		}
+		
+		final NodeTemplate createNodeTemplate() {
+			
+			final String[] sepStrings = new String[_paramTypes.length + 1];
+			
+			sepStrings[0]                  = glslName + "(";
+			for(int i = 1; i < _paramTypes.length; i++) sepStrings[i] = ", ";
+			sepStrings[_paramTypes.length] = ")";
+			
+			return new NodeTemplate(
+				_paramTypes.length,
+				new CustomSignature(_returnType, _paramTypes),
+				sepStrings);
 		}
 	}
 
@@ -242,7 +251,7 @@ final class ShaderProgram {
 		new Function(
     		"phong",
     		GlslType.FLOAT3,
-			new GlslType[]{},
+			new GlslType[]{GlslType.FLOAT3, GlslType.FLOAT3},
     		
     		"vec3 phong(",
     		"\t\tin vec3 pos,",
@@ -272,14 +281,42 @@ final class ShaderProgram {
     		"",
     		"\treturn intensity;",
     		"}");
-    	
-	static final Function FUNC_PARALLAX      = null;
-	
+    /*
+	static final Function FUNC_PARALLAX =
+		new Function(
+			"parallax",
+			GlslType.FLOAT2,
+			
+			"vec2 parallax(",
+			"\t\t"
+			
+			"vec3 eye = vec3(dot(normalize(var_uTangent), -var_pos), dot(normalize(var_vTangent), -var_pos), dot(normalize(var_normal), -var_pos));");
+			"eye.z = max(0.5 * eye.z, length(eye.xy));");
+			"vec2 mInv = eye.xy / eye.z;");
+			"float height = 0.05;");
+			
+			"vec2 t1 = var_texCoord1;");
+			"vec2 t2, td, a;");
+			"float h1, h2;");
+			"float maxA = -height / eye.z;");
+			"int j;");
+			"for(j = 0; j < 3; j++) {");
+			"h1 = height * (texture(u_s2D_TBump, t1).x - 1.0);");
+			"t2 = var_texCoord1 + mInv * h1;");
+			"h2 = height * (texture(u_s2D_TBump, t2).x - 1.0);");
+			"td = var_texCoord1 - t1;");
+			"a  = (h2 * td + h1 * h1 * mInv) / (eye.xy * (2 * h1 - h2) + eye.z * td);");
+			"t1 = var_texCoord1 + eye.xy * clamp(a, maxA, 0);");
+			"}");
+			"mediump vec2 var_texCoord = t1;"););
+	*/
 	static final Function FUNC_NORMALMAPPING =
 		new Function(
 			"normalmapping",
 			GlslType.FLOAT3,
-			new GlslType[]{},
+			new GlslType[]{
+				GlslType.FLOAT3, GlslType.FLOAT3, GlslType.FLOAT3,
+				GlslType.FLOAT3},
 			
 			"vec3 normalmapping(",
 			"\t\tin vec3 uTangent,",
@@ -429,12 +466,6 @@ final class ShaderProgram {
 			components.add(_VARY_TEXCOORD);
 		}
 		*/
-		if(components.contains(FUNC_NORMALMAPPING)) {
-			components.add(LVAR_NORMAL);
-			components.add(LVAR_UTANGENT);
-			components.add(LVAR_VTANGENT);
-		}
-		
 		if(components.contains(LVAR_NORMAL  )) components.add(VARY_NORMAL);
 		if(components.contains(LVAR_UTANGENT)) components.add(VARY_UTANGENT);
 		if(components.contains(LVAR_VTANGENT)) components.add(VARY_VTANGENT);
