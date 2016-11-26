@@ -13,9 +13,12 @@ public enum GlslType {
 	FLOAT (Base.FLOAT,   1, "float"),
 	FLOAT2(Base.FLOAT,   2, "vec2"),
 	FLOAT3(Base.FLOAT,   3, "vec3"),
-	FLOAT4(Base.FLOAT,   4, "vec4");
+	FLOAT4(Base.FLOAT,   4, "vec4"),
+	TEX1  (Base.TEXTURE, 1, "sampler1D"),
+	TEX2  (Base.TEXTURE, 2, "sampler2D"),
+	TEX3  (Base.TEXTURE, 3, "sampler3D");
 	
-	public enum Base {UNDEF, BOOLEAN, INTEGER, FLOAT}
+	public enum Base {UNDEF, BOOLEAN, INTEGER, FLOAT, TEXTURE}
 	
 	public final Base            baseType;
 	public final int             dimension;
@@ -63,6 +66,14 @@ public enum GlslType {
 					case 2: return FLOAT2;
 					case 3: return FLOAT3;
 					case 4: return FLOAT4;
+				}
+				break;
+			
+			case TEXTURE:
+				switch(dimension) {
+					case 1: return GlslType.TEX1;
+					case 2: return GlslType.TEX2;
+					case 3: return GlslType.TEX3;
 				}
 				break;
 			

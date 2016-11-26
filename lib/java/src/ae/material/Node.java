@@ -8,9 +8,16 @@ public final class Node {
 	final GlslType type;
 	
 	Node(
+			final String   name,
+			final GlslType type) {
+		
+		this(new NodeTemplate(0, type.varSignature, name), type);
+	}
+	
+	Node(
 			final NodeTemplate template,
 			final GlslType     type,
-			final Node[]       inputs) {
+			final Node ...     inputs) {
 		
 		_template = template;
 		_inputs   = inputs;

@@ -24,7 +24,7 @@ public final class Material {
 		private       int                              _location;
 		private       float[]                          _value;
 	
-		final NodeTemplate nodeTemplate;
+		final Node node;
 		
 		private final void _useParam() {
 	
@@ -42,21 +42,18 @@ public final class Material {
 				final String   name,
 				final GlslType type) {
 			
-			_uniform     = new ShaderProgram.CustomUniformParam(name, type);
-			nodeTemplate = new NodeTemplate(_uniform.glslName, type);
+			_uniform = new ShaderProgram.CustomUniformParam(name, type);
+			node     = new Node(_uniform.glslName, type);
 		}
 	}
 	
 	static final class CustomTexture {
 		
-		private static final Signature _SIGNATURE =
-			new CustomSignature(GlslType.FLOAT4, GlslType.FLOAT2);
-		
 		private final ShaderProgram.CustomUniformTexture _uniform;
 		private       int                                _location;
 		private       Texture                            _texture;
 		
-		final NodeTemplate nodeTemplate;
+		final Node node;
 		
 		private final void _useTexture(final int slot) {
 			
@@ -72,9 +69,8 @@ public final class Material {
 		}
 		
 		CustomTexture(final String name) {
-			_uniform     = new ShaderProgram.CustomUniformTexture(name);
-			nodeTemplate = new NodeTemplate(
-				1, _SIGNATURE, "texture(" + _uniform.glslName + ", ", ")");
+			_uniform = new ShaderProgram.CustomUniformTexture(name);
+			node     = new Node(_uniform.glslName, GlslType.TEX2);
 		}
 	}
 	
@@ -93,16 +89,16 @@ public final class Material {
 	static final class BuiltInVariable {
 		
 		private final ShaderProgram.ShaderComponent _component;
-		final         NodeTemplate                  nodeTemplate;
+		final         Node                          node;
 		
 		private BuiltInVariable(final ShaderProgram.LocalVariable lVariable) {
-			_component   = lVariable;
-			nodeTemplate = new NodeTemplate(lVariable.glslName, lVariable.type);
+			_component = lVariable;
+			node       = new Node(lVariable.glslName, lVariable.type);
 		}
 		
 		private BuiltInVariable(final ShaderProgram.Varying varying) {
-			_component   = varying;
-			nodeTemplate = new NodeTemplate(varying.glslName, varying.type);
+			_component = varying;
+			node       = new Node(varying.glslName, varying.type);
 		}
 	}
 	

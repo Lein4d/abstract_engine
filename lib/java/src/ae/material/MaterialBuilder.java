@@ -108,6 +108,9 @@ public final class MaterialBuilder {
 		"step",
 		SignatureGroup.SIG_GROUP_FLOAT_2N_IN_N_OUT,
 		new SignatureGroup(GlslType.Base.FLOAT, false, true, false));
+	private static final NodeTemplate _FUNC_TEXTURE    = _createFuncTemplate(
+		"texture",
+		new CustomSignature(GlslType.FLOAT4, GlslType.TEX2, GlslType.FLOAT2));
 
 	// Signatures for binary operators
 	private static final Signature[] _BIN_OP_SIGNATURES = {
@@ -145,7 +148,7 @@ public final class MaterialBuilder {
 		final String[] sepStrings = new String[paramCount + 1];
 		
 		sepStrings[0]          = name + "(";
-		for(int i = 0; i < paramCount; i++) sepStrings[i] = ", ";
+		for(int i = 1; i < paramCount; i++) sepStrings[i] = ", ";
 		sepStrings[paramCount] = ")";
 		
 		return new NodeTemplate(paramCount, signatures, sepStrings);
@@ -235,9 +238,7 @@ public final class MaterialBuilder {
 		final Node[] nodes = new Node[values.length];
 		
 		for(int i = 0; i < values.length; i++)
-			nodes[i] = 
-				new NodeTemplate(Float.toString(values[i]), GlslType.FLOAT).
-				createNode();
+			nodes[i] = new Node(Float.toString(values[i]), GlslType.FLOAT);
 		
 		return merge(nodes);
 	}
@@ -404,7 +405,7 @@ public final class MaterialBuilder {
 
 	public final Node normal() {
 		_variables.add(Material.BUILTIN_VAR_NORMAL);
-		return Material.BUILTIN_VAR_NORMAL.nodeTemplate.createNode();
+		return Material.BUILTIN_VAR_NORMAL.node;
 	}
 
 	public final Node normalize(final Node x) {
@@ -446,7 +447,7 @@ public final class MaterialBuilder {
 	}
 	
 	public final Node param(final String name) {
-		return _parameters.get(name).nodeTemplate.createNode();
+		return _parameters.get(name).node;
 	}
 	
 	public final Node phong() {
@@ -469,7 +470,7 @@ public final class MaterialBuilder {
 	
 	public final Node position() {
 		_variables.add(Material.BUILTIN_VAR_POSITION);
-		return Material.BUILTIN_VAR_POSITION.nodeTemplate.createNode();
+		return Material.BUILTIN_VAR_POSITION.node;
 	}
 
 	public final Node pow(
@@ -483,6 +484,10 @@ public final class MaterialBuilder {
 		return _FUNC_RADIANS.createNode(x);
 	}
 
+	public final Node rawTexture(final String name) {
+		return _textures.get(name).node;
+	}
+	
 	public final Node reflect(
 			final Node i,
 			final Node n) {
@@ -566,7 +571,7 @@ public final class MaterialBuilder {
 	
 	public final Node texCoord() {
 		_variables.add(Material.BUILTIN_VAR_TEXCOORD);
-		return Material.BUILTIN_VAR_TEXCOORD.nodeTemplate.createNode();
+		return Material.BUILTIN_VAR_TEXCOORD.node;
 	}
 	
 	public final Node texture(final String name) {
@@ -577,7 +582,7 @@ public final class MaterialBuilder {
 			final String name,
 			final Node   texCoord) {
 		
-		return _textures.get(name).nodeTemplate.createNode(texCoord);
+		return _FUNC_TEXTURE.createNode(rawTexture(name), texCoord);
 	}
 
 	public final Node textureA(final String name) {
@@ -604,7 +609,7 @@ public final class MaterialBuilder {
 
 	public final Node uTangent() {
 		_variables.add(Material.BUILTIN_VAR_UTANGENT);
-		return Material.BUILTIN_VAR_UTANGENT.nodeTemplate.createNode();
+		return Material.BUILTIN_VAR_UTANGENT.node;
 	}
 	/*
 	public final Node var(final String name) {
@@ -620,6 +625,6 @@ public final class MaterialBuilder {
 	*/
 	public final Node vTangent() {
 		_variables.add(Material.BUILTIN_VAR_VTANGENT);
-		return Material.BUILTIN_VAR_VTANGENT.nodeTemplate.createNode();
+		return Material.BUILTIN_VAR_VTANGENT.node;
 	}
 }
