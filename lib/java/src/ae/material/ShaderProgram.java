@@ -281,35 +281,48 @@ final class ShaderProgram {
     		"",
     		"\treturn intensity;",
     		"}");
-    /*
+    
 	static final Function FUNC_PARALLAX =
 		new Function(
 			"parallax",
 			GlslType.FLOAT2,
+			new GlslType[]{
+				GlslType.TEX2, GlslType.FLOAT, GlslType.FLOAT3, GlslType.FLOAT3,
+				GlslType.FLOAT3, GlslType.FLOAT3, GlslType.FLOAT2, GlslType.INT,
+				GlslType.FLOAT},
 			
 			"vec2 parallax(",
-			"\t\t"
-			
-			"vec3 eye = vec3(dot(normalize(var_uTangent), -var_pos), dot(normalize(var_vTangent), -var_pos), dot(normalize(var_normal), -var_pos));");
-			"eye.z = max(0.5 * eye.z, length(eye.xy));");
-			"vec2 mInv = eye.xy / eye.z;");
-			"float height = 0.05;");
-			
-			"vec2 t1 = var_texCoord1;");
-			"vec2 t2, td, a;");
-			"float h1, h2;");
-			"float maxA = -height / eye.z;");
-			"int j;");
-			"for(j = 0; j < 3; j++) {");
-			"h1 = height * (texture(u_s2D_TBump, t1).x - 1.0);");
-			"t2 = var_texCoord1 + mInv * h1;");
-			"h2 = height * (texture(u_s2D_TBump, t2).x - 1.0);");
-			"td = var_texCoord1 - t1;");
-			"a  = (h2 * td + h1 * h1 * mInv) / (eye.xy * (2 * h1 - h2) + eye.z * td);");
-			"t1 = var_texCoord1 + eye.xy * clamp(a, maxA, 0);");
+			"\t\tin sampler2D heightMap,",
+			"\t\tin float     height,",
+			"\t\tin vec3      uTangent,",
+			"\t\tin vec3      vTangent,",
+			"\t\tin vec3      normal,",
+			"\t\tin vec3      pos,",
+			"\t\tin vec2      texCoord,",
+			"\t\tin int       itCount,",
+			"\t\tin float     clampRatio) {",
+			"",
+			"\tvec3 eye   = vec3(dot(uTangent, -pos), dot(vTangent, -pos), dot(normal, -pos));",
+			"\t     eye.z = max(clampRatio * eye.z, length(eye.xy));",
+			"\tvec2 mInv  = eye.xy / eye.z;",
+			"",
+			"\tvec2 t1 = texCoord;",
+			"\tvec2 t2, td, a;",
+			"\tfloat h1, h2;",
+			"\tfloat maxA = -height / eye.z;",
+			"\tint i;",
+			"\tfor(i = 0; i < itCount; i++) {",
+			"\t\th1 = height * (texture(heightMap, t1).x - 1.0);",
+			"\t\tt2 = texCoord + mInv * h1;",
+			"\t\th2 = height * (texture(heightMap, t2).x - 1.0);",
+			"\t\ttd = texCoord - t1;",
+			"\t\ta  = (h2 * td + h1 * h1 * mInv) / (eye.xy * (2 * h1 - h2) + eye.z * td);",
+			"\t\tt1 = texCoord + eye.xy * clamp(a, maxA, 0);",
+			"\t}",
+			"",
+			"\treturn t1;",
 			"}");
-			"mediump vec2 var_texCoord = t1;"););
-	*/
+	
 	static final Function FUNC_NORMALMAPPING =
 		new Function(
 			"normalmapping",

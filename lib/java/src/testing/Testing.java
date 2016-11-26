@@ -181,9 +181,13 @@ public final class Testing {
 		final Material testMaterial = mb.
 			addTexture("diffuse").
 			addTexture("normal").
+			addTexture("bump").
+			//setColor(mb.mult(
+			//	mb.phong(mb.normalMapping(mb.normalTexture("normal"))),
+			//	mb.textureRGB("diffuse"))).
 			setColor(mb.mult(
-				mb.phong(mb.normalMapping(mb.normalTexture("normal"))),
-				mb.textureRGB("diffuse"))).
+				mb.phong(),
+				mb.textureRGB("diffuse", mb.parallax("bump", 0.05f)))).
 			createMaterial(engine);
 		
 		final Model quad = new Model(sceneGraph).
@@ -253,6 +257,7 @@ public final class Testing {
 		torus.setMaterial(testMaterial);
 		testMaterial.setTexture("diffuse", diffuse);
 		testMaterial.setTexture("normal",  normal);
+		testMaterial.setTexture("bump",    bump);
 		
 		ambLight.color.getValue().setData(0.1f, 0.1f, 0.1f);
 		ambLight.direction.getValue().setData(0, 1, 0);

@@ -243,6 +243,16 @@ public final class MaterialBuilder {
 		return merge(nodes);
 	}
 
+	public final Node constI(final int ... values) {
+		
+		final Node[] nodes = new Node[values.length];
+		
+		for(int i = 0; i < values.length; i++)
+			nodes[i] = new Node(Integer.toString(values[i]), GlslType.INT);
+		
+		return merge(nodes);
+	}
+
 	public final Node cos(final Node x) {
 		return _FUNC_COS.createNode(x);
 	}
@@ -444,6 +454,65 @@ public final class MaterialBuilder {
 			final Node   texCoord) {
 		
 		return sub(mult(textureRGB(name, texCoord), constF(2)), constF(1));
+	}
+
+	public final Node parallax(
+    		final String texture,
+    		final float  height) {
+		
+		return parallax(texture, height, 3, 0.5f);
+	}
+	
+	public final Node parallax(
+    		final String texture,
+    		final float  height,
+    		final int    itCount,
+    		final float  clampRatio) {
+		
+		return parallax(
+			texture, constF(height), constI(itCount), constF(clampRatio));
+	}
+	
+	public final Node parallax(
+    		final String texture,
+    		final Node   height,
+    		final Node   itCount,
+    		final Node   clampRatio) {
+		
+		return parallax(
+			texture, height, position(), texCoord(), itCount, clampRatio);
+	}
+	
+	public final Node parallax(
+    		final String texture,
+    		final Node   height,
+    		final Node   pos,
+    		final Node   texCoord,
+    		final Node   itCount,
+    		final Node   clampRatio) {
+		
+		return parallax(
+			texture, height,
+			uTangent(), vTangent(), normal(),
+			pos, texCoord, itCount, clampRatio);
+	}
+	
+	public final Node parallax(
+			final String texture,
+			final Node   height,
+			final Node   uTangent,
+			final Node   vTangent,
+			final Node   normal,
+			final Node   pos,
+			final Node   texCoord,
+			final Node   itCount,
+			final Node   clampRatio) {
+		
+		_functions.add(Material.BUILTIN_FUNC_PARALLAX);
+		
+		return Material.BUILTIN_FUNC_PARALLAX.nodeTemplate.createNode(
+			rawTexture(texture), height, uTangent, vTangent, normal, pos,
+			texCoord, itCount, clampRatio);
 	}
 	
 	public final Node param(final String name) {

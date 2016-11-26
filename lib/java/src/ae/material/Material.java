@@ -139,6 +139,8 @@ public final class Material {
 	
 	static final BuiltInFunction BUILTIN_FUNC_NORMALMAPPING =
 		new BuiltInFunction(ShaderProgram.FUNC_NORMALMAPPING);
+	static final BuiltInFunction BUILTIN_FUNC_PARALLAX =
+		new BuiltInFunction(ShaderProgram.FUNC_PARALLAX);
 	static final BuiltInFunction BUILTIN_FUNC_PHONG =
 		new BuiltInFunction(ShaderProgram.FUNC_PHONG);
 	
