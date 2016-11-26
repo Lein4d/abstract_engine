@@ -176,8 +176,6 @@ public final class Testing {
 			setFiltering(true, true, false, false, 0).
 			createTexture();
 		
-		//ae.material1.Material.test(engine);
-		
 		final MaterialBuilder mb = new MaterialBuilder();
 		
 		final Material testMaterial = mb.
@@ -187,41 +185,7 @@ public final class Testing {
 				mb.phong(mb.normalMapping(mb.normalTexture("normal"))),
 				mb.textureRGB("diffuse"))).
 			createMaterial(engine);
-		/*
-		final Material testMaterial = new Material(
-			engine,
-			null, "TDRGB", "TNXYZ", null, null,
-			(material, time, delta) -> {
-				
-				material.setParameter(
-					"MixFactor", (float)Math.sin(time / 1000) * 0.5f + 0.5f);
-				
-				material.setParameter(
-					"TOffset", (float)(time / 4000), (float)(time / 2000));
-			},
-			
-			Material.builtInTexCoord("TexCoord"),
-			
-			new ParameterNode("MixFactor", 1),
-			new ParameterNode("TOffset", 2),
-			
-			new TextureNode("T1", "TexCoordMod"),
-			new TextureNode("T2", "TexCoord"),
-			new TextureNode("TBump", "TexCoord"),
-			
-			BinaryOperator.add("TexCoordMod", "TexCoord", "TOffset"),
-			Nodes.colorTexture("T1RGB", "T1"),
-			Nodes.colorTexture("T2RGB", "T2"),
-			FunctionNode.mix("TMix", "T1RGB", "T2RGB", "MixFactor"),
-
-			new TextureNode("TD", "TexCoord"),
-			Nodes.swizzle("TDRGB", "TD", "rgb"),
-			new TextureNode("TN", "TexCoord"),
-			Nodes.normalMap("TNXYZ", "TN"),
-			Nodes.constant("White", 1, 1, 1),
-			
-			Nodes.constant("Normal", 0.5f, 0.5f, 1));
-		*/
+		
 		final Model quad = new Model(sceneGraph).
 			setMesh(Meshes.createQuad(8, true).createMesh()).
 			setUpdater((model, time, delta) -> {
@@ -288,12 +252,7 @@ public final class Testing {
 		cube .setMaterial(testMaterial);
 		torus.setMaterial(testMaterial);
 		testMaterial.setTexture("diffuse", diffuse);
-		testMaterial.setTexture("normal", normal);
-		//testMaterial.setTexture("T1", seamless1);
-		//testMaterial.setTexture("T2", seamless2);
-		//testMaterial.setTexture("TD", diffuse);
-		//testMaterial.setTexture("TN", normal);
-		//testMaterial.setTexture("TBump", bump);
+		testMaterial.setTexture("normal",  normal);
 		
 		ambLight.color.getValue().setData(0.1f, 0.1f, 0.1f);
 		ambLight.direction.getValue().setData(0, 1, 0);

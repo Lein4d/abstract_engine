@@ -317,15 +317,4 @@ public final class Material {
 		for(CustomParam   i : _params  .values) i._useParam();
 		for(CustomTexture i : _textures.values) i._useTexture(curSlot++);
 	}
-	
-	public static final void test(final AbstractEngine engine) {
-		
-		final MaterialBuilder mb = new MaterialBuilder();
-		
-		mb.addTexture("diffuse");
-		mb.addParameter("mixFactor", GlslType.FLOAT);
-		mb.setColor(mb.add(mb.normal(), mb.mult(mb.swizzle(mb.texture("diffuse", mb.texCoord()), "rgb"), mb.param("mixFactor"))));
-		
-		mb.createMaterial(engine);
-	}
 }
