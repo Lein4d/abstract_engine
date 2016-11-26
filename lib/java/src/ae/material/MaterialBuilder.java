@@ -1,4 +1,4 @@
-package ae.material1;
+package ae.material;
 
 import java.util.HashMap;
 import java.util.HashSet;

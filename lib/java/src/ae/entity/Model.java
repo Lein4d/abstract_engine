@@ -1,7 +1,7 @@
 package ae.entity;
 
 import ae.core.SceneGraph;
-import ae.material1.Material;
+import ae.material.Material;
 import ae.math.Matrix4D;
 import ae.mesh.Mesh;
 

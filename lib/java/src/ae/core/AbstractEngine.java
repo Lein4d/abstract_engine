@@ -9,7 +9,7 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
 import ae.collections.PooledLinkedList;
-import ae.material1.Material;
+import ae.material.Material;
 import ae.math.Matrix4D;
 import ae.math.Vector3D;
 import ae.math.Vector4D;

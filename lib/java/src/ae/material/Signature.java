@@ -1,4 +1,4 @@
-package ae.material1;
+package ae.material;
 
 interface Signature {
 	int      getParamCount();

@@ -1,4 +1,4 @@
-package ae.material1;
+package ae.material;
 
 public enum GlslType {
 	UNDEF (Base.UNDEF,   0, null),
