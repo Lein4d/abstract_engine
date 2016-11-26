@@ -12,12 +12,8 @@ import ae.core.TextureBuilder;
 import ae.entity.DirectionalLight;
 import ae.entity.Model;
 import ae.entity.PointLight;
-import ae.material.Nodes;
-import ae.material.BinaryOperator;
-import ae.material.FunctionNode;
-import ae.material.Material;
-import ae.material.ParameterNode;
-import ae.material.TextureNode;
+import ae.material1.Material;
+import ae.material1.MaterialBuilder;
 import ae.math.Matrix4D;
 import ae.mesh.Meshes;
 import ae.util.OrganizedObject;
@@ -180,6 +176,13 @@ public final class Testing {
 			setFiltering(true, true, false, false, 0).
 			createTexture();
 		
+		//ae.material1.Material.test(engine);
+		
+		final MaterialBuilder mb = new MaterialBuilder();
+		
+		final Material testMaterial =
+			mb.setColor(mb.normal()).createMaterial(engine);
+		/*
 		final Material testMaterial = new Material(
 			engine,
 			null, "TDRGB", "TNXYZ", null, null,
@@ -213,7 +216,7 @@ public final class Testing {
 			Nodes.constant("White", 1, 1, 1),
 			
 			Nodes.constant("Normal", 0.5f, 0.5f, 1));
-		
+		*/
 		final Model quad = new Model(sceneGraph).
 			setMesh(Meshes.createQuad(8, true).createMesh()).
 			setUpdater((model, time, delta) -> {
@@ -279,11 +282,11 @@ public final class Testing {
 		quad .setMaterial(testMaterial);
 		cube .setMaterial(testMaterial);
 		torus.setMaterial(testMaterial);
-		testMaterial.setTexture("T1", seamless1);
-		testMaterial.setTexture("T2", seamless2);
-		testMaterial.setTexture("TD", diffuse);
-		testMaterial.setTexture("TN", normal);
-		testMaterial.setTexture("TBump", bump);
+		//testMaterial.setTexture("T1", seamless1);
+		//testMaterial.setTexture("T2", seamless2);
+		//testMaterial.setTexture("TD", diffuse);
+		//testMaterial.setTexture("TN", normal);
+		//testMaterial.setTexture("TBump", bump);
 		
 		ambLight.color.getValue().setData(0.1f, 0.1f, 0.1f);
 		ambLight.direction.getValue().setData(0, 1, 0);

@@ -509,7 +509,7 @@ public final class Material {
 			throw new UnsupportedOperationException(
 				"Emissive component not supported yet");
 		
-		engine.addMaterial(this);
+		//engine.addMaterial(this);
 		
 		this._updater   = updater;
 		this._lightData = new float[
