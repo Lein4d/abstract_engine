@@ -7,7 +7,7 @@ import ae.util.OrganizedObject;
 
 public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 	
-	public static abstract class NodeIterator<T> implements Iterator<T> {
+	static abstract class NodeIterator<T> implements Iterator<T> {
 		
 		protected LinkedListNode<T> _node;
 		
@@ -34,7 +34,7 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 		}
 	}
 	
-	public static final class NodeIteratorForward<T> extends NodeIterator<T> {
+	static final class NodeIteratorForward<T> extends NodeIterator<T> {
 
 		public NodeIteratorForward(final LinkedListNode<T> node) {
 			super(node);
@@ -46,7 +46,7 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 		}
 	}
 
-	public static final class NodeIteratorReverse<T> extends NodeIterator<T> {
+	static final class NodeIteratorReverse<T> extends NodeIterator<T> {
 
 		public NodeIteratorReverse(final LinkedListNode<T> node) {
 			super(node);
@@ -58,22 +58,23 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 		}
 	}
 	
-	public T                 content = null;
-	public LinkedListNode<T> prev    = null;
-	public LinkedListNode<T> next    = null;
+	LinkedListNode<T> prev = null;
+	LinkedListNode<T> next = null;
+	
+	public T content = null;
 
 	// Note: linked list nodes will have uninitialized content
 	public static final <T> ObjectPool<LinkedListNode<T>> createObjectPool() {
 		return new ObjectPool<LinkedListNode<T>>(() -> new LinkedListNode<>());
 	}
 	
-	public LinkedListNode() {}
+	LinkedListNode() {}
 	
-	public LinkedListNode(final T content) {
+	LinkedListNode(final T content) {
 		this.content = content;
 	}
 	
-	public final LinkedListNode<T> insertAfter(final LinkedListNode<T> node) {
+	final LinkedListNode<T> insertAfter(final LinkedListNode<T> node) {
 		
 		if(node == null) return resetList();
 
@@ -84,7 +85,7 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 		return this;
 	}
 	
-	public final LinkedListNode<T> insertBefore(final LinkedListNode<T> node) {
+	final LinkedListNode<T> insertBefore(final LinkedListNode<T> node) {
 		
 		if(node == null) return resetList();
 		
@@ -95,7 +96,7 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 		return this;
 	}
 	
-	public final LinkedListNode<T> remove() {
+	final LinkedListNode<T> remove() {
 		
 		if(prev != null) prev.next = next;
 		if(next != null) next.prev = prev;
@@ -103,7 +104,7 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 		return this;
 	}
 
-	public final LinkedListNode<T> reset() {
+	final LinkedListNode<T> reset() {
 		
 		content     = null;
 		prev = next = null;
@@ -111,17 +112,13 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 		return this;
 	}
 	
-	public final LinkedListNode<T> resetContent() {
-		
+	final LinkedListNode<T> resetContent() {
 		content = null;
-		
 		return this;
 	}
 	
-	public final LinkedListNode<T> resetList() {
-		
+	final LinkedListNode<T> resetList() {
 		prev = next = null;
-		
 		return this;
 	}
 }

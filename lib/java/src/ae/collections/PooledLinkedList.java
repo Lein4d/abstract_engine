@@ -20,7 +20,7 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 		return node;
 	}
 	
-	private final boolean _remove(final LinkedListNode<T> node) {
+	final boolean remove(final LinkedListNode<T> node) {
 		
 		if(node == null) return false;
 		
@@ -77,18 +77,24 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 		return _last.content;
 	}
 	
-	public final void insertAtEnd(final T element) {
+	public final LinkedListNode<T> insertAtEnd(final T element) {
 		
 		final LinkedListNode<T> refNode = _last;
-		
 		_last = _insert(element);
 		
 		if(_size > 1) _last.insertAfter(refNode);
+		
+		return _last;
 	}
 	
-	public final void insertAtFront(final T element) {
+	public final LinkedListNode<T> insertAtFront(final T element) {
+		
 		final LinkedListNode<T> refNode = _first;
-		_insert(element).insertAfter(refNode);
+		_first = _insert(element);
+		
+		if(_size > 1) _first.insertBefore(refNode);
+		
+		return _first;
 	}
 	
 	@Override
@@ -115,7 +121,7 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 		final int         oldSize = _size;
 		
 		while(node != null) {
-			if(node.content == element) _remove(node);
+			if(node.content == element) remove(node);
 			node = node.next;
 		}
 		
@@ -123,7 +129,7 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 	}
 
 	public final boolean removeFirst() {
-		return _remove(_first);
+		return remove(_first);
 	}
 	
 	public final boolean removeFirst(final T element) {
@@ -131,7 +137,7 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 		LinkedListNode<T> node = _first;
 		
 		while(node != null) {
-			if(node.content == element) return _remove(node);
+			if(node.content == element) return remove(node);
 			node = node.next;
 		}
 		
@@ -139,7 +145,7 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 	}
 
 	public final boolean removeLast() {
-		return _remove(_last);
+		return remove(_last);
 	}
 	
 	public final boolean removeLast(final T element) {
@@ -147,7 +153,7 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 		LinkedListNode<T> node = _last;
 		
 		while(node != null) {
-			if(node.content == element) return _remove(node);
+			if(node.content == element) return remove(node);
 			node = node.prev;
 		}
 		

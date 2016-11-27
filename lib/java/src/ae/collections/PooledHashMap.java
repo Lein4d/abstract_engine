@@ -271,6 +271,7 @@ public final class PooledHashMap<K, V>
 		_resizeFactor = resizeFactor;
 	}
 	
+	// Returns 'true' when a new key has been inserted
 	public final boolean setValue(
 			final K key,
 			final V value) {
