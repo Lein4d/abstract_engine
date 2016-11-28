@@ -11,23 +11,6 @@ import ae.core.AbstractEngine;
 
 public final class MaterialBuilder {
 	
-	private final class Variable {
-		
-		private final String   _glslName;
-		private final GlslType _type;
-		private final Node     _definition;
-		
-		private Variable(
-    			final String   name,
-        		final GlslType type,
-        		final Node     definition) {
-			
-			_glslName   = "v_" + name;
-			_type       = type;
-			_definition = definition;
-		}
-	}
-	
 	// Node templates for functions with standard signatures
 	private static final NodeTemplate _FUNC_ABS         = _createFuncTemplate(
 		"abs",         SignatureGroup.SIG_GROUP_FLOAT_N_IN_N_OUT);
@@ -128,11 +111,14 @@ public final class MaterialBuilder {
 	private static final NodeTemplate _BIN_OP_SUB =
 		new NodeTemplate(2, _BIN_OP_SIGNATURES, "(", " - ", ")");
 	
-	private final Map<String, Material.CustomTexture> _textures   = new HashMap<>();
-	private final Map<String, Material.CustomParam>   _parameters = new HashMap<>();
-	
-	private final List<Variable>        _variablesOrdered = new LinkedList<>();
-	private final Map<String, Variable> _variablesByName  = new HashMap<>();
+	private final Map<String, Material.CustomTexture> _textures      =
+		new HashMap<>();
+	private final Map<String, Material.CustomParam>   _parameters    =
+		new HashMap<>();
+	private final List<Material.Value>                _valuesOrdered =
+		new LinkedList<>();
+	private final Map<String, Material.Value>         _valuesByName  =
+		new HashMap<>();
 	
 	private final Set<Material.BuiltInVariable> _variables = new HashSet<>();
 	private final Set<Material.BuiltInFunction> _functions = new HashSet<>();
@@ -200,15 +186,15 @@ public final class MaterialBuilder {
 		return this;
 	}
 	
-	public final MaterialBuilder addVariable(
+	public final MaterialBuilder addValue(
     		final String   name,
     		final GlslType type,
     		final Node     definition) {
 		
-		final Variable var = new Variable(name, type, definition);
+		final Material.Value var = new Material.Value(name, type, definition);
 		
-		_variablesOrdered.add(var);
-		_variablesByName .put(name, var);
+		_valuesOrdered.add(var);
+		_valuesByName .put(name, var);
 		
 		return this;
 	}
@@ -260,7 +246,8 @@ public final class MaterialBuilder {
 	public final Material createMaterial(final AbstractEngine engine) {
 		return new Material(
 			engine,
-			_variables, _functions, _parameters.values(), _textures.values(),
+			_variables, _functions,
+			_parameters.values(), _textures.values(), _valuesOrdered,
 			_color, _updater);
 	}
 
@@ -460,7 +447,14 @@ public final class MaterialBuilder {
     		final String texture,
     		final float  height) {
 		
-		return parallax(texture, height, 3, 0.5f);
+		return parallax(texture, constF(height));
+	}
+
+	public final Node parallax(
+    		final String texture,
+    		final Node   height) {
+		
+		return parallax(texture, height, constI(3), constF(0.5f));
 	}
 	
 	public final Node parallax(
@@ -680,18 +674,16 @@ public final class MaterialBuilder {
 		_variables.add(Material.BUILTIN_VAR_UTANGENT);
 		return Material.BUILTIN_VAR_UTANGENT.node;
 	}
-	/*
-	public final Node var(final String name) {
+	
+	public final Node value(final String name) {
 		
-		if(!_variablesByName.containsKey(name))
+		if(!_valuesByName.containsKey(name))
 			throw new UnsupportedOperationException(
 				"variable '" + name + "' doesn't exist");
 		
-		return new Node(
-			new CustomSignature(_variablesByName.get(name)._type),
-			new String[]{name});
+		return _valuesByName.get(name).node;
 	}
-	*/
+	
 	public final Node vTangent() {
 		_variables.add(Material.BUILTIN_VAR_VTANGENT);
 		return Material.BUILTIN_VAR_VTANGENT.node;

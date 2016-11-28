@@ -12,6 +12,7 @@ import ae.core.TextureBuilder;
 import ae.entity.DirectionalLight;
 import ae.entity.Model;
 import ae.entity.PointLight;
+import ae.material.GlslType;
 import ae.material.Material;
 import ae.material.MaterialBuilder;
 import ae.math.Matrix4D;
@@ -182,12 +183,11 @@ public final class Testing {
 			addTexture("diffuse").
 			addTexture("normal").
 			addTexture("bump").
-			//setColor(mb.mult(
-			//	mb.phong(mb.normalMapping(mb.normalTexture("normal"))),
-			//	mb.textureRGB("diffuse"))).
+			addParameter("height", GlslType.FLOAT).
+			addValue("tcMod", GlslType.FLOAT2, mb.parallax("bump", mb.param("height"))).
 			setColor(mb.mult(
-				mb.phong(),
-				mb.textureRGB("diffuse", mb.parallax("bump", 0.05f)))).
+				mb.phong(mb.normalMapping(mb.normalTexture("normal", mb.value("tcMod")))),
+				mb.textureRGB("diffuse", mb.value("tcMod")))).
 			createMaterial(engine);
 		
 		final Model quad = new Model(sceneGraph).
@@ -255,9 +255,11 @@ public final class Testing {
 		quad .setMaterial(testMaterial);
 		cube .setMaterial(testMaterial);
 		torus.setMaterial(testMaterial);
+		
 		testMaterial.setTexture("diffuse", diffuse);
 		testMaterial.setTexture("normal",  normal);
 		testMaterial.setTexture("bump",    bump);
+		testMaterial.setParam  ("height",  0.05f);
 		
 		ambLight.color.getValue().setData(0.1f, 0.1f, 0.1f);
 		ambLight.direction.getValue().setData(0, 1, 0);
@@ -280,6 +282,8 @@ public final class Testing {
 	
 		engine.setInputListener(new InputListener() {
 			
+			private int materialHeightState = 2;
+			
 			@Override
 			public final void onKeyDown(
 					final int key) {
@@ -291,6 +295,12 @@ public final class Testing {
 					case GLFW_KEY_1: engine.setSpeed(0.5); break;
 					case GLFW_KEY_2: engine.setSpeed(1); break;
 					case GLFW_KEY_3: engine.setSpeed(2); break;
+					
+					case GLFW_KEY_H:
+						materialHeightState = (materialHeightState + 1) % 3;
+						testMaterial.setParam(
+							"height", materialHeightState * 0.025f);
+						break;
 				}
 			}
 		});
@@ -300,7 +310,7 @@ public final class Testing {
 				engine.getFramebufferWidth(), engine.getFramebufferHeight(),
 				60, 2);
 		});
-		System.out.println(Math.toDegrees(Math.atan2(1, -1)));
+		
 		engine.start();
 	}
 }

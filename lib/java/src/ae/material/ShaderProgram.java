@@ -108,7 +108,7 @@ final class ShaderProgram {
 		final String   glslName;
 		final GlslType type;
 		
-		private LocalVariable(
+		LocalVariable(
 				final String   name,
 				final GlslType type,
 				final String   glslLine) {
@@ -123,7 +123,7 @@ final class ShaderProgram {
 	static abstract class Uniform implements ShaderComponent {
 		
 		final String glslName;
-		final String _glslLine; // This memeber should be private
+		final String _glslLine; // This member should be private
 
 		protected Uniform(
 				final String glslName,
@@ -370,6 +370,7 @@ final class ShaderProgram {
     		final List<CustomUniformTexture> uniformTextures,
 			final List<Varying>              varyings,
 			final List<LocalVariable>        lVariables,
+    		final List<LocalVariable>        customLVariables,
 			final List<Function>             functions,
 			final Node                       color) {
 		
@@ -406,6 +407,10 @@ final class ShaderProgram {
 		_appendEmptyLine(source);
 		
 		for(LocalVariable i : lVariables)
+			_appendLines(source, 1, i._glslLine);
+		_appendEmptyLine(source);
+
+		for(LocalVariable i : customLVariables)
 			_appendLines(source, 1, i._glslLine);
 		_appendEmptyLine(source);
 		
@@ -537,6 +542,7 @@ final class ShaderProgram {
     		final List<Attribute>            attributes,
     		final List<Varying>              varyings,
     		final List<LocalVariable>        lVariables,
+    		final List<LocalVariable>        customLVariables,
     		final List<Function>             functions,
 			final Node                       color) {
 
@@ -552,7 +558,7 @@ final class ShaderProgram {
 			engine, GL_FRAGMENT_SHADER, program,
 			_assembleFragmentShaderSource(
 				uniformsFS, uniformParams, uniformTextures,
-				varyings, lVariables, functions, color));
+				varyings, lVariables, customLVariables, functions, color));
 		
 		// If one of shader components failed, no program will be used
 		if(!vsSuccess || !fsSuccess) return 0;
@@ -576,6 +582,7 @@ final class ShaderProgram {
 	ShaderProgram(
     		final AbstractEngine       engine,
     		final Set<ShaderComponent> components,
+    		final List<LocalVariable>  customLVariables,
     		final Node                 color) {
 		
 		final List<Uniform>              uniforms        = new LinkedList<>();
@@ -610,7 +617,7 @@ final class ShaderProgram {
 		programId = _createShaderProgram(
 			engine,
 			uniformsVS, uniformsFS, uniformParams, uniformTextures,
-			attributes, varyings, lVariables, functions,
+			attributes, varyings, lVariables, customLVariables, functions,
 			color);
 		
 		for(Uniform i : uniforms)

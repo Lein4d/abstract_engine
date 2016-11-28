@@ -5,6 +5,8 @@ import static org.lwjgl.opengl.GL13.*;
 import static org.lwjgl.opengl.GL20.*;
 
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import ae.collections.PooledHashMap;
@@ -99,6 +101,26 @@ public final class Material {
 		private BuiltInVariable(final ShaderProgram.Varying varying) {
 			_component = varying;
 			node       = new Node(varying.glslName, varying.type);
+		}
+	}
+	
+	static final class Value {
+		
+		private final ShaderProgram.LocalVariable _lVariable;
+		final         Node                        node;
+		
+		Value(
+				final String   name,
+				final GlslType type,
+				final Node     definition) {
+			
+			_lVariable = new ShaderProgram.LocalVariable(
+				"var_" + name,
+				type,
+				type.glslName + " var_" + name + " = " +
+					definition.toSourceString() + ";");
+			
+			node = new Node(_lVariable.glslName, type);
 		}
 	}
 	
@@ -210,10 +232,13 @@ public final class Material {
 			final Set<BuiltInFunction>    functions,
 			final Iterable<CustomParam>   params,
 			final Iterable<CustomTexture> textures,
+			final List<Value>             values,
 			final Node                    color,
 			final Updater                 updater) {
 	
 		final Set<ShaderProgram.ShaderComponent> components = new HashSet<>();
+		final List<ShaderProgram.LocalVariable>  valueVariables =
+			new LinkedList<>();
 
 		engine.addMaterial(this);
 		
@@ -222,13 +247,14 @@ public final class Material {
 		this._lightData = new float[
 			Math.max(engine.maxDirLightCount, engine.maxPointLightCount) * 8];
 		
-		for(BuiltInVariable i : variables) components.add(i._component);
-		for(BuiltInFunction i : functions) components.add(i._function);
-		for(CustomParam     i : params)    components.add(i._uniform);
-		for(CustomTexture   i : textures)  components.add(i._uniform);
+		for(BuiltInVariable i : variables) components    .add(i._component);
+		for(BuiltInFunction i : functions) components    .add(i._function);
+		for(CustomParam     i : params)    components    .add(i._uniform);
+		for(CustomTexture   i : textures)  components    .add(i._uniform);
+		for(Value           i : values)    valueVariables.add(i._lVariable);
 		
 		final ShaderProgram program =
-			new ShaderProgram(engine, components, color);
+			new ShaderProgram(engine, components, valueVariables, color);
 		
 		_shaderProgram = program.programId;
 		
