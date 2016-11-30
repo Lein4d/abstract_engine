@@ -10,6 +10,7 @@ import org.lwjgl.opengl.GL;
 
 import ae.collections.PooledLinkedList;
 import ae.material.Material;
+import ae.material.StandardMaterials;
 import ae.math.Matrix4D;
 import ae.math.Vector3D;
 import ae.math.Vector4D;
@@ -90,6 +91,7 @@ public final class AbstractEngine {
 	public final PrintStream err;
 	
 	public final Texture  defaultTexture;
+	public final StandardMaterials standardMaterials;
 	public final Vector3D background = Vector4D.BLACK.xyz.cloneStatic();
 	public final Matrix4D projection = new Matrix4D();
 	
@@ -189,6 +191,7 @@ public final class AbstractEngine {
 
 		defaultTexture =
 			Texture.createCheckerTexture(Vector4D.WHITE, Vector4D.WHITE);
+		standardMaterials = new StandardMaterials(this);
 	}
 
 	public final void addMaterial(final Material material) {

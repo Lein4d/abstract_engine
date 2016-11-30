@@ -94,22 +94,15 @@ public final class MaterialBuilder {
 	private static final NodeTemplate _FUNC_TEXTURE    = _createFuncTemplate(
 		"texture",
 		new CustomSignature(GlslType.FLOAT4, GlslType.TEX2, GlslType.FLOAT2));
-
-	// Signatures for binary operators
-	private static final Signature[] _BIN_OP_SIGNATURES = {
-		new SignatureGroup(GlslType.Base.FLOAT, false, true,  false),
-		new SignatureGroup(GlslType.Base.FLOAT, false, false, true),
-		new SignatureGroup(GlslType.Base.FLOAT, false, false, false)};
 	
-	// Node templates for the binary operators
-	private static final NodeTemplate _BIN_OP_ADD =
-		new NodeTemplate(2, _BIN_OP_SIGNATURES, "(", " + ", ")");
-	private static final NodeTemplate _BIN_OP_DIV =
-		new NodeTemplate(2, _BIN_OP_SIGNATURES, "(", " / ", ")");
-	private static final NodeTemplate _BIN_OP_MULT =
-		new NodeTemplate(2, _BIN_OP_SIGNATURES, "(", " * ", ")");
-	private static final NodeTemplate _BIN_OP_SUB =
-		new NodeTemplate(2, _BIN_OP_SIGNATURES, "(", " - ", ")");
+	// Node template forthe division
+	private static final NodeTemplate _BIN_OP_DIV = new NodeTemplate(
+		2,
+		new Signature[]{
+			new SignatureGroup(GlslType.Base.FLOAT, false, true,  false),
+			new SignatureGroup(GlslType.Base.FLOAT, false, false, true),
+			new SignatureGroup(GlslType.Base.FLOAT, false, false, false)},
+		"(", " / ", ")");
 	
 	private final Map<String, Material.CustomTexture> _textures      =
 		new HashMap<>();
@@ -140,6 +133,29 @@ public final class MaterialBuilder {
 		return new NodeTemplate(paramCount, signatures, sepStrings);
 	}
 	
+	private static final Node createMultiOpOperatorNode(
+			final char   operator,
+			final Node[] ops) {
+		
+		if(ops.length == 1) return ops[0];
+		
+		final boolean[] isOpScalar = new boolean[ops.length];
+		final String[]  sepStrings = new String [ops.length + 1];
+		
+		for(int i = 0; i < ops.length; i++)
+			isOpScalar[i] = ops[i].type.isScalar();
+		
+		sepStrings[0] = "(";
+		for(int i = 1; i < ops.length; i++)
+			sepStrings[i] = " " + operator + " ";
+		sepStrings[ops.length] = ")";
+		
+		return new NodeTemplate(
+			ops.length,
+			new SignatureGroup(ops[0].type.baseType, false, isOpScalar),
+			sepStrings).createNode(ops);
+	}
+	
 	public final Node abs(final Node x) {
 		return _FUNC_ABS.createNode(x);
 	}
@@ -147,14 +163,11 @@ public final class MaterialBuilder {
 	public final Node acos(final Node x) {
 		return _FUNC_ACOS.createNode(x);
 	}
-	
-	public final Node add(
-			final Node op1,
-			final Node op2) {
-		
-		return _BIN_OP_ADD.createNode(op1, op2);
+
+	public final Node add(final Node ... ops) {
+		return createMultiOpOperatorNode('+', ops);
 	}
-	
+
 	public final MaterialBuilder addFunction(
     		final String name,
     		final Object definition) {
@@ -393,11 +406,8 @@ public final class MaterialBuilder {
 		return _FUNC_MOD.createNode(x, y);
 	}
 	
-	public final Node mult(
-			final Node op1,
-			final Node op2) {
-		
-		return _BIN_OP_MULT.createNode(op1, op2);
+	public final Node mult(final Node ... ops) {
+		return createMultiOpOperatorNode('*', ops);
 	}
 
 	public final Node normal() {
@@ -606,14 +616,11 @@ public final class MaterialBuilder {
 		
 		return _FUNC_STEP.createNode(edge, x);
 	}
-	
-	public final Node sub(
-			final Node op1,
-			final Node op2) {
-		
-		return _BIN_OP_SUB.createNode(op1, op2);
+
+	public final Node sub(final Node ... ops) {
+		return createMultiOpOperatorNode('-', ops);
 	}
-	
+
 	public final Node swizzle(
 			final Node   input,
 			final String mask) {

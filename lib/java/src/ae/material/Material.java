@@ -18,7 +18,7 @@ import ae.entity.Entity;
 import ae.entity.PointLight;
 import ae.math.Matrix4D;
 
-public final class Material {
+public class Material {
 
 	static final class CustomParam {
 		

@@ -15,7 +15,9 @@ import ae.entity.PointLight;
 import ae.material.GlslType;
 import ae.material.Material;
 import ae.material.MaterialBuilder;
+import ae.material.StandardMaterials;
 import ae.math.Matrix4D;
+import ae.math.Vector4D;
 import ae.mesh.Meshes;
 import ae.util.OrganizedObject;
 
@@ -156,14 +158,6 @@ public final class Testing {
 		final AbstractEngine engine     = new AbstractEngine("Engine Test", 8, 8);
 		final SceneGraph     sceneGraph = new SceneGraph();
 		
-		final Texture seamless1 = new TextureBuilder().
-			setData("data/seamless1.jpg").
-			setFiltering(true, true, true, true, 16).
-			createTexture();
-		final Texture seamless2 = new TextureBuilder().
-			setData("data/seamless2.jpg").
-			setFiltering(true, true, true, true, 16).
-			createTexture();
 		final Texture diffuse = new TextureBuilder().
 			setData("data/floor_d.jpg").
 			setFiltering(true, true, true, true, 16).
@@ -176,9 +170,14 @@ public final class Testing {
 			setData("data/floor_h.jpg").
 			setFiltering(true, true, false, false, 0).
 			createTexture();
+		/*
+		final StandardMaterials.Textures sMaterialTextures =
+			new StandardMaterials.Textures(diffuse, normal, null);
+		final Material testMaterial =
+			engine.standardMaterials.get(true, true, true, true, false);
+		*/
 		
 		final MaterialBuilder mb = new MaterialBuilder();
-		
 		final Material testMaterial = mb.
 			addTexture("diffuse").
 			addTexture("normal").
@@ -189,6 +188,7 @@ public final class Testing {
 				mb.phong(mb.normalMapping(mb.normalTexture("normal", mb.value("tcMod")))),
 				mb.textureRGB("diffuse", mb.value("tcMod")))).
 			createMaterial(engine);
+		
 		
 		final Model quad = new Model(sceneGraph).
 			setMesh(Meshes.createQuad(8, true).createMesh()).
@@ -255,6 +255,10 @@ public final class Testing {
 		quad .setMaterial(testMaterial);
 		cube .setMaterial(testMaterial);
 		torus.setMaterial(testMaterial);
+		
+		//quad .textures.setExternalValue(sMaterialTextures);
+		//cube .textures.setExternalValue(sMaterialTextures);
+		//torus.textures.setExternalValue(sMaterialTextures);
 		
 		testMaterial.setTexture("diffuse", diffuse);
 		testMaterial.setTexture("normal",  normal);

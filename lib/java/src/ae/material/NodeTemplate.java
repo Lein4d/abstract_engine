@@ -5,14 +5,7 @@ final class NodeTemplate {
 	private final int         _inputCount;
 	private final Signature[] _signatures;
 	private final String[]    _sepStrings;
-	/*
-	NodeTemplate(
-			final String   name,
-			final GlslType type) {
-		
-		this(0, type.varSignature, name);
-	}
-	*/
+	
 	NodeTemplate(
     		final int        inputCount,
     		final Signature  signature,

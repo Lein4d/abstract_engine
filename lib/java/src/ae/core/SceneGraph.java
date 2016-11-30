@@ -119,17 +119,11 @@ public class SceneGraph {
 		// Compute transformation matrices
 		_traversePrefix(_rootInstance, _transformationUpdater);
 		
-		for(Entity.Instance i : _models) {
-			
-			final Model model = (Model)i.getEntity();
-			
-			if(!model.isComplete()) continue;
-			
-			model.material.getActiveValue().use(
+		// Render all solid models
+		for(Entity.Instance i : _models)
+			((Model)i.getEntity()).draw(
 				i.transformation, getEngine().projection,
 				_dirLights, _pointLights);
-			model.draw(i.transformation);
-		}
 	}
 	
 	final void setEngine(final AbstractEngine engine) {

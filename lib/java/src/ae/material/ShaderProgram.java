@@ -478,15 +478,7 @@ final class ShaderProgram {
 			components.add(UNI_POINT_LIGHTS);
 			components.add(UNI_POINT_LIGHT_COUNT);
 		}
-		/*
-		if(components.contains(FUNC_PARALLAX)) {
-			components.add(_VARY_POSITION);
-			components.add(_VARY_NORMAL);
-			components.add(_VARY_UTANGENT);
-			components.add(_VARY_VTANGENT);
-			components.add(_VARY_TEXCOORD);
-		}
-		*/
+		
 		if(components.contains(LVAR_NORMAL  )) components.add(VARY_NORMAL);
 		if(components.contains(LVAR_UTANGENT)) components.add(VARY_UTANGENT);
 		if(components.contains(LVAR_VTANGENT)) components.add(VARY_VTANGENT);
@@ -516,7 +508,7 @@ final class ShaderProgram {
 			final int            shaderType,
 			final int            program,
 			final String         shaderSource) {
-		System.out.println(shaderSource);
+		
 		final int shader = glCreateShader(shaderType);
 		
 		glShaderSource (shader, shaderSource);
