@@ -75,6 +75,8 @@ public final class Meshes {
 			final int       vOffset,
 			final int[][]   indices,
 			final float[][] positions,
+			final float[][] uTangents,
+			final float[][] vTangents,
 			final float[][] normals,
 			final float[][] texCoords) {
 		
@@ -88,17 +90,17 @@ public final class Meshes {
 			vPos = vOffset + i;
 			
 			indices[iPos][0] = vPos;
-			indices[iPos][1] = vPos + ringSize;
+			indices[iPos][1] = vPos            + 1;
 			indices[iPos][2] = vPos + ringSize + 1;
-			indices[iPos][3] = vPos            + 1;
+			indices[iPos][3] = vPos + ringSize;
 		}
 		
 		_computeDiscVertices(
 			subdivisions, 0, vOffset,
-			false, positions, normals, null);
+			false, positions, uTangents, vTangents, normals, null);
 		_computeDiscVertices(
 			subdivisions, 1, vOffset + ringSize,
-			false, positions, normals, null);
+			false, positions, uTangents, vTangents, normals, null);
 		
 		for(int i = 0; i < ringSize; i++) {
 			
@@ -119,6 +121,8 @@ public final class Meshes {
     		final int       vOffset,
     		final int[][]   indices,
     		final float[][] positions,
+    		final float[][] uTangents,
+    		final float[][] vTangents,
     		final float[][] normals,
     		final float[][] texCoords) {
 		
@@ -136,16 +140,20 @@ public final class Meshes {
 		// Vertices of down-facing cap
 		_computeDiscVertices(
 			subdivisions, posY1, vOffset,
-			true, positions, null, texCoords);
+			true, positions, null, null, null, texCoords);
 		// Vertices of up-facing cap
 		_computeDiscVertices(
 			subdivisions, posY2, vOffset + subdivisions,
-			true, positions, null, texCoords);
+			true, positions, null, null, null, texCoords);
 		
-		// Fill normal data
+		// Fill TBN data
 		for(int i = 0; i < subdivisions; i++) {
-			Vector3D.Y_NEG.getData(normals[vOffset                + i]);
-			Vector3D.Y_POS.getData(normals[vOffset + subdivisions + i]);
+			Vector3D.X_POS.getData(uTangents[vOffset                + i]);
+			Vector3D.X_POS.getData(uTangents[vOffset + subdivisions + i]);
+			Vector3D.Z_POS.getData(vTangents[vOffset                + i]);
+			Vector3D.Z_POS.getData(vTangents[vOffset + subdivisions + i]);
+			Vector3D.Y_NEG.getData(normals  [vOffset                + i]);
+			Vector3D.Y_POS.getData(normals  [vOffset + subdivisions + i]);
 		}
 	}
 	
@@ -159,8 +167,8 @@ public final class Meshes {
 
 		final int ringSize  = subdivisions + (wrapIndices ? 0 : 1);
 		final int quadCount = _computeDiscQuadCount(subdivisions);
-		final int offset1   = invert ? 3 : 1;
-		final int offset3   = invert ? 1 : 3;
+		final int offset1   = invert ? 1 : 3;
+		final int offset3   = invert ? 3 : 1;
 		
 		int iPos;
 		
@@ -181,6 +189,8 @@ public final class Meshes {
 			final int       vOffset,
 			final boolean   wrapIndices,
 			final float[][] positions,
+    		final float[][] uTangents,
+    		final float[][] vTangents,
 			final float[][] normals,
 			final float[][] texCoords) {
 		
@@ -192,13 +202,25 @@ public final class Meshes {
 		for(int i = 0; i < ringSize; i++) {
 			
 			angle = 2.0 * Math.PI * (double)i / subdivisions;
-			x     =  (float)Math.sin(angle);
-			z     = -(float)Math.cos(angle);
+			x     = (float)Math.sin(angle);
+			z     = (float)Math.cos(angle);
 			
 			positions[vOffset + i][0] = x;
 			positions[vOffset + i][1] = posY;
 			positions[vOffset + i][2] = z;
 			
+			if(uTangents != null) {
+				uTangents[vOffset + i][0] =  (float)Math.cos(angle);
+				uTangents[vOffset + i][1] = 0;
+				uTangents[vOffset + i][2] = -(float)Math.sin(angle);
+			}
+
+			if(vTangents != null) {
+				vTangents[vOffset + i][0] = 0;
+				vTangents[vOffset + i][1] = 1;
+				vTangents[vOffset + i][2] = 0;
+			}
+
 			if(normals != null) {
 				normals[vOffset + i][0] = x;
 				normals[vOffset + i][1] = 0;
@@ -266,15 +288,18 @@ public final class Meshes {
 			2 * quadCount + subdivisions, PrimitiveType.QUAD);
 		final float[][] positions = mb.createPositionArray(
 			2 * subdivisions + 2 * ringSize);
+		final float[][] uTangents = mb.createUTangentArray();
+		final float[][] vTangents = mb.createVTangentArray();
 		final float[][] normals   = mb.createNormalArray();
 		final float[][] texCoords = mb.createTexCoordArray();
 		
 		_computeDiscData(
-			subdivisions, 0, 1, 0, 0, indices, positions, normals, texCoords);
+			subdivisions, 0, 1, 0, 0,
+			indices, positions, uTangents, vTangents, normals, texCoords);
 		
 		_computeCylinderShellData(
 			subdivisions, 2 * quadCount, 2 * subdivisions,
-			indices, positions, normals, texCoords);
+			indices, positions, uTangents, vTangents, normals, texCoords);
 
 		mb.cullFacing = true;
 		
@@ -313,11 +338,14 @@ public final class Meshes {
 		final int[][]   indices   = mb.createIndexArray(
 			subdivisions, PrimitiveType.QUAD);
 		final float[][] positions = mb.createPositionArray(2 * ringSize);
+		final float[][] uTangents = mb.createUTangentArray();
+		final float[][] vTangents = mb.createVTangentArray();
 		final float[][] normals   = mb.createNormalArray();
 		final float[][] texCoords = mb.createTexCoordArray();
 		
 		_computeCylinderShellData(
-			subdivisions, 0, 0, indices, positions, normals, texCoords);
+			subdivisions, 0, 0,
+			indices, positions, uTangents, vTangents, normals, texCoords);
 
 		mb.cullFacing = true;
 		
@@ -354,11 +382,14 @@ public final class Meshes {
 		final int[][]   indices   = mb.createIndexArray(
 			2 * quadCount, PrimitiveType.QUAD);
 		final float[][] positions = mb.createPositionArray(2 * subdivisions);
+		final float[][] uTangents = mb.createUTangentArray();
+		final float[][] vTangents = mb.createVTangentArray();
 		final float[][] normals   = mb.createNormalArray();
 		final float[][] texCoords = mb.createTexCoordArray();
 		
 		_computeDiscData(
-			subdivisions, 0, 0, 0, 0, indices, positions, normals, texCoords);
+			subdivisions, 0, 0, 0, 0,
+			indices, positions, uTangents, vTangents, normals, texCoords);
 
 		mb.cullFacing = true;
 		
@@ -481,20 +512,23 @@ public final class Meshes {
 				// formula
 				if(!flat) {
     				
+    				uTangents[vPos][0] = (float) Math.cos(angleHor);
+    				uTangents[vPos][1] = 0;
+    				uTangents[vPos][2] = (float)-Math.sin(angleHor);
+    				
+    				vTangents[vPos][0] =
+    					(float)(Math.sin(angleHor) * Math.sin(angleVer));
+        			vTangents[vPos][1] =
+        				(float) Math.cos(angleVer);
+            		vTangents[vPos][2] =
+            			(float)(Math.cos(angleHor) * Math.sin(angleVer));
+    				
 					normals[vPos][0] =
     					(float)(Math.sin(angleHor) * -Math.cos(angleVer));
     				normals[vPos][1] =
     					(float) Math.sin(angleVer);
     				normals[vPos][2] =
     					(float)(Math.cos(angleHor) * -Math.cos(angleVer));
-    				
-    				uTangents[vPos][0] = (float) Math.cos(angleHor);
-    				uTangents[vPos][1] = 0;
-    				uTangents[vPos][2] = (float)-Math.sin(angleHor);
-    				
-    				vTangents[vPos][0] = (float)(Math.sin(angleHor) * Math.sin(angleVer));
-        			vTangents[vPos][1] = (float) Math.cos(angleVer);
-            		vTangents[vPos][2] = (float)(Math.cos(angleHor) * Math.sin(angleVer));
 				}
 				
 				texCoords[vPos][0] = (float)j / subdivisionsHor;
@@ -545,12 +579,13 @@ public final class Meshes {
     	final int[][]   indices   = mb.createIndexArray(
     		subdivisionsHor * subdivisionsVer, PrimitiveType.QUAD);
     	final float[][] positions = mb.createPositionArray(vertexCount);
-    	final float[][] normals   = mb.createNormalArray();
+    	final float[][] uTangents = flat ? null : mb.createUTangentArray();
+		final float[][] vTangents = flat ? null : mb.createVTangentArray();
+    	final float[][] normals   = flat ? null : mb.createNormalArray();
     	final float[][] texCoords = mb.createTexCoordArray();
     
     	double angleHor;
     	double angleVer;
-    	float  radius;
     	float  x, y, z;
     	int    iPos;
     	int    vPos;
@@ -561,9 +596,9 @@ public final class Meshes {
     			iPos = i * subdivisionsHor + j;
     
     			indices[iPos][0] =  i      * (subdivisionsHor + 1) +  j;
-    			indices[iPos][1] = (i + 1) * (subdivisionsHor + 1) +  j;
+    			indices[iPos][1] =  i      * (subdivisionsHor + 1) + (j + 1);
     			indices[iPos][2] = (i + 1) * (subdivisionsHor + 1) + (j + 1);
-    			indices[iPos][3] =  i      * (subdivisionsHor + 1) + (j + 1);
+    			indices[iPos][3] = (i + 1) * (subdivisionsHor + 1) +  j;
     		}
     	}
     
@@ -572,21 +607,32 @@ public final class Meshes {
     			
     			angleHor = 2.0 * Math.PI * (double)j / subdivisionsHor;
     			angleVer = Math.PI * ((double)i / subdivisionsVer - 0.5);
-    			radius   = (float)Math.cos(angleVer);
     			vPos     = i * (subdivisionsHor + 1) + j;
     
-    			x =  (float)Math.sin(angleHor) * radius;
-    			y =  (float)Math.sin(angleVer);
-    			z = -(float)Math.cos(angleHor) * radius;
+    			x = (float)(Math.cos(angleVer) * Math.sin(angleHor));
+    			y = (float) Math.sin(angleVer);
+    			z = (float)(Math.cos(angleVer) * Math.cos(angleHor));
     
     			positions[vPos][0] = x;
     			positions[vPos][1] = y;
     			positions[vPos][2] = z;
     
     			if(!flat) {
+    				
+    				uTangents[vPos][0] =  (float)Math.cos(angleHor);
+        			uTangents[vPos][1] = 0;
+            		uTangents[vPos][2] = -(float)Math.sin(angleHor);
+            		
+            		vTangents[vPos][0] =
+            			(float)(Math.sin(angleVer) * -Math.sin(angleHor));
+        			vTangents[vPos][1] =
+        				(float) Math.cos(angleVer);
+            		vTangents[vPos][2] =
+            			(float)(Math.sin(angleVer) * -Math.cos(angleHor));
+    				
     				normals[vPos][0] = x;
-    				normals[vPos][1] = y;
-    				normals[vPos][2] = z;
+        			normals[vPos][1] = y;
+        			normals[vPos][2] = z;
     			}
     
     			texCoords[vPos][0] = 2 * (float)j / subdivisionsHor;

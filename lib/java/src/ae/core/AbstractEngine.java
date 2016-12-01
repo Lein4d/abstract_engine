@@ -73,7 +73,7 @@ public final class AbstractEngine {
 
 	public static final int VERSION_MAJOR    = 0;
 	public static final int VERSION_MINOR    = 9;
-	public static final int VERSION_REVISION = 0;
+	public static final int VERSION_REVISION = 1;
 	
 	public static final int SIZE_BYTE   = 1;
 	public static final int SIZE_SHORT  = 2;
@@ -90,8 +90,8 @@ public final class AbstractEngine {
 	public final PrintStream out;
 	public final PrintStream err;
 	
-	public final Texture  defaultTexture;
 	public final StandardMaterials standardMaterials;
+	
 	public final Vector3D background = Vector4D.BLACK.xyz.cloneStatic();
 	public final Matrix4D projection = new Matrix4D();
 	
@@ -189,8 +189,6 @@ public final class AbstractEngine {
 
 		GL.createCapabilities();
 
-		defaultTexture =
-			Texture.createCheckerTexture(Vector4D.WHITE, Vector4D.WHITE);
 		standardMaterials = new StandardMaterials(this);
 	}
 
