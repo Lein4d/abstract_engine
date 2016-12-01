@@ -15,9 +15,7 @@ import ae.entity.PointLight;
 import ae.material.GlslType;
 import ae.material.Material;
 import ae.material.MaterialBuilder;
-import ae.material.StandardMaterials;
 import ae.math.Matrix4D;
-import ae.math.Vector4D;
 import ae.mesh.Meshes;
 import ae.util.OrganizedObject;
 
@@ -155,7 +153,7 @@ public final class Testing {
 			"Testing complete: " + successCount + " of " + testCount +
 			" tests successful!");
 		
-		final AbstractEngine engine     = new AbstractEngine("Engine Test", 8, 8);
+		final AbstractEngine engine     = new AbstractEngine("Engine Test");
 		final SceneGraph     sceneGraph = new SceneGraph();
 		
 		final Texture diffuse = new TextureBuilder().

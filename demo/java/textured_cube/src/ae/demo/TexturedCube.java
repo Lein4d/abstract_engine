@@ -14,8 +14,7 @@ import ae.mesh.Meshes;
 
 public final class TexturedCube {
 	
-	public static void main(
-			final String[] args) {
+	public static void main(final String[] args) {
 		
 		// The engine and a scenegraph are the basic components
 		final AbstractEngine engine     = new AbstractEngine("Triangle");
@@ -29,9 +28,11 @@ public final class TexturedCube {
 			createTexture();
 		
 		// Use a standard cube for the crate and apply some fancy rotation
+		// Apply a standard material with diffuse light computation
 		final Model crate = new Model(sceneGraph).
 			setMesh(Meshes.createCube(1, true).createMesh()).
-			setTexture(crateTexture).
+			setMaterial(
+				engine.standardMaterials.get(true, false, true, false, false)).
 			setUpdater((model, time, delta) -> {
 				model.transformation.getValue().
 					toIdentity().
@@ -45,6 +46,9 @@ public final class TexturedCube {
 		// cube
 		final DirectionalLight light =
 			new DirectionalLight(sceneGraph).makeAmbient();
+		
+		// Set the diffuse crate texture
+		crate.textures.getValue().diffuse = crateTexture;
 		
 		// Set light parameters
 		light.color    .getValue().setData(Vector4D.WHITE.xyz);

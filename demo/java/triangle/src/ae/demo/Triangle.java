@@ -5,8 +5,6 @@ import static org.lwjgl.glfw.GLFW.*;
 import ae.core.AbstractEngine;
 import ae.core.InputListener;
 import ae.core.SceneGraph;
-import ae.core.Texture;
-import ae.entity.DirectionalLight;
 import ae.entity.Model;
 import ae.math.Vector4D;
 import ae.mesh.Meshes;
@@ -20,14 +18,11 @@ public final class Triangle {
 		final AbstractEngine engine     = new AbstractEngine("Triangle");
 		final SceneGraph     sceneGraph = new SceneGraph();
 		
-		// A checker texture can be used to verify the texture coordinates
-		final Texture checkerTexture =
-			Texture.createCheckerTexture(Vector4D.WHITE, Vector4D.GREY);
-		
 		// A triangle can be created by creating a disc with 3 edges
 		final Model triangle = new Model(sceneGraph).
 			setMesh(Meshes.createDisc(3).createMesh()).
-			setTexture(checkerTexture).
+			setMaterial(engine.standardMaterials.get(
+				false, false, false, false, false)).
 			setUpdater((model, time, delta) -> {
 				model.transformation.getValue().
 					toIdentity().
@@ -36,18 +31,8 @@ public final class Triangle {
 					rotateX(90);
 			});
 		
-		// Right now, the light is neccessary to make the triangle visible
-		final DirectionalLight light = new DirectionalLight(sceneGraph).
-			makeAmbient();
-		
-		// Set light parameters
-		light.color    .getValue().setData(Vector4D.WHITE.xyz);
-		light.direction.getValue().setData(0, 0, 1);
-		
-		// Add the triangle and the light source to the scenegraph
-		// Both entities will be children of the root entity
+		// Add the triangle to the scenegraph as child of the root entity
 		sceneGraph.root.addChild(triangle);
-		sceneGraph.root.addChild(light);
 		
 		// Make the background black
 		engine.background.setData(Vector4D.BLACK.xyz);

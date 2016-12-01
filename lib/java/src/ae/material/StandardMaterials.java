@@ -68,8 +68,8 @@ public final class StandardMaterials {
 					mb.param("colorMask");
 			}
 			
-			mb.setColor(curColorNode != null ?
-				curColorNode : mb.constF(0.5f,0.5f, 0.5f));
+			mb.setColor(
+				curColorNode != null ? curColorNode : mb.constF(1, 1, 1));
 			
 			_material = mb.createMaterial(engine);
 		}

@@ -126,25 +126,19 @@ public final class AbstractEngine {
 		if(_cbResize != null) _cbResize.onResize(this);
 	}
 	
-	public AbstractEngine(
-    		final String title,
-    		final int    maxDirLightCount,
-    		final int    maxPointLightCount) {
+	public AbstractEngine(final String title) {
 		
 		this(
-			title, maxDirLightCount, maxPointLightCount,
-			System.out, System.err);
+			title, System.out, System.err);
 	}
 	
 	public AbstractEngine(
 			final String      title,
-			final int         maxDirLightCount,
-			final int         maxPointLightCount,
 			final PrintStream out,
 			final PrintStream err) {
 		
-		this.maxDirLightCount   = maxDirLightCount;
-		this.maxPointLightCount = maxPointLightCount;
+		this.maxDirLightCount   = 8;
+		this.maxPointLightCount = 8;
 		this.out                = out;
 		this.err                = err;
 		
