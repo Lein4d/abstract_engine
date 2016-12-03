@@ -10,47 +10,36 @@ public final class PooledOrderedSet<T> extends PooledCollection<T, T> {
 	@SuppressWarnings("unchecked")
 	private final LinkedListNode<T>[] _tempNode = new LinkedListNode[1];
 	
-	private final boolean _ignoreMultiInsert;
-	
-	public PooledOrderedSet(final boolean ignoreMultiInsert) {
-		this(
-			ignoreMultiInsert, new PooledHashMap<>(), new PooledLinkedList<>());
+	public PooledOrderedSet() {
+		this(new PooledHashMap<>(), new PooledLinkedList<>());
 	}
 	
 	public PooledOrderedSet(
-			final boolean                             ignoreMultiInsert,
 			final PooledHashMap<T, LinkedListNode<T>> backendSet,
 			final PooledLinkedList<T>                 backendList) {
 		
 		super(null, false);
 		
-		_hashMap           = backendSet;
-		_list              = backendList;
-		_ignoreMultiInsert = ignoreMultiInsert;
+		_hashMap = backendSet;
+		_list    = backendList;
 	}
 	
-	public PooledOrderedSet(
-			final boolean     ignoreMultiInsert,
-			final Iterable<T> elements) {
+	public PooledOrderedSet(final Iterable<T> elements) {
 		
-		this(
-			ignoreMultiInsert, elements,
-			new PooledHashMap<>(), new PooledLinkedList<>());
+		this(elements, new PooledHashMap<>(), new PooledLinkedList<>());
 	}
 	
 	public PooledOrderedSet(
-			final boolean                             ignoreMultiInsert,
 			final Iterable<T>                         elements,
 			final PooledHashMap<T, LinkedListNode<T>> backendSet,
 			final PooledLinkedList<T>                 backendList) {
 		
 		super(null, false);
 		
-		_hashMap           = backendSet;
-		_list              = backendList;
-		_ignoreMultiInsert = ignoreMultiInsert;
+		_hashMap = backendSet;
+		_list    = backendList;
 		
-		for(T i : elements) insert(i);
+		for(T i : elements) tryInsertAtEnd(i);
 	}
 	
 	public final boolean exists(final T element) {
@@ -69,28 +58,59 @@ public final class PooledOrderedSet<T> extends PooledCollection<T, T> {
 		return _hashMap.getResizeFactor();
 	}
 	
-	// Returns 'true' if the order list has changed either by inserting a new
-	// value or by reinserting an existing value
-	public final boolean insert(final T element) {
+	public final boolean insertAfter(
+			final T element,
+			final T refElement) {
 		
-		boolean insert = false;
+		final boolean exists = _hashMap.tryGetValue(element, _tempNode);
 		
-		if(_hashMap.tryGetValue(element, _tempNode)) {
-			
-			if(!_ignoreMultiInsert) {
-				_list.remove(_tempNode[0]);
-				insert = true;
-			}
-			
+		if(exists) _list.remove(_tempNode[0]);
+		
+		_hashMap.setValue(
+			element,
+			_list.insertAfter(element, _hashMap.getValue(refElement)));
+		
+		return !exists;
+	}
+
+	public final boolean insertAtEnd(final T element) {
+		
+		final boolean exists = _hashMap.tryGetValue(element, _tempNode);
+		
+		if(exists) _list.remove(_tempNode[0]);
+		_hashMap.setValue(element, _list.insertAtEnd(element));
+		
+		return !exists;
+	}
+
+	public final boolean insertAtFront(final T element) {
+		
+		if(!_hashMap.hasKey(element)) {
+			_hashMap.setValue(element, _list.insertAtFront(element));
+			return true;
 		} else {
-			insert = true;
+			return false;
 		}
+	}
+
+	public final boolean insertBefore(
+			final T element,
+			final T refElement) {
 		
-		// Insert the element with a new node in the list and store this node
-		// in the map
-		if(insert) _hashMap.setValue(element, _list.insertAtEnd(element));
+		final boolean exists = _hashMap.tryGetValue(element, _tempNode);
 		
-		return _hashMap.setValue(element, null);
+		if(exists) _list.remove(_tempNode[0]);
+		
+		_hashMap.setValue(
+			element,
+			_list.insertBefore(element, _hashMap.getValue(refElement)));
+		
+		return !exists;
+	}
+
+	@Override
+	public Iterator<T> iterator() {
+		return _list.iterator();
 	}
 	
 	public final boolean remove(final T element) {
@@ -113,8 +133,51 @@ public final class PooledOrderedSet<T> extends PooledCollection<T, T> {
 		_hashMap.setResizeFactor(resizeFactor);
 	}
 
-	@Override
-	public Iterator<T> iterator() {
-		return _list.iterator();
+	public final boolean tryInsertAfter(
+			final T element,
+			final T refElement) {
+		
+		if(!_hashMap.hasKey(element)) {
+			_hashMap.setValue(
+				element,
+				_list.insertAfter(element, _hashMap.getValue(refElement)));
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	public final boolean tryInsertAtEnd(final T element) {
+		
+		if(!_hashMap.hasKey(element)) {
+			_hashMap.setValue(element, _list.insertAtEnd(element));
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public final boolean tryInsertAtFront(final T element) {
+		
+		if(!_hashMap.hasKey(element)) {
+			_hashMap.setValue(element, _list.insertAtFront(element));
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	public final boolean tryInsertBefore(
+			final T element,
+			final T refElement) {
+		
+		if(!_hashMap.hasKey(element)) {
+			_hashMap.setValue(
+				element,
+				_list.insertBefore(element, _hashMap.getValue(refElement)));
+			return true;
+		} else {
+			return false;
+		}
 	}
 }

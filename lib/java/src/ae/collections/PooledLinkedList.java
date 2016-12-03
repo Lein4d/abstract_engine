@@ -20,6 +20,34 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 		return node;
 	}
 	
+	final LinkedListNode<T> insertAfter(
+			final T                 element,
+			final LinkedListNode<T> refNode) {
+		
+		final LinkedListNode<T> newNode = _insert(element);
+		
+		// Assume the list contains at least one element. Otherwise a reference
+		// node cannot exist.
+		newNode.insertAfter(refNode);
+		if(refNode == _last) _last = newNode;
+		
+		return newNode;
+	}
+	
+	final LinkedListNode<T> insertBefore(
+    		final T                 element,
+    		final LinkedListNode<T> refNode) {
+
+		final LinkedListNode<T> newNode = _insert(element);
+		
+		// Assume the list contains at least one element. Otherwise a reference
+		// node cannot exist.
+		newNode.insertBefore(refNode);
+		if(refNode == _first) _first = newNode;
+		
+		return newNode;
+	}
+	
 	final boolean remove(final LinkedListNode<T> node) {
 		
 		if(node == null) return false;
@@ -79,20 +107,22 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 	
 	public final LinkedListNode<T> insertAtEnd(final T element) {
 		
-		final LinkedListNode<T> refNode = _last;
-		_last = _insert(element);
-		
-		if(_size > 1) _last.insertAfter(refNode);
+		if(_size == 0) {
+			_insert(element);
+		} else {
+			insertAfter(element, _last);
+		}
 		
 		return _last;
 	}
 	
 	public final LinkedListNode<T> insertAtFront(final T element) {
 		
-		final LinkedListNode<T> refNode = _first;
-		_first = _insert(element);
-		
-		if(_size > 1) _first.insertBefore(refNode);
+		if(_size == 0) {
+			_insert(element);
+		} else {
+			insertBefore(element, _first);
+		}
 		
 		return _first;
 	}
