@@ -76,6 +76,7 @@ public class SceneGraph {
 		
 		switch(entity.type) {
 			case NONE:                                              break;
+			case CAMERA:                                            break;
 			case MODEL:             _models     .insertAtEnd(node); break;
 			case DIRECTIONAL_LIGHT: _dirLights  .insertAtEnd(node); break;
 			case POINT_LIGHT:       _pointLights.insertAtEnd(node); break;

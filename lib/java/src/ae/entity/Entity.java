@@ -10,7 +10,7 @@ import ae.util.OrganizedObject;
 public class Entity<T> {
 	
 	public enum Type {
-		NONE, MODEL, DIRECTIONAL_LIGHT, POINT_LIGHT
+		NONE, CAMERA, MODEL, DIRECTIONAL_LIGHT, POINT_LIGHT
 	}
 	
 	public interface Updater<T> {
