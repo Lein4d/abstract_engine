@@ -124,4 +124,9 @@ public final class TextureScreen extends Screen {
 	public final void removeLayer(final TextureLayer layer) {
 		if(layer._parent == this) layer._activate(false);
 	}
+	
+	@Override
+	public final void render(final AbstractEngine engine) {
+		
+	}
 }

@@ -1,5 +1,7 @@
 package ae.core;
 
+import static org.lwjgl.opengl.GL11.*;
+
 import ae.collections.PooledOrderedSet;
 import ae.entity.Camera;
 
@@ -10,10 +12,17 @@ public abstract class Screen {
 		private final Screen                 _parent;
 		private final PooledOrderedSet<Rect> _rects = new PooledOrderedSet<>();
 		
-		private Layer() {
+		protected Layer() {
 			_parent = Screen.this;
 		}
 
+		protected final void _render(final AbstractEngine engine) {
+			
+			for(Rect i : _rects) {
+				glViewport(i.getX(), i.getY(), i.getWidth(), i.getHeight());
+			}
+		}
+		
 		public final Layer appendRects(final Rect ... rects) {
 			for(Rect i : rects) if(i._parent == _parent) _rects.insertAtEnd(i);
 			return this;
@@ -201,6 +210,8 @@ public abstract class Screen {
 	private int _height;
 	
 	protected abstract void _setSize(int width, int height);
+	
+	public abstract void render(AbstractEngine engine);
 	
 	public final Screen setSize(
 			final int width,

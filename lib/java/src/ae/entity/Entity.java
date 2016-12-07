@@ -156,7 +156,7 @@ public class Entity<T> {
 		_childrenByOrder.insertAtEnd(entity);
 		_childrenByName .setValue(entity.name, entity);
 		
-		sceneGraph.ivalidateGraphStructure();
+		sceneGraph.invalidateGraphStructure();
 	}
 	
 	public final Instance assignInstance(

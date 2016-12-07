@@ -19,6 +19,8 @@ public class SceneGraph {
 	private final ObjectPool<Entity.Instance> _treeNodePool =
 		new ObjectPool<>(() -> new Entity.Instance());
 
+	private final PooledLinkedList<Entity.Instance> _cameras =
+		new PooledLinkedList<>();
 	private final PooledLinkedList<Entity.Instance> _models =
 		new PooledLinkedList<>();
 	private final PooledLinkedList<Entity.Instance> _dirLights =
@@ -76,7 +78,7 @@ public class SceneGraph {
 		
 		switch(entity.type) {
 			case NONE:                                              break;
-			case CAMERA:                                            break;
+			case CAMERA:            _cameras    .insertAtEnd(node); break;
 			case MODEL:             _models     .insertAtEnd(node); break;
 			case DIRECTIONAL_LIGHT: _dirLights  .insertAtEnd(node); break;
 			case POINT_LIGHT:       _pointLights.insertAtEnd(node); break;
@@ -108,8 +110,9 @@ public class SceneGraph {
 			i.getValue().update(time, delta);
 		
 		if(_rootInstance == null) {
-			// Discard all previous instancesS
+			// Discard all previous instances
 			_treeNodePool.reset();
+			_cameras    .removeAll();
 			_models     .removeAll();
 			_dirLights  .removeAll();
 			_pointLights.removeAll();
@@ -159,7 +162,7 @@ public class SceneGraph {
 		return _engine;
 	}
 	
-	public final void ivalidateGraphStructure() {
+	public final void invalidateGraphStructure() {
 		_rootInstance = null;
 	}
 	
