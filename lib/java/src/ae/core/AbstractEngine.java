@@ -94,6 +94,7 @@ public final class AbstractEngine {
 	
 	public final Vector3D background = Vector4D.BLACK.xyz.cloneStatic();
 	public final Matrix4D projection = new Matrix4D();
+	public final Display  display    = new Display();
 	
 	static {
 		
@@ -124,6 +125,7 @@ public final class AbstractEngine {
 	private final void _updateViewport() {
 		glViewport(0, 0, _fbWidth, _fbHeight);
 		if(_cbResize != null) _cbResize.onResize(this);
+		display.setSize(_fbWidth, _fbHeight);
 	}
 	
 	public AbstractEngine(final String title) {
@@ -290,6 +292,7 @@ public final class AbstractEngine {
 
 		glfwShowWindow(_window);
 		if(_cbResize != null) _cbResize.onResize(this);
+		display.setSize(_fbWidth, _fbHeight);
 		
 		glClearColor(1f, 0f, 0f, 1f);
 		glClearDepth(1);
@@ -317,7 +320,8 @@ public final class AbstractEngine {
 			glClearColor(background.x, background.y, background.z, 1);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			_sceneGraph.draw(_time, delta);
+			_sceneGraph.prepareForDrawing(_time, delta);
+			display.render(this);
 			
 			glfwSwapBuffers(_window);
 			glfwPollEvents();

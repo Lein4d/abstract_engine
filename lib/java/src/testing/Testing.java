@@ -9,6 +9,7 @@ import ae.core.InputListener;
 import ae.core.SceneGraph;
 import ae.core.Texture;
 import ae.core.TextureBuilder;
+import ae.entity.Camera;
 import ae.entity.DirectionalLight;
 import ae.entity.Model;
 import ae.entity.PointLight;
@@ -187,6 +188,9 @@ public final class Testing {
 				mb.textureRGB("diffuse", mb.value("tcMod")))).
 			createMaterial(engine);
 		
+		final Camera camera = new Camera(sceneGraph, "camera").
+			setProjectionMode(
+				new Camera.AdaptiveFOV().setMinHorFOV(Camera.RATIO_16_9, 60));
 		
 		final Model quad = new Model(sceneGraph).
 			setMesh(Meshes.createQuad(8, true).createMesh()).
@@ -270,6 +274,7 @@ public final class Testing {
 		pointLightGreen.color.getValue().setData(0.3f, 1, 0.3f);
 		pointLightBlue.color.getValue().setData(0.3f, 0.3f, 1);
 		
+		sceneGraph.root.addChild(camera);
 		sceneGraph.root.addChild(quad);
 		
 		quad.addChild(cube);
@@ -281,6 +286,9 @@ public final class Testing {
 		
 		engine.background.setData(0.5f, 0, 0);
 		engine.setSceneGraph(sceneGraph);
+		engine.display.layer.appendRects(
+			engine.display.new RelativeRect(camera).setPosition(0, 0).setSize(0.5f, 1),
+			engine.display.new RelativeRect(camera).setPosition(0.5f, 0).setSize(0.5f, 1));
 	
 		engine.setInputListener(new InputListener() {
 			

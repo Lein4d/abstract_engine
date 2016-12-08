@@ -110,9 +110,27 @@ public class SceneGraph {
 	}
 	
 	final void draw(
-			final double time,
-			final double delta) {
+			final Camera   camera,
+			final Matrix4D projection) {
 		
+		final Matrix4D camTransformation =
+			camera.getInstance().transformation.invert();
+		
+		// Render all solid models
+		for(Model i : _models)
+			i.drawInstances(
+				projection, camTransformation,
+				_dirLightNodes, _pointLightNodes);
+	}
+	
+	final void setEngine(final AbstractEngine engine) {
+		_engine = engine;
+	}
+	
+	final void prepareForDrawing(
+    		final double time,
+    		final double delta) {
+
 		// Call the specific update callbacks for each entity instance
 		for(PooledHashMap.KeyValuePair<String, Entity<?>> i : _entities)
 			i.getValue().update(time, delta);
@@ -131,15 +149,6 @@ public class SceneGraph {
 		
 		// Compute transformation matrices
 		_traversePrefix(_rootInstance, _transformationUpdater);
-		
-		// Render all solid models
-		for(Model i : _models)
-			i.drawInstances(
-				getEngine().projection, _dirLightNodes, _pointLightNodes);
-	}
-	
-	final void setEngine(final AbstractEngine engine) {
-		_engine = engine;
 	}
 	
 	public SceneGraph() {

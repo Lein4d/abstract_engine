@@ -4,6 +4,7 @@ import static org.lwjgl.opengl.GL11.*;
 
 import ae.collections.PooledOrderedSet;
 import ae.entity.Camera;
+import ae.math.Matrix4D;
 
 public abstract class Screen {
 
@@ -16,11 +17,8 @@ public abstract class Screen {
 			_parent = Screen.this;
 		}
 
-		protected final void _render(final AbstractEngine engine) {
-			
-			for(Rect i : _rects) {
-				glViewport(i.getX(), i.getY(), i.getWidth(), i.getHeight());
-			}
+		protected final void _render() {
+			for(Rect i : _rects) i._render();
 		}
 		
 		public final Layer appendRects(final Rect ... rects) {
@@ -61,9 +59,24 @@ public abstract class Screen {
 	
 	public abstract class Rect {
 
-		private final Screen _parent;
+		private final Screen   _parent;
+		private final Matrix4D _projection = new Matrix4D();
 		
 		public Camera camera;
+		
+		private void _render() {
+			
+			if(camera == null) return;
+			
+			final int width  = getWidth();
+			final int height = getHeight();
+			
+			glViewport(getX(), getY(), width, height);
+			
+			camera.sceneGraph.draw(
+				camera,
+				camera.createProjectionMatrix(width, height, _projection));
+		}
 		
 		protected Rect(final Camera camera) {
 			this._parent = Screen.this;

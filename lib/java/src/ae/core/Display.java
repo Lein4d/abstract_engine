@@ -9,13 +9,10 @@ public final class Display extends Screen {
 	@Override
 	protected void _setSize(
 			final int width,
-			final int height) {
-		
-		
-	}
+			final int height) {}
 	
 	@Override
 	public final void render(final AbstractEngine engine) {
-		
+		layer._render();
 	}
 }

@@ -13,6 +13,8 @@ import static org.lwjgl.opengl.GL11.*;
 
 public final class Model extends Entity<Model> {
 	
+	private final Matrix4D _tempMatrix = new Matrix4D();
+	
 	// Attributes neccessary for each model
 	public final Attribute<Mesh>     mesh     = new Attribute<>();
 	public final Attribute<Material> material = new Attribute<>();
@@ -36,6 +38,7 @@ public final class Model extends Entity<Model> {
 	
 	public final void drawInstances(
 			final Matrix4D                          projection,
+			final Matrix4D                          camTransformation,
 			final PooledLinkedList<Entity.Instance> dirLights,
 			final PooledLinkedList<Entity.Instance> pointLights) {
 		
@@ -58,7 +61,12 @@ public final class Model extends Entity<Model> {
 		}
 		
 		iterateInstances((instance) -> {
-
+			
+			// Apply the inverse camera transformation to the instance
+			// transformation. The instance will then be in camera space.
+			_tempMatrix.setData       (camTransformation);
+			_tempMatrix.multWithMatrix(instance.transformation);
+			
 			// Pass the global scene data to the material shader
 			activeMaterial.use(
 				instance.transformation, projection, dirLights, pointLights);
