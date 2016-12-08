@@ -90,26 +90,12 @@ public final class PooledHashMap<K, V>
 		}
 	}
 
-	public final class KeySet implements Iterable<K> {
-		@Override
-		public Iterator<K> iterator() {
-			return new KeyIterator();
-		}
-	}
-	
-	public final class ValueSet implements Iterable<V> {
-		@Override
-		public Iterator<V> iterator() {
-			return new ValueIterator();
-		}
-	}
-	
 	private LinkedListNode<KeyValuePair<K, V>>[] _buckets;
 	private float                                _maxLoadFactor = 0.5f;
 	private int                                  _resizeFactor  = 2;
 	
-	public final KeySet   keys   = new KeySet();
-	public final ValueSet values = new ValueSet();
+	public final Iterable<K> keys   = () -> new KeyIterator();
+	public final Iterable<V> values = () -> new ValueIterator();
 	
 	private final boolean _areKeysEqual(
 			final K key1,

@@ -104,7 +104,7 @@ public final class Camera extends Entity<Camera> {
 			final SceneGraph sceneGraph,
 			final String     name) {
 		
-		super(sceneGraph, Type.CAMERA, name);
+		super(sceneGraph, Type.CAMERA, name, false);
 		mode.setInternalValue(new AdaptiveFOV());
 	}
 
@@ -113,7 +113,7 @@ public final class Camera extends Entity<Camera> {
     		final String     name,
     		final Mode       projectionMode) {
 		
-		super(sceneGraph, Type.CAMERA, name);
+		super(sceneGraph, Type.CAMERA, name, false);
 		mode.setInternalValue(projectionMode);
 	}
 	

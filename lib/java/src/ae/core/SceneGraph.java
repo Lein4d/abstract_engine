@@ -7,6 +7,7 @@ import ae.collections.LinkedListNode;
 import ae.collections.ObjectPool;
 import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;
+import ae.entity.Camera;
 import ae.entity.Entity;
 import ae.entity.Model;
 import ae.math.Matrix4D;
@@ -18,15 +19,19 @@ public class SceneGraph {
 		new PooledHashMap<>();
 	private final ObjectPool<Entity.Instance> _treeNodePool =
 		new ObjectPool<>(() -> new Entity.Instance());
-
-	private final PooledLinkedList<Entity.Instance> _cameras =
+	
+	// Some entities are stored in separate lists
+	private final PooledLinkedList<Camera> _cameras = new PooledLinkedList<>();
+	private final PooledLinkedList<Model>  _models  = new PooledLinkedList<>();
+	
+	// Some instances are stored in separate lists
+	private final PooledLinkedList<Entity.Instance> _dirLightNodes   =
 		new PooledLinkedList<>();
-	private final PooledLinkedList<Entity.Instance> _models =
+	private final PooledLinkedList<Entity.Instance> _pointLightNodes =
 		new PooledLinkedList<>();
-	private final PooledLinkedList<Entity.Instance> _dirLights =
-		new PooledLinkedList<>();
-	private final PooledLinkedList<Entity.Instance> _pointLights =
-		new PooledLinkedList<>();
+	
+	// Used in scene graph to tree conversion
+	private Entity.Instance _tempLatestNode;
 	
 	private final Consumer<Entity.Instance> _transformationUpdater =
 		(node) -> {
@@ -46,14 +51,18 @@ public class SceneGraph {
 	private AbstractEngine  _engine       = null;
 	private Entity.Instance _rootInstance = null;
 	
-	// Node pool für die verketteten Listen der Entities
-	public final ObjectPool<LinkedListNode<Entity<?>>> nodePoolLinkedList =
+	// Node pool for the children linked list of an entity
+	public final ObjectPool<LinkedListNode<Entity<?>>> nodePoolChildrenLL =
 		PooledLinkedList.<Entity<?>>createNodePool();
 	
-	// Node pool für die Hashmaps der Entities
+	// Node pool for the children hashmap of an entity
 	public final ObjectPool<LinkedListNode<PooledHashMap.KeyValuePair
-			<String, Entity<?>>>> nodePoolHashMap =
+			<String, Entity<?>>>> nodePoolChildrenHM =
 		PooledHashMap.<String, Entity<?>>createNodePool();
+
+	// Node pool for the instance list of an entity
+	public final ObjectPool<LinkedListNode<Entity.Instance>> nodePoolInstances =
+		PooledLinkedList.<Entity.Instance>createNodePool();
 	
 	public static final int KEEP_TRANSFORMATION = 0x01;
 	public static final int KEEP_COLOR          = 0x02;
@@ -66,22 +75,21 @@ public class SceneGraph {
 			final Entity.Instance nextSibling,
 			final int             level) {
 		
-		final Entity.Instance node       = _treeNodePool.provideObject();
-		Entity.Instance       latestNode = null;
+		final Entity.Instance node = _treeNodePool.provideObject();
 		
 		// Die Kinder iterieren, die Sibling-Verweise sind genau andersrum wie
 		// in der children-Liste gespeichert
-		for(Entity<?> i : entity.getChildren())
-			latestNode = _instantiateEntity(i, node, latestNode, level + 1);
+		entity.iterateChildren((child) -> {
+			_tempLatestNode =
+				_instantiateEntity(child, node, _tempLatestNode, level + 1);
+		});
 		
-		entity.assignInstance(node, parent, latestNode, nextSibling, level);
+		entity.addInstance(node, parent, _tempLatestNode, nextSibling, level);
 		
 		switch(entity.type) {
-			case NONE:                                              break;
-			case CAMERA:            _cameras    .insertAtEnd(node); break;
-			case MODEL:             _models     .insertAtEnd(node); break;
-			case DIRECTIONAL_LIGHT: _dirLights  .insertAtEnd(node); break;
-			case POINT_LIGHT:       _pointLights.insertAtEnd(node); break;
+			case DIRECTIONAL_LIGHT: _dirLightNodes  .insertAtEnd(node); break;
+			case POINT_LIGHT:       _pointLightNodes.insertAtEnd(node); break;
+			default: break;
 		}
 		
 		return node;
@@ -110,12 +118,13 @@ public class SceneGraph {
 			i.getValue().update(time, delta);
 		
 		if(_rootInstance == null) {
+			
 			// Discard all previous instances
-			_treeNodePool.reset();
-			_cameras    .removeAll();
-			_models     .removeAll();
-			_dirLights  .removeAll();
-			_pointLights.removeAll();
+			_treeNodePool   .reset();
+			_dirLightNodes  .removeAll();
+			_pointLightNodes.removeAll();
+			for(Entity<?> i : _entities.values) i.resetInstances();
+			
 			// Start the recursive tree creation
 			_rootInstance = _instantiateEntity(root, null, null, 0);
 		}
@@ -124,10 +133,9 @@ public class SceneGraph {
 		_traversePrefix(_rootInstance, _transformationUpdater);
 		
 		// Render all solid models
-		for(Entity.Instance i : _models)
-			((Model)i.getEntity()).draw(
-				i.transformation, getEngine().projection,
-				_dirLights, _pointLights);
+		for(Model i : _models)
+			i.drawInstances(
+				getEngine().projection, _dirLightNodes, _pointLightNodes);
 	}
 	
 	final void setEngine(final AbstractEngine engine) {
@@ -145,6 +153,12 @@ public class SceneGraph {
 				"Entity with name '" + entity.name + "' already exists");
 		
 		_entities.setValue(entity.name, entity);
+
+		switch(entity.type) {
+			case CAMERA: _cameras.insertAtEnd((Camera)entity); break;
+			case MODEL:  _models .insertAtEnd((Model) entity); break;
+			default: break;
+		}
 	}
 	
 	public final String generateRandomEntityName() {

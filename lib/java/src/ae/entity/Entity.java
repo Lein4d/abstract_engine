@@ -1,6 +1,7 @@
 package ae.entity;
 
-import ae.collections.PooledCollection;
+import java.util.function.Consumer;
+
 import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;
 import ae.core.SceneGraph;
@@ -108,6 +109,7 @@ public class Entity<T> {
 	
 	private final PooledLinkedList<Entity<?>>      _childrenByOrder;
 	private final PooledHashMap<String, Entity<?>> _childrenByName;
+	private final PooledLinkedList<Instance>       _instances;
 	
 	private Updater<T> _updater = null;
 	
@@ -115,6 +117,7 @@ public class Entity<T> {
 	public final Type       type;
 	public final T          downCasted;
 	public final SceneGraph sceneGraph;
+	public final boolean    multiInstance;
 	
 	// Attributes
 	public final ConstAttribute<Matrix4D> transformation =
@@ -124,27 +127,31 @@ public class Entity<T> {
 	protected Entity(
 			final SceneGraph sceneGraph,
 			final Type       type,
-			final String     name) {
+			final String     name,
+			final boolean    multiInstance) {
 		
-		this.name       =
+		this.name          =
 			name != null ? name : sceneGraph.generateRandomEntityName();
-		this.type       = type;
-		this.downCasted = (T)this;
-		this.sceneGraph = sceneGraph;
+		this.type          = type;
+		this.downCasted    = (T)this;
+		this.sceneGraph    = sceneGraph;
+		this.multiInstance = multiInstance;
 		
 		sceneGraph.addEntity(this);
 		
 		_childrenByOrder =
-			new PooledLinkedList<>(sceneGraph.nodePoolLinkedList, false);
+			new PooledLinkedList<>(sceneGraph.nodePoolChildrenLL, false);
 		_childrenByName  =
-			new PooledHashMap<>(sceneGraph.nodePoolHashMap, false);
+			new PooledHashMap<>(sceneGraph.nodePoolChildrenHM, false);
+		_instances       =
+			new PooledLinkedList<>(sceneGraph.nodePoolInstances, false);
 	}
 	
 	public Entity(
     		final SceneGraph sceneGraph,
     		final String     name) {
 		
-		this(sceneGraph, Type.NONE, name);
+		this(sceneGraph, Type.NONE, name, true);
 	}
 	
 	public final void addChild(final Entity<?> entity) {
@@ -159,7 +166,7 @@ public class Entity<T> {
 		sceneGraph.invalidateGraphStructure();
 	}
 	
-	public final Instance assignInstance(
+	public final Instance addInstance(
 			final Instance instance,
 			final Instance parent,
 			final Instance firstChild,
@@ -172,6 +179,8 @@ public class Entity<T> {
 		instance._nextSibling = nextSibling;
 		instance._level       = level;
 		
+		_instances.insertAtEnd(instance);
+		
 		return instance;
 	}
 	
@@ -181,8 +190,9 @@ public class Entity<T> {
 		return name.equals(((Entity<?>)obj).name);
 	}
 	
-	public final PooledCollection<Entity<?>, ?> getChildren() {
-		return _childrenByOrder;
+	public final Instance getInstance() {
+		return multiInstance || _instances.isEmpty() ?
+			null : _instances.getFirst();
 	}
 	
 	public static final Entity<?> group(
@@ -200,6 +210,18 @@ public class Entity<T> {
 	@Override
 	public final int hashCode() {
 		return name.hashCode();
+	}
+	
+	public final void iterateChildren(final Consumer<Entity<?>> worker) {
+		for(Entity<?> i : _childrenByOrder) worker.accept(i);
+	}
+	
+	public final void iterateInstances(final Consumer<Instance> worker) {
+		for(Instance i : _instances) worker.accept(i);
+	}
+	
+	public final void resetInstances() {
+		_instances.removeAll();
 	}
 	
 	public final T setUpdater(final Updater<T> updater) {

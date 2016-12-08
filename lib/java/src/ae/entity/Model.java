@@ -31,11 +31,10 @@ public final class Model extends Entity<Model> {
 			final SceneGraph sceneGraph,
 			final String     name) {
 		
-		super(sceneGraph, Type.MODEL, name);
+		super(sceneGraph, Type.MODEL, name, true);
 	}
 	
-	public final void draw(
-			final Matrix4D                          curTransformation,
+	public final void drawInstances(
 			final Matrix4D                          projection,
 			final PooledLinkedList<Entity.Instance> dirLights,
 			final PooledLinkedList<Entity.Instance> pointLights) {
@@ -51,18 +50,21 @@ public final class Model extends Entity<Model> {
 			activeMaterial,
 			textures .getActiveValue(),
 			colorMask.getActiveValue());
-		
-		// Pass the global scene data to the material shader
-		activeMaterial.use(
-			curTransformation, projection, dirLights, pointLights);
-		
+
 		if(activeMesh.cullFacing) {
 			glEnable(GL_CULL_FACE);
 		} else {
 			glDisable(GL_CULL_FACE);
 		}
 		
-		activeMesh.draw();
+		iterateInstances((instance) -> {
+
+			// Pass the global scene data to the material shader
+			activeMaterial.use(
+				instance.transformation, projection, dirLights, pointLights);
+
+			activeMesh.draw();
+		});
 	}
 	
 	public final boolean isComplete() {
