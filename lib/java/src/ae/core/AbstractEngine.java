@@ -11,11 +11,11 @@ import org.lwjgl.opengl.GL;
 import ae.collections.PooledLinkedList;
 import ae.material.Material;
 import ae.material.StandardMaterials;
-import ae.math.Matrix4D;
 import ae.math.Vector3D;
 import ae.math.Vector4D;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.glfw.GLFW.*;
 
 public final class AbstractEngine {
@@ -36,7 +36,30 @@ public final class AbstractEngine {
 		void update(double time, double delta);
 	}
 	
-	private final long _window;
+	public final class Display extends Screen {
+		
+		private final Layer _layer = new Layer();
+		
+		private Display() {}
+		
+		@Override
+		protected final void _setSize(
+			final int width,
+			final int height) {}
+		
+		@Override
+		public final void render(final AbstractEngine engine) {
+			
+			// Ensure rendering to the screen
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			
+			// Render the only layer available
+			_layer._render();
+		}
+	}
+	
+	private final long    _window;
+	private final Display _display = new Display();
 	
 	private final PooledLinkedList<Material> _materials   =
 		new PooledLinkedList<>();
@@ -92,9 +115,8 @@ public final class AbstractEngine {
 	
 	public final StandardMaterials standardMaterials;
 	
-	public final Vector3D background = Vector4D.BLACK.xyz.cloneStatic();
-	public final Matrix4D projection = new Matrix4D();
-	public final Display  display    = new Display();
+	public final Vector3D     background = Vector4D.BLACK.xyz.cloneStatic();
+	public final Screen.Layer display    = _display._layer;
 	
 	static {
 		
@@ -113,8 +135,8 @@ public final class AbstractEngine {
 			final Path fullPathRelative =
 				Paths.get("").toAbsolutePath().relativize(fullPath);
 			
-			SOURCE_PATH =
-				fullPathRelative.subpath(0, fullPathRelative.getNameCount() - 1);
+			SOURCE_PATH = fullPathRelative.subpath(
+				0, fullPathRelative.getNameCount() - 1);
 			
 		} else {
 			
@@ -125,13 +147,7 @@ public final class AbstractEngine {
 	private final void _updateViewport() {
 		glViewport(0, 0, _fbWidth, _fbHeight);
 		if(_cbResize != null) _cbResize.onResize(this);
-		display.setSize(_fbWidth, _fbHeight);
-	}
-	
-	public AbstractEngine(final String title) {
-		
-		this(
-			title, System.out, System.err);
+		_display.setSize(_fbWidth, _fbHeight);
 	}
 	
 	public AbstractEngine(
@@ -141,8 +157,8 @@ public final class AbstractEngine {
 		
 		this.maxDirLightCount   = 8;
 		this.maxPointLightCount = 8;
-		this.out                = out;
-		this.err                = err;
+		this.out                = out != null ? out : System.out;
+		this.err                = err != null ? err : System.err;
 		
 		if(!glfwInit())
 			throw new IllegalStateException("Unable to initialize GLFW");
@@ -292,7 +308,7 @@ public final class AbstractEngine {
 
 		glfwShowWindow(_window);
 		if(_cbResize != null) _cbResize.onResize(this);
-		display.setSize(_fbWidth, _fbHeight);
+		_display.setSize(_fbWidth, _fbHeight);
 		
 		glClearColor(1f, 0f, 0f, 1f);
 		glClearDepth(1);
@@ -321,7 +337,7 @@ public final class AbstractEngine {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			_sceneGraph.prepareForDrawing(_time, delta);
-			display.render(this);
+			_display   .render(this);
 			
 			glfwSwapBuffers(_window);
 			glfwPollEvents();

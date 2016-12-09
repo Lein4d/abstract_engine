@@ -64,9 +64,6 @@ public class SceneGraph {
 	public final ObjectPool<LinkedListNode<Entity.Instance>> nodePoolInstances =
 		PooledLinkedList.<Entity.Instance>createNodePool();
 	
-	public static final int KEEP_TRANSFORMATION = 0x01;
-	public static final int KEEP_COLOR          = 0x02;
-	
 	public final Entity<?> root;
 	
 	private final Entity.Instance _instantiateEntity(

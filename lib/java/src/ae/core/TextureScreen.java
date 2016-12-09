@@ -4,12 +4,13 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL14.*;
 import static org.lwjgl.opengl.GL15.*;
+import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.opengl.GL42.*;
 
 public final class TextureScreen extends Screen {
 	
-	public final class TextureLayer {
+	public final class TextureLayer extends Layer {
 		
 		private final TextureScreen _parent;
 		private final int           _level;
@@ -17,10 +18,13 @@ public final class TextureScreen extends Screen {
 		private int _texture = 0;
 		
 		private final void _activate(final boolean active) {
+
+			// Ensure the framebuffer object is bound
+			glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
 			
 			if(active) {
 				
-				//_addToFBO();
+				_addToFBO(getWidth(), getHeight());
 				
 			} else {
 				
@@ -128,5 +132,11 @@ public final class TextureScreen extends Screen {
 	@Override
 	public final void render(final AbstractEngine engine) {
 		
+		glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+		
+		for(TextureLayer i : _layers) {
+			glDrawBuffers(GL_COLOR_ATTACHMENT0 + i._level);
+			i._render();
+		}
 	}
 }

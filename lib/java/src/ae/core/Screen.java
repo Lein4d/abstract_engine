@@ -10,19 +10,15 @@ public abstract class Screen {
 
 	public class Layer {
 		
-		private final Screen                 _parent;
 		private final PooledOrderedSet<Rect> _rects = new PooledOrderedSet<>();
 		
-		protected Layer() {
-			_parent = Screen.this;
-		}
-
 		protected final void _render() {
-			for(Rect i : _rects) i._render();
+			for(Rect i : _rects)
+				i._render(Screen.this._width, Screen.this._height);
 		}
 		
 		public final Layer appendRects(final Rect ... rects) {
-			for(Rect i : rects) if(i._parent == _parent) _rects.insertAtEnd(i);
+			for(Rect i : rects) _rects.insertAtEnd(i);
 			return this;
 		}
 		
@@ -30,9 +26,7 @@ public abstract class Screen {
 				final Rect rect,
 				final Rect refRect) {
 			
-			if(rect._parent == _parent && refRect._parent == _parent)
-				_rects.insertAfter(rect, refRect);
-			
+			_rects.insertAfter(rect, refRect);
 			return this;
 		}
 
@@ -40,56 +34,85 @@ public abstract class Screen {
 				final Rect rect,
 				final Rect refRect) {
 			
-			if(rect._parent == _parent && refRect._parent == _parent)
-				_rects.insertBefore(rect, refRect);
-			
+			_rects.insertBefore(rect, refRect);
 			return this;
 		}
 		
 		public final Layer moveToBack(final Rect rect) {
-			if(rect._parent == _parent) _rects.insertAtFront(rect);
+			_rects.insertAtFront(rect);
 			return this;
 		}
 		
 		public final Layer moveToFront(final Rect rect) {
-			if(rect._parent == _parent) _rects.insertAtEnd(rect);
+			_rects.insertAtEnd(rect);
+			return this;
+		}
+		
+		public final Layer setCamera(final Camera camera) {
+			// TODO: Remove all rects
+			_rects.insertAtEnd(new RelativeRect(camera));
+			return this;
+		}
+		
+		public final Layer split(
+				final int        rowCount,
+				final int        columnCount,
+				final Camera ... cameras) {
+			
+			// TODO: Remove all rects
+			
+			final float rowCountF    = rowCount;
+			final float columnCountF = columnCount;
+			
+			for(int i = 0; i < rowCount; i++) {
+				for(int j = 0; j < columnCount; j++) {
+					
+					final int    cameraPos = i * columnCount + j;
+					final Camera camera    =
+						cameras.length > cameraPos ? cameras[cameraPos] : null;
+					
+					_rects.insertAtEnd(new RelativeRect(camera).
+						setPosition(j / columnCountF, i / rowCountF).
+						setSize    (1 / columnCountF, 1 / rowCountF));
+				}
+			}
+			
 			return this;
 		}
 	}
 	
-	public abstract class Rect {
-
-		private final Screen   _parent;
+	public static abstract class Rect {
+		
 		private final Matrix4D _projection = new Matrix4D();
+		private final int[]    _absRect    = new int[4];
 		
 		public Camera camera;
 		
-		private void _render() {
+		private void _render(
+				final int width,
+				final int height) {
 			
 			if(camera == null) return;
 			
-			final int width  = getWidth();
-			final int height = getHeight();
+			_computeAbsRect(width, height, _absRect);
 			
-			glViewport(getX(), getY(), width, height);
+			glViewport(_absRect[0], _absRect[1], _absRect[2], _absRect[3]);
 			
 			camera.sceneGraph.draw(
 				camera,
-				camera.createProjectionMatrix(width, height, _projection));
+				camera.createProjectionMatrix(
+					_absRect[2], _absRect[3], _projection));
 		}
 		
 		protected Rect(final Camera camera) {
-			this._parent = Screen.this;
 			this.camera  = camera;
 		}
 		
-		public abstract int getX();
-		public abstract int getY();
-		public abstract int getWidth();
-		public abstract int getHeight();
+		protected abstract void _computeAbsRect(
+			int width, int height, int[] dst);
 	}
 	
-	public final class AbsoluteRect extends Rect {
+	public static final class AbsoluteRect extends Rect {
 		
 		private int _x;
 		private int _y;
@@ -105,6 +128,18 @@ public abstract class Screen {
 			return value;
 		}
 
+		@Override
+		protected final void _computeAbsRect(
+    			final int   width,
+    			final int   height,
+    			final int[] dst) {
+			
+			dst[0] = _x;
+			dst[1] = _y;
+			dst[2] = _width;
+			dst[3] = _height;
+		}
+		
 		public AbsoluteRect() {
 			super(null);
 		}
@@ -113,26 +148,6 @@ public abstract class Screen {
 			super(camera);
 		}
 		
-		@Override
-		public final int getWidth() {
-			return _width;
-		}
-
-		@Override
-		public final int getHeight() {
-			return _height;
-		}
-
-		@Override
-		public final int getX() {
-			return _x;
-		}
-
-		@Override
-		public final int getY() {
-			return _y;
-		}
-
 		public final AbsoluteRect setPosition(
 				final int x,
 				final int y) {
@@ -154,7 +169,7 @@ public abstract class Screen {
 		}
 	}
 	
-	public final class RelativeRect extends Rect {
+	public static final class RelativeRect extends Rect {
 		
 		private float _x      = 0;
 		private float _y      = 0;
@@ -169,6 +184,18 @@ public abstract class Screen {
 			
 			return value;
 		}
+
+		@Override
+		protected final void _computeAbsRect(
+    			final int   width,
+    			final int   height,
+    			final int[] dst) {
+			
+			dst[0] = Math.round(_x * width);
+			dst[1] = Math.round(_y * height);
+			dst[2] = Math.round((_x + _width ) * width ) - dst[0];
+			dst[3] = Math.round((_y + _height) * height) - dst[1];
+		}
 		
 		public RelativeRect() {
 			super(null);
@@ -178,26 +205,6 @@ public abstract class Screen {
 			super(camera);
 		}
 		
-		@Override
-		public final int getWidth() {
-			return Math.round((_x + _width) * Screen.this._width) - getX();
-		}
-
-		@Override
-		public final int getHeight() {
-			return Math.round((_y + _height) * Screen.this._height) - getY();
-		}
-
-		@Override
-		public final int getX() {
-			return Math.round(_x * Screen.this._width);
-		}
-
-		@Override
-		public final int getY() {
-			return Math.round(_y * Screen.this._height);
-		}
-
 		public final RelativeRect setPosition(
 				final float x,
 				final float y) {
@@ -223,6 +230,14 @@ public abstract class Screen {
 	private int _height;
 	
 	protected abstract void _setSize(int width, int height);
+	
+	public final int getWidth() {
+		return _width;
+	}
+	
+	public final int getHeight() {
+		return _height;
+	}
 	
 	public abstract void render(AbstractEngine engine);
 	

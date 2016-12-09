@@ -154,8 +154,10 @@ public final class Testing {
 			"Testing complete: " + successCount + " of " + testCount +
 			" tests successful!");
 		
-		final AbstractEngine engine     = new AbstractEngine("Engine Test");
-		final SceneGraph     sceneGraph = new SceneGraph();
+		final AbstractEngine engine =
+			new AbstractEngine("Engine Test", null, null);
+		
+		final SceneGraph sceneGraph = new SceneGraph();
 		
 		final Texture diffuse = new TextureBuilder().
 			setData("data/floor_d.jpg").
@@ -296,10 +298,9 @@ public final class Testing {
 		
 		engine.background.setData(0.5f, 0, 0);
 		engine.setSceneGraph(sceneGraph);
-		engine.display.layer.appendRects(
-			engine.display.new RelativeRect(cameraGlobal).setPosition(0, 0).setSize(0.5f, 1),
-			engine.display.new RelativeRect(cameraLocal).setPosition(0.5f, 0).setSize(0.5f, 1));
-	
+		engine.display.split(1, 2, cameraGlobal, cameraLocal);
+		//engine.display.setCamera(cameraLocal);
+		
 		engine.setInputListener(new InputListener() {
 			
 			private int materialHeightState = 2;
@@ -323,12 +324,6 @@ public final class Testing {
 						break;
 				}
 			}
-		});
-		
-		engine.setResizeCallback((eng) -> {
-			engine.projection.toIdentity().projectPerspectiveHorFOV(
-				engine.getFramebufferWidth(), engine.getFramebufferHeight(),
-				60, 2);
 		});
 		
 		engine.start();
