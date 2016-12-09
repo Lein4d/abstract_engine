@@ -22,27 +22,6 @@ public final class ObjectPool<T extends OrganizedObject<T>>
 		}
 	}
 	
-	public final class ListIterator implements Iterator<T> {
-		
-		private ListNode<T> node = _used;
-		
-		@Override
-		public final boolean hasNext() {
-			return node != null;
-		}
-		
-		@Override
-		public final T next() {
-			
-			if(!hasNext()) throw new IndexOutOfBoundsException();
-			
-			node = (ListNode<T>)node.next;
-			
-			// Es wird das Objekt des alten Knotens zurückgegeben
-			return node.prev.content;
-		}
-	}
-	
 	private final ObjectCreator<T> _creator;
 	
 	private ListNode<T> _free = null;
