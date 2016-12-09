@@ -188,7 +188,11 @@ public final class Testing {
 				mb.textureRGB("diffuse", mb.value("tcMod")))).
 			createMaterial(engine);
 		
-		final Camera camera = new Camera(sceneGraph, "camera").
+		final Camera cameraGlobal = new Camera(sceneGraph, null).
+			setProjectionMode(
+				new Camera.AdaptiveFOV().setMinHorFOV(Camera.RATIO_16_9, 60));
+
+		final Camera cameraLocal = new Camera(sceneGraph, null).
 			setProjectionMode(
 				new Camera.AdaptiveFOV().setMinHorFOV(Camera.RATIO_16_9, 60));
 		
@@ -254,6 +258,11 @@ public final class Testing {
 			}).
 			setRange(4).makeLinear();
 		
+		cameraLocal.transformation.getValue().
+			translate(-5, 3, 5).
+			rotateY(-45).
+			rotateX(-20);
+		
 		quad .setMaterial(testMaterial);
 		cube .setMaterial(testMaterial);
 		torus.setMaterial(testMaterial);
@@ -274,9 +283,10 @@ public final class Testing {
 		pointLightGreen.color.getValue().setData(0.3f, 1, 0.3f);
 		pointLightBlue.color.getValue().setData(0.3f, 0.3f, 1);
 		
-		sceneGraph.root.addChild(camera);
+		sceneGraph.root.addChild(cameraGlobal);
 		sceneGraph.root.addChild(quad);
 		
+		quad.addChild(cameraLocal);
 		quad.addChild(cube);
 		quad.addChild(torus);
 		quad.addChild(ambLight);
@@ -287,8 +297,8 @@ public final class Testing {
 		engine.background.setData(0.5f, 0, 0);
 		engine.setSceneGraph(sceneGraph);
 		engine.display.layer.appendRects(
-			engine.display.new RelativeRect(camera).setPosition(0, 0).setSize(0.5f, 1),
-			engine.display.new RelativeRect(camera).setPosition(0.5f, 0).setSize(0.5f, 1));
+			engine.display.new RelativeRect(cameraGlobal).setPosition(0, 0).setSize(0.5f, 1),
+			engine.display.new RelativeRect(cameraLocal).setPosition(0.5f, 0).setSize(0.5f, 1));
 	
 		engine.setInputListener(new InputListener() {
 			

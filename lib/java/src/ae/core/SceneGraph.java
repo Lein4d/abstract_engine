@@ -40,11 +40,11 @@ public class SceneGraph {
 				node.getEntity().transformation.getActiveValue();
 			
 			if(node.getParent() != null) {
-				node.transformation.
-					setData       (node.getParent().transformation).
+				node.tfToEyeSpace.
+					setData       (node.getParent().tfToEyeSpace).
 					multWithMatrix(transformation);
 			} else {
-				node.transformation.setData(transformation);
+				node.tfToEyeSpace.setData(transformation);
 			}
 		};
 	
@@ -113,14 +113,16 @@ public class SceneGraph {
 			final Camera   camera,
 			final Matrix4D projection) {
 		
-		final Matrix4D camTransformation =
-			camera.getInstance().transformation.invert();
+		final Matrix4D tfCameraInverse =
+			camera.getInstance().tfToEyeSpace.invert();
+		
+		// Transform all entities into the current camera space
+		for(Entity.Instance i : _treeNodePool)
+			i.transformToCameraSpace(tfCameraInverse);
 		
 		// Render all solid models
 		for(Model i : _models)
-			i.drawInstances(
-				projection, camTransformation,
-				_dirLightNodes, _pointLightNodes);
+			i.drawInstances(projection, _dirLightNodes, _pointLightNodes);
 	}
 	
 	final void setEngine(final AbstractEngine engine) {

@@ -72,7 +72,8 @@ public class Entity<T> {
 	
 	public static final class Instance extends OrganizedObject<Instance> {
 		
-		public final Matrix4D transformation = new Matrix4D();
+		public final Matrix4D tfToEyeSpace    = new Matrix4D();
+		public final Matrix4D tfToCameraSpace = new Matrix4D();
 		
 		private Entity<?> _entity;
 		private int       _level;
@@ -104,6 +105,15 @@ public class Entity<T> {
 		
 		public final Instance getParent() {
 			return _parent;
+		}
+		
+		public final Instance transformToCameraSpace(
+				final Matrix4D tfCameraInverse) {
+			
+			tfToCameraSpace.setData(tfCameraInverse);
+			tfToCameraSpace.multWithMatrix(tfToEyeSpace);
+			
+			return this;
 		}
 	}
 	
