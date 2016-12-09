@@ -224,6 +224,43 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		return v;
 	}
 
+	public final Vector3D applyToOrigin(final Vector3D dst) {
+		return dst.setData(applyToOrigin(_temp, (byte)3));
+	}
+
+	public final Vector4D applyToOrigin(final Vector4D dst) {
+		return dst.setData(applyToOrigin(_temp, (byte)4));
+	}
+
+	public final float[] applyToOrigin(final float[] dst) {
+		return applyToOrigin(dst, 0, (byte)dst.length);
+	}
+	
+	public final float[] applyToOrigin(
+			final float[] dst,
+			final int     offset) {
+		
+		return applyToOrigin(dst, offset, (byte)dst.length);
+	}
+	
+	public final float[] applyToOrigin(
+    		final float[] dst,
+    		final byte    dimension) {
+		
+		return applyToOrigin(dst, 0, dimension);
+	}
+	
+	public final float[] applyToOrigin(
+			final float[] dst,
+			final int     offset,
+			final byte    dimension) {
+		
+		for(int i = 0; i < dimension; i++)
+			dst[offset + i] = getElement(i, 3);
+		
+		return dst;
+	}
+
 	public final Vector3D applyToPoint(final Vector3D p) {
 		return p.setData(applyToPoint(p.getData(_temp), (byte)3));
 	}

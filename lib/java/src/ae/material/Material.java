@@ -209,8 +209,7 @@ public class Material {
 			
 			// Apply the transformation to the light position and copy it into
 			// the data array
-			for(int j = 0; j < 3; j++) _lightData[offset + j] = 0;
-			i.tfToCameraSpace.applyToPoint(_lightData, offset, (byte)3);
+			i.tfToCameraSpace.applyToOrigin(_lightData, offset, (byte)3);
 			
 			// Copy the color to the data array
 			light.color.getActiveValue().getData(_lightData, offset + 4);
