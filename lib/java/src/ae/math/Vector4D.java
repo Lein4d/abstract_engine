@@ -110,9 +110,7 @@ public final class Vector4D extends OrganizedObject<Vector4D> {
 		return this;
 	}
 
-	public static final Vector4D createConst(
-			final float grey) {
-		
+	public static final Vector4D createConst(final float grey) {
 		return createConst(grey, grey, grey, grey);
 	}
 	
@@ -132,9 +130,7 @@ public final class Vector4D extends OrganizedObject<Vector4D> {
 		return new Vector4D(new ReadOnlyBackend(new StaticBackend(x, y, z, w)));
 	}
 
-	public static final Vector4D createStatic(
-			final float grey) {
-		
+	public static final Vector4D createStatic(final float grey) {
 		return createStatic(grey, grey, grey, grey);
 	}
 	
@@ -288,6 +284,27 @@ public final class Vector4D extends OrganizedObject<Vector4D> {
 		backend.setW(backend.getW() - v.backend.getW());
 		
 		return this;
+	}
+
+	@Override
+	public final String toString() {
+		return toString(" ");
+	}
+	
+	public final String toString(final String sep) {
+		return toString("(", sep, ")");
+	}
+	
+	public final String toString(
+			final String start,
+			final String sep,
+			final String end) {
+		
+		return
+			start +
+			backend.getX() + sep + backend.getY() + sep +
+			backend.getZ() + sep + backend.getW() +
+			end;
 	}
 	
 	public final Vector4D toZeroPoint() {

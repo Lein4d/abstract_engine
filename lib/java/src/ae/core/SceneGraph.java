@@ -8,9 +8,12 @@ import ae.collections.ObjectPool;
 import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;
 import ae.entity.Camera;
+import ae.entity.DynamicSpace;
 import ae.entity.Entity;
+import ae.entity.Marker;
 import ae.entity.Model;
 import ae.math.Matrix4D;
+import ae.math.Vector3D;
 
 public class SceneGraph {
 	
@@ -23,6 +26,9 @@ public class SceneGraph {
 	// Some entities are stored in separate lists
 	private final PooledLinkedList<Camera> _cameras = new PooledLinkedList<>();
 	private final PooledLinkedList<Model>  _models  = new PooledLinkedList<>();
+	private final PooledLinkedList<Marker> _markers = new PooledLinkedList<>();
+	private final PooledLinkedList<DynamicSpace> _dynSpaces =
+		new PooledLinkedList<>();
 	
 	// Some instances are stored in separate lists
 	private final PooledLinkedList<Entity.Instance> _dirLightNodes   =
@@ -46,6 +52,20 @@ public class SceneGraph {
 			} else {
 				node.tfToEyeSpace.setData(transformation);
 			}
+
+			if(node.getEntity().name.equals("marker_t")) {
+				final Vector3D pos = node.tfToEyeSpace.applyToOrigin(Vector3D.createStatic());
+				//final Vector3D pos = node.tfToEyeSpace.getColumn(3).xyz;
+				pos.copyStaticValues();
+				//System.out.println(pos.x + " " + pos.y + " " + pos.z);
+			}
+		};
+	
+	private final Consumer<Entity.Instance> _treePrinter =
+		(instance) -> {
+			for(int i = 0; i < instance.getLevel(); i++)
+				getEngine().out.print('\t');
+			getEngine().out.println(instance.getEntity().name);
 		};
 	
 	private AbstractEngine  _engine       = null;
@@ -66,6 +86,20 @@ public class SceneGraph {
 	
 	public final Entity<?> root;
 	
+	private final void _unrollGraph() {
+		
+		if(_rootInstance != null) return;
+			
+		// Discard all previous instances
+		_treeNodePool   .reset();
+		_dirLightNodes  .removeAll();
+		_pointLightNodes.removeAll();
+		for(Entity<?> i : _entities.values) i.resetInstances();
+		
+		// Start the recursive tree creation
+		_rootInstance = _instantiateEntity(root, null, null, 0);
+	}
+	
 	private final Entity.Instance _instantiateEntity(
 			final Entity<?>       entity,
 			final Entity.Instance parent,
@@ -73,6 +107,8 @@ public class SceneGraph {
 			final int             level) {
 		
 		final Entity.Instance node = _treeNodePool.provideObject();
+		
+		_tempLatestNode = null;
 		
 		// Die Kinder iterieren, die Sibling-Verweise sind genau andersrum wie
 		// in der children-Liste gespeichert
@@ -134,20 +170,13 @@ public class SceneGraph {
 		for(PooledHashMap.KeyValuePair<String, Entity<?>> i : _entities)
 			i.getValue().update(time, delta);
 		
-		if(_rootInstance == null) {
-			
-			// Discard all previous instances
-			_treeNodePool   .reset();
-			_dirLightNodes  .removeAll();
-			_pointLightNodes.removeAll();
-			for(Entity<?> i : _entities.values) i.resetInstances();
-			
-			// Start the recursive tree creation
-			_rootInstance = _instantiateEntity(root, null, null, 0);
-		}
+		_unrollGraph();
 		
 		// Compute transformation matrices
 		_traversePrefix(_rootInstance, _transformationUpdater);
+		
+		for(Marker       i : _markers)   i.invalidatePosition();
+		for(DynamicSpace i : _dynSpaces) i.computeTransformation();
 	}
 	
 	public SceneGraph() {
@@ -165,6 +194,10 @@ public class SceneGraph {
 		switch(entity.type) {
 			case CAMERA: _cameras.insertAtEnd((Camera)entity); break;
 			case MODEL:  _models .insertAtEnd((Model) entity); break;
+			case MARKER: _markers.insertAtEnd((Marker)entity); break;
+			case DYNAMIC_SPACE:
+				_dynSpaces.insertAtEnd((DynamicSpace)entity);
+				break;
 			default: break;
 		}
 	}
@@ -186,6 +219,11 @@ public class SceneGraph {
 	
 	public final void invalidateGraphStructure() {
 		_rootInstance = null;
+	}
+	
+	public final void print() {
+		_unrollGraph();
+		_traversePrefix(_rootInstance, _treePrinter);
 	}
 	
 	public final boolean removeEntity(final Entity<?> entity) {

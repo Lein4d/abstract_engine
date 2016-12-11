@@ -38,11 +38,11 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		@Override
 		protected final void _setX(final float x) {_setElement(0, x);}
 		@Override
-		protected final void _setY(final float y) {_setElement(0, y);}
+		protected final void _setY(final float y) {_setElement(1, y);}
 		@Override
-		protected final void _setZ(final float z) {_setElement(0, z);}
+		protected final void _setZ(final float z) {_setElement(2, z);}
 		@Override
-		protected final void _setW(final float w) {_setElement(0, w);}
+		protected final void _setW(final float w) {_setElement(3, w);}
 
 		public MatrixVector(
 				final boolean isRow,
@@ -357,7 +357,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		
 		if(_columnVectors[cIndex] == null)
 			_columnVectors[cIndex] =
-				new Vector4D(new MatrixVector(true, cIndex));
+				new Vector4D(new MatrixVector(false, cIndex));
 		
 		return _columnVectors[cIndex];
 	}

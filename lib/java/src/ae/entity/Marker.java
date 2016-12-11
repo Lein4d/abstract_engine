@@ -10,6 +10,10 @@ public final class Marker extends Entity<Marker> {
 		Vector3D.createStatic(0, 0, 0),
 		(pos) -> {
 			final Instance instance = getInstance();
+			//System.out.println(
+			//	instance.tfToEyeSpace.getElement(0, 3) + " " +
+			//	instance.tfToEyeSpace.getElement(1, 3) + " " +
+			//	instance.tfToEyeSpace.getElement(2, 3) + " ");
 			return instance != null ?
 				instance.tfToEyeSpace.applyToOrigin(pos) : pos;
 		});

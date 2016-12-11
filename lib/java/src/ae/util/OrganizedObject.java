@@ -6,7 +6,6 @@ import ae.collections.PooledHashSet;
 public abstract class OrganizedObject<T extends OrganizedObject<T>> {
 	
 	public interface Listener<T extends OrganizedObject<T>> {
-		
 		void onObjectChange(OrganizedObject<T> obj);
 	}
 	

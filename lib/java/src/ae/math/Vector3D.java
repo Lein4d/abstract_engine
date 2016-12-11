@@ -44,9 +44,17 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 		
 		return this;
 	}
-	
-	public final Vector3D add(
-			final Vector3D v) {
+
+	public final Vector3D add(final float value) {
+		
+		backend.setX(backend.getX() + value);
+		backend.setY(backend.getY() + value);
+		backend.setZ(backend.getZ() + value);
+		
+		return this;
+	}
+
+	public final Vector3D add(final Vector3D v) {
 		
 		backend.setX(backend.getX() + v.backend.getX());
 		backend.setY(backend.getY() + v.backend.getY());
@@ -56,17 +64,14 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 	}
 
 	public final Vector3D cloneConst() {
-		
 		return new Vector3D(new ReadOnlyBackend(new StaticBackend(backend)));
 	}
 	
 	public final Vector3D cloneDeep() {
-		
 		return new Vector3D(backend);
 	}
 	
 	public final Vector3D cloneStatic() {
-		
 		return new Vector3D(new StaticBackend(backend));
 	}
 	
@@ -80,23 +85,36 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 	}
 	
 	public final float computeLength() {
-		
 		copyStaticValues();
-		
 		return (float)Math.sqrt(x * x + y * y + z * z);
 	}
 
 	public final float computeMean() {
-		
 		return (backend.getX() + backend.getY() + backend.getZ()) / 4;
 	}
 
+	public static final Vector3D createConst() {
+		return createConst(0);
+	}
+
+	public static final Vector3D createConst(final float grey) {
+		return createConst(grey, grey, grey);
+	}
+	
 	public static final Vector3D createConst(
 			final float x,
 			final float y,
 			final float z) {
 		
 		return new Vector3D(new ReadOnlyBackend(new StaticBackend(x, y, z, 1)));
+	}
+
+	public static final Vector3D createStatic() {
+		return createStatic(0);
+	}
+
+	public static final Vector3D createStatic(final float grey) {
+		return createStatic(grey, grey, grey);
 	}
 	
 	public static final Vector3D createStatic(
@@ -117,13 +135,12 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 		
 		dst.backend.setX(v1.y * v2.z - v1.z * v2.y);
 		dst.backend.setY(v1.z * v2.x - v1.x * v2.z);
-		dst.backend.setX(v1.x * v2.y - v1.y * v2.x);
+		dst.backend.setZ(v1.x * v2.y - v1.y * v2.x);
 		
 		return dst;
 	}
 	
-	public final Vector3D div(
-			final float factor) {
+	public final Vector3D div(final float factor) {
 		
 		backend.setX(backend.getX() / factor);
 		backend.setY(backend.getY() / factor);
@@ -132,8 +149,16 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 		return this;
 	}
 
-	public final float dot(
-			final Vector3D v) {
+	public final Vector3D div(final Vector3D v) {
+		
+		backend.setX(backend.getX() / v.backend.getX());
+		backend.setY(backend.getY() / v.backend.getY());
+		backend.setZ(backend.getZ() / v.backend.getZ());
+		
+		return this;
+	}
+	
+	public final float dot(final Vector3D v) {
 		
 		return
 			backend.getX() * v.backend.getX() +
@@ -141,8 +166,7 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 			backend.getZ() * v.backend.getZ();
 	}
 	
-	public final VectorBackend getData(
-			final VectorBackend dst) {
+	public final VectorBackend getData(final VectorBackend dst) {
 		
 		dst.setX(backend.getX());
 		dst.setY(backend.getY());
@@ -151,14 +175,11 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 		return dst;
 	}
 	
-	public final Vector3D getData(
-			final Vector3D dst) {
-		
+	public final Vector3D getData(final Vector3D dst) {
 		return dst.setData(backend);
 	}
 	
-	public final float[] getData(
-			final float[] dst) {
+	public final float[] getData(final float[] dst) {
 		
 		dst[0] = backend.getX();
 		dst[1] = backend.getY();
@@ -178,8 +199,7 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 		return dst;
 	}
 
-	public final Vector3D mult(
-			final float factor) {
+	public final Vector3D mult(final float factor) {
 		
 		backend.setX(backend.getX() * factor);
 		backend.setY(backend.getY() * factor);
@@ -188,8 +208,7 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 		return this;
 	}
 	
-	public final Vector3D mult(
-			final Vector3D v) {
+	public final Vector3D mult(final Vector3D v) {
 		
 		backend.setX(backend.getX() * v.backend.getX());
 		backend.setY(backend.getY() * v.backend.getY());
@@ -203,8 +222,7 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 		return applyUnaryOp((x) -> x / length);
 	}
 	
-	public final Vector3D setData(
-			final VectorBackend src) {
+	public final Vector3D setData(final VectorBackend src) {
 		
 		backend.setX(src.getX());
 		backend.setY(src.getY());
@@ -213,9 +231,7 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 		return this;
 	}
 	
-	public final Vector3D setData(
-			final Vector3D src) {
-		
+	public final Vector3D setData(final Vector3D src) {
 		return setData(src.backend);
 	}
 
@@ -229,11 +245,9 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 		return this;
 	}
 	
-	public final Vector3D setData(
-    		final float[] src) {
-    	
-    	return setData(src[0], src[1], src[2]);
-    }
+	public final Vector3D setData(final float[] src) {
+		return setData(src[0], src[1], src[2]);
+	}
 	
 	public final Vector3D setData(
 			final float[] src,
@@ -241,9 +255,46 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 
 		return setData(src[offset], src[offset + 1], src[offset + 2]);
 	}
+
+	public final Vector3D sub(final float value) {
+		
+		backend.setX(backend.getX() - value);
+		backend.setY(backend.getY() - value);
+		backend.setZ(backend.getZ() - value);
+		
+		return this;
+	}
+
+	public final Vector3D sub(final Vector3D v) {
+		
+		backend.setX(backend.getX() - v.backend.getX());
+		backend.setY(backend.getY() - v.backend.getY());
+		backend.setZ(backend.getZ() - v.backend.getZ());
+		
+		return this;
+	}
+
+	@Override
+	public final String toString() {
+		return toString(" ");
+	}
+	
+	public final String toString(final String sep) {
+		return toString("(", sep, ")");
+	}
+	
+	public final String toString(
+			final String start,
+			final String sep,
+			final String end) {
+		
+		return
+			start +
+			backend.getX() + sep + backend.getY() + sep + backend.getZ() +
+			end;
+	}
 	
 	public final Vector3D toZeroVector() {
-		
 		return setData(0, 0, 0);
 	}
 }

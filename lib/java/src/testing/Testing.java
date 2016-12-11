@@ -11,6 +11,8 @@ import ae.core.Texture;
 import ae.core.TextureBuilder;
 import ae.entity.Camera;
 import ae.entity.DirectionalLight;
+import ae.entity.DynamicSpace;
+import ae.entity.Marker;
 import ae.entity.Model;
 import ae.entity.PointLight;
 import ae.material.GlslType;
@@ -197,8 +199,15 @@ public final class Testing {
 		final Camera cameraLocal = new Camera(sceneGraph, null).
 			setProjectionMode(
 				new Camera.AdaptiveFOV().setMinHorFOV(Camera.RATIO_16_9, 60));
+
+		final Marker originMarker = new Marker(sceneGraph, "marker_o");
+		final Marker torusMarker  = new Marker(sceneGraph, "marker_t");
 		
-		final Model quad = new Model(sceneGraph).
+		final DynamicSpace cameraSpace = new DynamicSpace(sceneGraph, "cam_space").
+			setOrigin(originMarker).
+			setFocus (torusMarker);
+		
+		final Model quad = new Model(sceneGraph, "quad").
 			setMesh(Meshes.createQuad(8, true).createMesh()).
 			setUpdater((model, time, delta) -> {
 				model.transformation.getValue().
@@ -208,7 +217,7 @@ public final class Testing {
 					rotateY((float)time / 200f);
 			});
 		
-		final Model cube = new Model(sceneGraph).
+		final Model cube = new Model(sceneGraph, "cube").
 			setMesh(Meshes.createCube(2, true).createMesh()).
 			setUpdater((model, time, delta) -> {
 				model.transformation.getValue().
@@ -217,7 +226,7 @@ public final class Testing {
 					rotateX((float)time / 200f);
 			});
 		
-		final Model torus = new Model(sceneGraph).
+		final Model torus = new Model(sceneGraph, "torus").
 			setMesh(
 				Meshes.createTorus(64, 32, 1, 0.5f, 0.5f, false).
 					transformTexCoords(new Matrix4D().scale(2, 1, 1)).createMesh()).
@@ -230,10 +239,10 @@ public final class Testing {
 					rotateX((float)time / 200f);
 			});
 		
-		final DirectionalLight ambLight = new DirectionalLight(sceneGraph).
+		final DirectionalLight ambLight = new DirectionalLight(sceneGraph, "amb").
 			makeAmbient();
 		
-		final PointLight pointLightRed = new PointLight(sceneGraph).
+		final PointLight pointLightRed = new PointLight(sceneGraph, "red").
 			setUpdater((light, time, delta) -> {
 				light.transformation.getValue().
 					toIdentity().
@@ -242,7 +251,7 @@ public final class Testing {
 			}).
 			setRange(4).makeLinear();
 		
-		final PointLight pointLightGreen = new PointLight(sceneGraph).
+		final PointLight pointLightGreen = new PointLight(sceneGraph, "green").
 			setUpdater((light, time, delta) -> {
 				light.transformation.getValue().
 					toIdentity().
@@ -251,7 +260,7 @@ public final class Testing {
 			}).
 			setRange(4).makeLinear();
 
-		final PointLight pointLightBlue = new PointLight(sceneGraph).
+		final PointLight pointLightBlue = new PointLight(sceneGraph, "blue").
 			setUpdater((light, time, delta) -> {
 				light.transformation.getValue().
 					toIdentity().
@@ -259,6 +268,8 @@ public final class Testing {
 					translate(2, 1, 0);
 			}).
 			setRange(4).makeLinear();
+		
+		cameraGlobal.transformation.getValue().rotateY(180);
 		
 		cameraLocal.transformation.getValue().
 			translate(-5, 3, 5).
@@ -285,8 +296,10 @@ public final class Testing {
 		pointLightGreen.color.getValue().setData(0.3f, 1, 0.3f);
 		pointLightBlue.color.getValue().setData(0.3f, 0.3f, 1);
 		
-		sceneGraph.root.addChild(cameraGlobal);
+		//sceneGraph.root.addChild(cameraGlobal);
 		sceneGraph.root.addChild(quad);
+		sceneGraph.root.addChild(originMarker);
+		sceneGraph.root.addChild(cameraSpace);
 		
 		quad.addChild(cameraLocal);
 		quad.addChild(cube);
@@ -296,10 +309,16 @@ public final class Testing {
 		quad.addChild(pointLightGreen);
 		quad.addChild(pointLightBlue);
 		
+		torus.addChild(torusMarker);
+		
+		cameraSpace.addChild(cameraGlobal);
+		
 		engine.background.setData(0.5f, 0, 0);
 		engine.setSceneGraph(sceneGraph);
 		engine.display.split(1, 2, cameraGlobal, cameraLocal);
 		//engine.display.setCamera(cameraLocal);
+		
+		sceneGraph.print();
 		
 		engine.setInputListener(new InputListener() {
 			
