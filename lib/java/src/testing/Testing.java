@@ -19,6 +19,7 @@ import ae.material.GlslType;
 import ae.material.Material;
 import ae.material.MaterialBuilder;
 import ae.math.Matrix4D;
+import ae.math.SignedAxis;
 import ae.math.Vector4D;
 import ae.mesh.Meshes;
 import ae.util.OrganizedObject;
@@ -200,7 +201,8 @@ public final class Testing {
 		
 		final DynamicSpace cameraSpace = new DynamicSpace(sceneGraph, "cam_space").
 			setOrigin(originMarker).
-			setFocus (torusMarker);
+			setViewFocus (torusMarker).
+			setViewAxisMapping(SignedAxis.Z_NEG);
 		
 		final Model refCube = new Model(sceneGraph, "ref_cube").
 			setMesh(Meshes.createCube(20, true).
@@ -272,7 +274,7 @@ public final class Testing {
 			}).
 			setRange(4).makeLinear();
 		
-		cameraGlobal.transformation.getValue().rotateY(180);
+		//cameraGlobal.transformation.getValue().rotateY(180);
 		
 		cameraLocal.transformation.getValue().
 			translate(-5, 3, 5).

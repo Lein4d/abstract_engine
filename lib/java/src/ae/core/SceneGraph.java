@@ -61,7 +61,7 @@ public class SceneGraph {
 			for(int i = 0; i < instance.getLevel(); i++)
 				getEngine().out.print("|\t");
 			
-			getEngine().out.println("|> [" + entity.type + "] " + entity.name);
+			getEngine().out.println("[" + entity.type + "] " + entity.name);
 		};
 	
 	private AbstractEngine  _engine       = null;
