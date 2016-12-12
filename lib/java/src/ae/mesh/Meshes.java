@@ -1,7 +1,7 @@
 package ae.mesh;
 
 import ae.math.Matrix4D;
-import ae.math.Vector3D;
+import ae.math.SignedAxis;
 import ae.mesh.Mesh.PrimitiveType;
 import ae.util.Functions;
 
@@ -148,12 +148,12 @@ public final class Meshes {
 		
 		// Fill TBN data
 		for(int i = 0; i < subdivisions; i++) {
-			Vector3D.X_POS.getData(uTangents[vOffset                + i]);
-			Vector3D.X_POS.getData(uTangents[vOffset + subdivisions + i]);
-			Vector3D.Z_POS.getData(vTangents[vOffset                + i]);
-			Vector3D.Z_POS.getData(vTangents[vOffset + subdivisions + i]);
-			Vector3D.Y_NEG.getData(normals  [vOffset                + i]);
-			Vector3D.Y_POS.getData(normals  [vOffset + subdivisions + i]);
+			SignedAxis.X_POS.v.getData(uTangents[vOffset                + i]);
+			SignedAxis.X_POS.v.getData(uTangents[vOffset + subdivisions + i]);
+			SignedAxis.Z_POS.v.getData(vTangents[vOffset                + i]);
+			SignedAxis.Z_POS.v.getData(vTangents[vOffset + subdivisions + i]);
+			SignedAxis.Y_NEG.v.getData(normals  [vOffset                + i]);
+			SignedAxis.Y_POS.v.getData(normals  [vOffset + subdivisions + i]);
 		}
 	}
 	

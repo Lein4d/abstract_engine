@@ -8,13 +8,6 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 		float applyToComponent(float x);
 	}
 	
-	public static final Vector3D X_POS = createConst( 1,  0,  0);
-	public static final Vector3D X_NEG = createConst(-1,  0,  0);
-	public static final Vector3D Y_POS = createConst( 0,  1,  0);
-	public static final Vector3D Y_NEG = createConst( 0, -1,  0);
-	public static final Vector3D Z_POS = createConst( 0,  0,  1);
-	public static final Vector3D Z_NEG = createConst( 0,  0, -1);
-	
 	public final VectorBackend backend;
 	public final Vector3D      readOnly;
 	

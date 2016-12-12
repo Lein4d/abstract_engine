@@ -13,7 +13,6 @@ import ae.entity.Entity;
 import ae.entity.Marker;
 import ae.entity.Model;
 import ae.math.Matrix4D;
-import ae.math.Vector3D;
 
 public class SceneGraph {
 	
@@ -52,20 +51,17 @@ public class SceneGraph {
 			} else {
 				node.tfToEyeSpace.setData(transformation);
 			}
-
-			if(node.getEntity().name.equals("marker_t")) {
-				final Vector3D pos = node.tfToEyeSpace.applyToOrigin(Vector3D.createStatic());
-				//final Vector3D pos = node.tfToEyeSpace.getColumn(3).xyz;
-				pos.copyStaticValues();
-				//System.out.println(pos.x + " " + pos.y + " " + pos.z);
-			}
 		};
 	
 	private final Consumer<Entity.Instance> _treePrinter =
 		(instance) -> {
+			
+			final Entity<?> entity = instance.getEntity();
+			
 			for(int i = 0; i < instance.getLevel(); i++)
-				getEngine().out.print('\t');
-			getEngine().out.println(instance.getEntity().name);
+				getEngine().out.print("|\t");
+			
+			getEngine().out.println("|> [" + entity.type + "] " + entity.name);
 		};
 	
 	private AbstractEngine  _engine       = null;
