@@ -322,6 +322,18 @@ public class MeshBuilder {
 		return newIndices;
 	}
 	
+	private final void _invertPrimitive(
+			final float[][] data,
+			final float[][] tempPrimitive,
+			final int       offset) {
+
+		System.arraycopy(
+			data, offset, tempPrimitive, 0, _primitiveType.size);
+		
+		for(int i = 0; i < _primitiveType.size; i++)
+			data[offset + i] = tempPrimitive[_primitiveType.size - 1 - i];
+	}
+	
 	private static final void _mergeUnifiedMeshData(
 			final MeshBuilder[] src,
 			final MeshBuilder   dst,
@@ -511,6 +523,49 @@ public class MeshBuilder {
 
 	public final float[][] getVTangents() {
 		return _vTangents;
+	}
+	
+	public final MeshBuilder invertFaceOrientation() {
+		
+		_assertPrimitiveTypeSet();
+		
+		if(_indices != null) {
+			
+			final int[] primitive = new int[_primitiveType.size];
+			
+			for(int[] i : _indices) {
+				System.arraycopy(i, 0, primitive, 0, _primitiveType.size);
+				for(int j = 0; j < _primitiveType.size; j++)
+					i[j] = primitive[_primitiveType.size - 1 - j];
+			}
+			
+		} else {
+			
+			_assertPositionsNotNull();
+			final float[][] primitive = new float[_primitiveType.size][];
+			
+			for(int i = 0; i < _positions.length; i += _primitiveType.size) {
+				
+				_invertPrimitive(_positions, primitive, i);
+				
+				if(_normals   != null)
+					_invertPrimitive(_normals,   primitive, i);
+				if(_uTangents != null)
+					_invertPrimitive(_uTangents, primitive, i);
+				if(_vTangents != null)
+					_invertPrimitive(_vTangents, primitive, i);
+				if(_texCoords != null)
+					_invertPrimitive(_texCoords, primitive, i);
+			}
+		}
+		
+		// Invert all normal vectors, tangents are not affected as the
+		// tex-coords stay the same
+		if(_normals != null)
+			for(float[] i : _normals)
+				for(int j = 0; j < 3; j++) i[j] = -i[j];
+		
+		return this;
 	}
 	
 	public static final MeshBuilder merge(

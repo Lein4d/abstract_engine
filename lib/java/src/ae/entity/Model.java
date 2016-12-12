@@ -2,6 +2,7 @@ package ae.entity;
 
 import ae.collections.PooledLinkedList;
 import ae.core.SceneGraph;
+import ae.core.Texture;
 import ae.material.Material;
 import ae.material.StandardMaterials;
 import ae.math.Matrix4D;
@@ -70,6 +71,35 @@ public final class Model extends Entity<Model> {
 	public final boolean isComplete() {
 		return
 			mesh.getActiveValue() != null && material.getActiveValue() != null;
+	}
+
+	public final Model setColorMask(final Vector3D mask) {
+		colorMask.getValue().setData(mask);
+		return this;
+	}
+
+	public final Model setColorMask(
+			final float red,
+			final float green,
+			final float blue) {
+		
+		colorMask.getValue().setData(red, green, blue);
+		return this;
+	}
+	
+	public final Model setDiffuseTexture(final Texture texture) {
+		textures.getValue().diffuse = texture;
+		return this;
+	}
+
+	public final Model setEmissiveTexture(final Texture texture) {
+		textures.getValue().emissive = texture;
+		return this;
+	}
+	
+	public final Model setNormalMapTexture(final Texture texture) {
+		textures.getValue().normalMap = texture;
+		return this;
 	}
 	
 	public final Model setMesh(final Mesh mesh) {

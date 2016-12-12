@@ -19,6 +19,7 @@ import ae.material.GlslType;
 import ae.material.Material;
 import ae.material.MaterialBuilder;
 import ae.math.Matrix4D;
+import ae.math.Vector4D;
 import ae.mesh.Meshes;
 import ae.util.OrganizedObject;
 
@@ -173,12 +174,6 @@ public final class Testing {
 			setData("data/floor_h.jpg").
 			setFiltering(true, true, false, false, 0).
 			createTexture();
-		/*
-		final StandardMaterials.Textures sMaterialTextures =
-			new StandardMaterials.Textures(diffuse, normal, null);
-		final Material testMaterial =
-			engine.standardMaterials.get(true, true, true, true, false);
-		*/
 		
 		final MaterialBuilder mb = new MaterialBuilder();
 		final Material testMaterial = mb.
@@ -194,7 +189,7 @@ public final class Testing {
 		
 		final Camera cameraGlobal = new Camera(sceneGraph, null).
 			setProjectionMode(
-				new Camera.AdaptiveFOV().setMinHorFOV(Camera.RATIO_16_9, 60));
+				new Camera.AdaptiveFOV().setMinHorFOV(Camera.RATIO_16_9, 40));
 
 		final Camera cameraLocal = new Camera(sceneGraph, null).
 			setProjectionMode(
@@ -207,13 +202,21 @@ public final class Testing {
 			setOrigin(originMarker).
 			setFocus (torusMarker);
 		
+		final Model refCube = new Model(sceneGraph, "ref_cube").
+			setMesh(Meshes.createCube(20, true).
+				transformTexCoords(new Matrix4D().scale(2)).
+				invertFaceOrientation().
+				createMesh()).
+			setMaterial(
+				engine.standardMaterials.get(true, false, false, false, false)).
+			setDiffuseTexture(
+				Texture.createCheckerTexture(Vector4D.WHITE, Vector4D.GREY));
+		
 		final Model quad = new Model(sceneGraph, "quad").
 			setMesh(Meshes.createQuad(8, true).createMesh()).
 			setUpdater((model, time, delta) -> {
 				model.transformation.getValue().
 					toIdentity().
-					translate(0, 0, -12).
-					rotateX(45).
 					rotateY((float)time / 200f);
 			});
 		
@@ -276,13 +279,13 @@ public final class Testing {
 			rotateY(-45).
 			rotateX(-20);
 		
+		refCube.transformation.getValue().
+			translate(0, 0, -12).
+			rotateX(45);
+		
 		quad .setMaterial(testMaterial);
 		cube .setMaterial(testMaterial);
 		torus.setMaterial(testMaterial);
-		
-		//quad .textures.setExternalValue(sMaterialTextures);
-		//cube .textures.setExternalValue(sMaterialTextures);
-		//torus.textures.setExternalValue(sMaterialTextures);
 		
 		testMaterial.setTexture("diffuse", diffuse);
 		testMaterial.setTexture("normal",  normal);
@@ -297,9 +300,11 @@ public final class Testing {
 		pointLightBlue.color.getValue().setData(0.3f, 0.3f, 1);
 		
 		//sceneGraph.root.addChild(cameraGlobal);
-		sceneGraph.root.addChild(quad);
+		sceneGraph.root.addChild(refCube);
 		sceneGraph.root.addChild(originMarker);
 		sceneGraph.root.addChild(cameraSpace);
+		
+		refCube.addChild(quad);
 		
 		quad.addChild(cameraLocal);
 		quad.addChild(cube);
