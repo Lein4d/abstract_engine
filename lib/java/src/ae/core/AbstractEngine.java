@@ -13,6 +13,7 @@ import ae.material.Material;
 import ae.material.StandardMaterials;
 import ae.math.Vector3D;
 import ae.math.Vector4D;
+import ae.scenegraph.SceneGraph;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL30.*;

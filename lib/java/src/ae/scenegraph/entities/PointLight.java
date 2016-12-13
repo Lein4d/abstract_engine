@@ -1,8 +1,9 @@
-package ae.entity;
+package ae.scenegraph.entities;
 
-import ae.core.SceneGraph;
 import ae.math.Vector3D;
 import ae.math.Vector4D;
+import ae.scenegraph.Entity;
+import ae.scenegraph.SceneGraph;
 
 public class PointLight extends Entity<PointLight> {
 

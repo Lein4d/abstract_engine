@@ -1,4 +1,4 @@
-package ae.core;
+package ae.scenegraph;
 
 import java.io.PrintStream;
 import java.util.Random;
@@ -8,24 +8,24 @@ import ae.collections.LinkedListNode;
 import ae.collections.ObjectPool;
 import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;
-import ae.entity.Camera;
-import ae.entity.DynamicSpace;
-import ae.entity.Entity;
-import ae.entity.Marker;
-import ae.entity.Model;
+import ae.core.AbstractEngine;
 import ae.math.Matrix4D;
+import ae.scenegraph.entities.Camera;
+import ae.scenegraph.entities.DynamicSpace;
+import ae.scenegraph.entities.Marker;
+import ae.scenegraph.entities.Model;
 import ae.util.OrganizedObject;
 
 public class SceneGraph {
 	
 	private final class UnrollError extends OrganizedObject<UnrollError> {
 		
-		private final PooledLinkedList<Entity.Instance> _instanceScope =
+		private final PooledLinkedList<Instance> _instanceScope =
 			new PooledLinkedList<>();
 		
-		private Entity<?>       _entity;
-		private Entity.Instance _instance;
-		private String          _msg;
+		private Entity<?> _entity;
+		private Instance  _instance;
+		private String    _msg;
 		
 		private final void _print() {
 			
@@ -38,7 +38,7 @@ public class SceneGraph {
 				_instance.getScope(_instanceScope);
 				
 				_engine.err.print("\t\tin instance [");
-				for(Entity.Instance i : _instanceScope)
+				for(Instance i : _instanceScope)
 					_engine.err.print(
 						i.getEntity().name + (i != _instance ? " -> " : ""));
 				_engine.err.println("]");
@@ -57,8 +57,8 @@ public class SceneGraph {
 		}
 		
 		private final UnrollError _set(
-				final Entity.Instance instance,
-				final String          msg) {
+				final Instance instance,
+				final String   msg) {
 			
 			_entity   = instance.getEntity();
 			_instance = instance;
@@ -73,11 +73,11 @@ public class SceneGraph {
 	private static final String _ERROR_MULTI_INSTANCE =
 		"Only one instance is allowed";
 	
-	private final Random                           _random   = new Random();
-	private final PooledHashMap<String, Entity<?>> _entities =
+	private final Random                           _random    = new Random();
+	private final PooledHashMap<String, Entity<?>> _entities  =
 		new PooledHashMap<>();
-	private final ObjectPool<Entity.Instance> _treeNodePool =
-		new ObjectPool<>(() -> new Entity.Instance());
+	private final ObjectPool<Instance>             _instances =
+		new ObjectPool<>(() -> new Instance());
 	
 	// The errors during graph unrolling are stored here
 	private final ObjectPool<UnrollError> _unrollErrors =
@@ -91,27 +91,31 @@ public class SceneGraph {
 		new PooledLinkedList<>();
 	
 	// Some instances are stored in separate lists
-	private final PooledLinkedList<Entity.Instance> _dirLightNodes   =
+	private final PooledLinkedList<Instance> _dirLightNodes   =
 		new PooledLinkedList<>();
-	private final PooledLinkedList<Entity.Instance> _pointLightNodes =
+	private final PooledLinkedList<Instance> _pointLightNodes =
 		new PooledLinkedList<>();
 	
-	// Used in scene graph to tree conversion
-	private Entity.Instance _tempLatestNode;
+	private final Consumer<Instance> _instanceDeactivator =
+		(instance) -> instance.deactivate();
 	
-	private final Consumer<Entity.Instance> _propertyComputer =
+	private final Consumer<Instance> _unrollPostProcessing =
 		(instance) -> {
 			
-			instance.computeProperties();
+			instance.deriveProperties();
 			
-			final Entity<?>       entity = instance.getEntity();
-			final Entity.Instance parent = instance.getParent();
+			final Entity<?> entity        = instance.getEntity();
+			final Instance  parent        = instance.getParent();
+			final int       oldErrorCount = _unrollErrors.getSize();
 			
 			if(entity.noInheritedTF && parent != null && !parent.isStatic())
 				_unrollErrors.provideObject()._set(instance, _ERROR_NOT_STATIC);
+			
+			// Deactivate the instance in case of errors
+			if(_unrollErrors.getSize() > oldErrorCount) instance.deactivate();
 		};
 	
-	private final Consumer<Entity.Instance> _transformationUpdater =
+	private final Consumer<Instance> _transformationUpdater =
 		(node) -> {
 			
 			final Matrix4D transformation =
@@ -126,7 +130,7 @@ public class SceneGraph {
 			}
 		};
 	
-	private final Consumer<Entity.Instance> _treePrinter =
+	private final Consumer<Instance> _treePrinter =
 		(instance) -> {
 			
 			final Entity<?>   entity = instance.getEntity();
@@ -138,9 +142,12 @@ public class SceneGraph {
 			if(instance.isStatic()) out.print(" [S]");
 			out.println();
 		};
+
+	// Used during scene graph unrolling
+	private Instance _tempLatestNode;
 	
-	private AbstractEngine  _engine       = null;
-	private Entity.Instance _rootInstance = null;
+	private AbstractEngine _engine       = null;
+	private Instance       _rootInstance = null;
 	
 	// Node pool for the children linked list of an entity
 	public final ObjectPool<LinkedListNode<Entity<?>>> nodePoolChildrenLL =
@@ -152,8 +159,8 @@ public class SceneGraph {
 		PooledHashMap.<String, Entity<?>>createNodePool();
 
 	// Node pool for the instance list of an entity
-	public final ObjectPool<LinkedListNode<Entity.Instance>> nodePoolInstances =
-		PooledLinkedList.<Entity.Instance>createNodePool();
+	public final ObjectPool<LinkedListNode<Instance>> nodePoolInstances =
+		PooledLinkedList.<Instance>createNodePool();
 	
 	// The root cannot be transformed, the matrix will be reseted to identity
 	public final Entity<?> root;
@@ -165,7 +172,7 @@ public class SceneGraph {
 		if(_rootInstance != null) return;
 		
 		// Discard all previous instances
-		_treeNodePool   .reset();
+		_instances   .reset();
 		_dirLightNodes  .removeAll();
 		_pointLightNodes.removeAll();
 		for(Entity<?> i : _entities.values) i.resetInstances();
@@ -175,14 +182,24 @@ public class SceneGraph {
 		// Start the recursive tree creation
 		_rootInstance = _instantiateEntity(root, null, null, 0);
 		
-		_traversePrefix(_rootInstance, _propertyComputer);
-		
 		// Check for graph related errors
-		for(Entity<?> i : _entities.values)
+		for(Entity<?> i : _entities.values) {
+			
+			final int oldErrorCount = _unrollErrors.getSize();
+			
 			if(i.getInstanceCount() > 1 && !i.multiInstance)
 				_unrollErrors.provideObject()._set(i, _ERROR_MULTI_INSTANCE);
+			
+			// Check whether some errors occurred on this entity and deactivate
+			// its instances
+			if(_unrollErrors.getSize() > oldErrorCount)
+				i.iterateInstances(_instanceDeactivator);
+		}
+
+		// Derive instance information in a post processing step
+		_traversePrefix(_rootInstance, _unrollPostProcessing);
 		
-		// Abort if no errors occured during unrolling
+		// Abort if no errors occurred during unrolling
 		if(_unrollErrors.getSize() == 0) return;
 		
 		_engine.err.println(
@@ -193,13 +210,13 @@ public class SceneGraph {
 		for(UnrollError i : _unrollErrors) i._print();
 	}
 	
-	private final Entity.Instance _instantiateEntity(
-			final Entity<?>       entity,
-			final Entity.Instance parent,
-			final Entity.Instance nextSibling,
-			final int             level) {
+	private final Instance _instantiateEntity(
+			final Entity<?> entity,
+			final Instance  parent,
+			final Instance  nextSibling,
+			final int       level) {
 		
-		final Entity.Instance node = _treeNodePool.provideObject();
+		final Instance node = _instances.provideObject();
 		
 		_tempLatestNode = null;
 		
@@ -210,7 +227,8 @@ public class SceneGraph {
 				_instantiateEntity(child, node, _tempLatestNode, level + 1);
 		});
 		
-		entity.addInstance(node, parent, _tempLatestNode, nextSibling, level);
+		entity.addInstance(
+			node.assign(entity, parent, _tempLatestNode, nextSibling));
 		
 		switch(entity.type) {
 			case DIRECTIONAL_LIGHT: _dirLightNodes  .insertAtEnd(node); break;
@@ -222,12 +240,16 @@ public class SceneGraph {
 	}
 	
 	private final void _traversePrefix(
-			final Entity.Instance           instance,
-			final Consumer<Entity.Instance> consumer) {
+			final Instance           instance,
+			final Consumer<Instance> consumer) {
+		
+		// Skip this instance and all its transitive children if it is marked as
+		// inactive
+		if(!instance.isActive()) return;
 		
 		consumer.accept(instance);
 		
-		Entity.Instance child = instance.getFirstChild();
+		Instance child = instance.getFirstChild();
 		
 		while(child != null) {
 			_traversePrefix(child, consumer);
@@ -235,7 +257,7 @@ public class SceneGraph {
 		}
 	}
 	
-	final void draw(
+	public final void draw(
 			final Camera   camera,
 			final Matrix4D projection) {
 		
@@ -243,7 +265,7 @@ public class SceneGraph {
 			camera.getInstance().tfToEyeSpace.invert();
 		
 		// Transform all entities into the current camera space
-		for(Entity.Instance i : _treeNodePool)
+		for(Instance i : _instances)
 			i.transformToCameraSpace(tfCameraInverse);
 		
 		// Render all solid models
@@ -251,11 +273,11 @@ public class SceneGraph {
 			i.drawInstances(projection, _dirLightNodes, _pointLightNodes);
 	}
 	
-	final void setEngine(final AbstractEngine engine) {
+	public final void setEngine(final AbstractEngine engine) {
 		_engine = engine;
 	}
 	
-	final void prepareForDrawing(
+	public final void prepareForDrawing(
 			final int    frameIndex,
     		final double time,
     		final double delta) {

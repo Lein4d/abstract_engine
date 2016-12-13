@@ -3,8 +3,8 @@ package ae.core;
 import static org.lwjgl.opengl.GL11.*;
 
 import ae.collections.PooledOrderedSet;
-import ae.entity.Camera;
 import ae.math.Matrix4D;
+import ae.scenegraph.entities.Camera;
 
 public abstract class Screen {
 
@@ -92,7 +92,7 @@ public abstract class Screen {
 				final int width,
 				final int height) {
 			
-			if(camera == null) return;
+			if(camera == null || camera.getInstance() == null) return;
 			
 			_computeAbsRect(width, height, _absRect);
 			

@@ -1,7 +1,6 @@
-package ae.entity;
+package ae.scenegraph.entities;
 
 import ae.collections.PooledLinkedList;
-import ae.core.SceneGraph;
 import ae.core.Texture;
 import ae.material.Material;
 import ae.material.StandardMaterials;
@@ -9,6 +8,9 @@ import ae.math.Matrix4D;
 import ae.math.Vector3D;
 import ae.math.Vector4D;
 import ae.mesh.Mesh;
+import ae.scenegraph.Entity;
+import ae.scenegraph.Instance;
+import ae.scenegraph.SceneGraph;
 
 import static org.lwjgl.opengl.GL11.*;
 
@@ -36,9 +38,9 @@ public final class Model extends Entity<Model> {
 	}
 	
 	public final void drawInstances(
-			final Matrix4D                          projection,
-			final PooledLinkedList<Entity.Instance> dirLights,
-			final PooledLinkedList<Entity.Instance> pointLights) {
+			final Matrix4D                   projection,
+			final PooledLinkedList<Instance> dirLights,
+			final PooledLinkedList<Instance> pointLights) {
 		
 		final Mesh     activeMesh     = mesh    .getActiveValue();
 		final Material activeMaterial = material.getActiveValue();

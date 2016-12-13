@@ -13,10 +13,10 @@ import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;
 import ae.core.AbstractEngine;
 import ae.core.Texture;
-import ae.entity.DirectionalLight;
-import ae.entity.Entity;
-import ae.entity.PointLight;
 import ae.math.Matrix4D;
+import ae.scenegraph.Instance;
+import ae.scenegraph.entities.DirectionalLight;
+import ae.scenegraph.entities.PointLight;
 
 public class Material {
 
@@ -169,11 +169,11 @@ public class Material {
 	public final AbstractEngine engine;
 
 	private final void _setDirLightData(
-			final PooledLinkedList<Entity.Instance> lights) {
+			final PooledLinkedList<Instance> lights) {
 		
 		int offset = 0;
 		
-		for(Entity.Instance i : lights) {
+		for(Instance i : lights) {
 			
 			final DirectionalLight light   = (DirectionalLight)i.getEntity();
 			final float[]          dotBias = light.dotBias.getActiveValue();
@@ -198,11 +198,11 @@ public class Material {
 	}
 
 	private final void _setPointLightData(
-			final PooledLinkedList<Entity.Instance> lights) {
+			final PooledLinkedList<Instance> lights) {
 		
 		int offset = 0;
 		
-		for(Entity.Instance i : lights) {
+		for(Instance i : lights) {
 			
 			final PointLight light       = (PointLight)i.getEntity();
 			final float[]    attenuation = light.attenuation.getActiveValue();
@@ -312,10 +312,10 @@ public class Material {
 	}
 	
 	public final void use(
-			final Matrix4D                          matModelView,
-			final Matrix4D                          matProjection,
-			final PooledLinkedList<Entity.Instance> dirLights,
-			final PooledLinkedList<Entity.Instance> pointLights) {
+			final Matrix4D                   matModelView,
+			final Matrix4D                   matProjection,
+			final PooledLinkedList<Instance> dirLights,
+			final PooledLinkedList<Instance> pointLights) {
 		
 		glUseProgram(_shaderProgram);
 		

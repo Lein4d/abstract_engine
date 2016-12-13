@@ -1,12 +1,10 @@
-package ae.entity;
+package ae.scenegraph;
 
 import java.util.function.Consumer;
 
 import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;
-import ae.core.SceneGraph;
 import ae.math.Matrix4D;
-import ae.util.OrganizedObject;
 
 public class Entity<T> {
 	
@@ -76,78 +74,6 @@ public class Entity<T> {
 		}
 	}
 	
-	public static final class Instance extends OrganizedObject<Instance> {
-		
-		public final Matrix4D tfToEyeSpace    = new Matrix4D();
-		public final Matrix4D tfToCameraSpace = new Matrix4D();
-		
-		private Entity<?> _entity;
-		private int       _level;
-		private boolean   _static;
-		
-		// 'null', falls Knoten zur Wurzel gehört
-		private Instance _parent;
-		
-		// 'null', falls keine Kinder vorhanden
-		private Instance _firstChild;
-		
-		// 'null', falls keine weiteren Geschwister vorhanden
-		private Instance _nextSibling;
-		
-		public final void computeProperties() {
-			_static =
-				(_parent != null ? _parent._static : true) && _entity.noTF;
-		}
-		
-		public final Entity<?> getEntity() {
-			return _entity;
-		}
-		
-		public final Instance getFirstChild() {
-			return _firstChild;
-		}
-		
-		public final int getLevel() {
-			return _level;
-		}
-		
-		public final Instance getNextSibling() {
-			return _nextSibling;
-		}
-		
-		public final Instance getParent() {
-			return _parent;
-		}
-		
-		public final PooledLinkedList<Instance> getScope(
-				final PooledLinkedList<Instance> dst) {
-			
-			Instance instance = this;
-			
-			dst.removeAll();
-			
-			while(instance != null) {
-				dst.insertAtFront(instance);
-				instance = instance._parent;
-			}
-			
-			return dst;
-		}
-		
-		public final boolean isStatic() {
-			return _static;
-		}
-		
-		public final Instance transformToCameraSpace(
-				final Matrix4D tfCameraInverse) {
-			
-			tfToCameraSpace.setData(tfCameraInverse);
-			tfToCameraSpace.multWithMatrix(tfToEyeSpace);
-			
-			return this;
-		}
-	}
-	
 	private final PooledLinkedList<Entity<?>>      _childrenByOrder;
 	private final PooledHashMap<String, Entity<?>> _childrenByName;
 	private final PooledLinkedList<Instance>       _instances;
@@ -206,19 +132,8 @@ public class Entity<T> {
 		sceneGraph.invalidateGraphStructure();
 	}
 	
-	public final Instance addInstance(
-			final Instance instance,
-			final Instance parent,
-			final Instance firstChild,
-			final Instance nextSibling,
-			final int      level) {
-		
-		instance._entity      = this;
-		instance._parent      = parent;
-		instance._firstChild  = firstChild;
-		instance._nextSibling = nextSibling;
-		instance._level       = level;
-		
+	public final Instance addInstance(final Instance instance) {
+	
 		_instances.insertAtEnd(instance);
 		
 		return instance;
@@ -235,8 +150,11 @@ public class Entity<T> {
 	}
 	
 	public final Instance getInstance() {
-		return multiInstance || _instances.isEmpty() ?
-			null : _instances.getFirst();
+		
+		if(multiInstance || _instances.isEmpty()) return null;
+		
+		final Instance instance = _instances.getFirst();
+		return instance.isActive() ? instance : null;
 	}
 
 	public final int getInstanceCount() {
@@ -267,7 +185,7 @@ public class Entity<T> {
 	}
 	
 	public final void iterateInstances(final Consumer<Instance> worker) {
-		for(Instance i : _instances) worker.accept(i);
+		for(Instance i : _instances) if(i.isActive()) worker.accept(i);
 	}
 
 	public static final Entity<?> makeRoot(final SceneGraph sceneGraph) {

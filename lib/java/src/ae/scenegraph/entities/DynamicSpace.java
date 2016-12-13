@@ -1,10 +1,11 @@
-package ae.entity;
+package ae.scenegraph.entities;
 
-import ae.core.SceneGraph;
 import ae.math.Axis;
 import ae.math.Matrix4D;
 import ae.math.SignedAxis;
 import ae.math.Vector3D;
+import ae.scenegraph.Entity;
+import ae.scenegraph.SceneGraph;
 import ae.util.RelativePoint;
 import ae.util.RelativeVector;
 

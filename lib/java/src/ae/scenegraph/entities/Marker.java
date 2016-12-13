@@ -1,7 +1,9 @@
-package ae.entity;
+package ae.scenegraph.entities;
 
-import ae.core.SceneGraph;
 import ae.math.Vector3D;
+import ae.scenegraph.Entity;
+import ae.scenegraph.Instance;
+import ae.scenegraph.SceneGraph;
 import ae.util.CachedObject;
 
 public final class Marker extends Entity<Marker> {
