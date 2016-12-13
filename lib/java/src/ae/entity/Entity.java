@@ -94,6 +94,11 @@ public class Entity<T> {
 		// 'null', falls keine weiteren Geschwister vorhanden
 		private Instance _nextSibling;
 		
+		public final void computeProperties() {
+			_static =
+				(_parent != null ? _parent._static : true) && _entity.noTF;
+		}
+		
 		public final Entity<?> getEntity() {
 			return _entity;
 		}
@@ -112,6 +117,21 @@ public class Entity<T> {
 		
 		public final Instance getParent() {
 			return _parent;
+		}
+		
+		public final PooledLinkedList<Instance> getScope(
+				final PooledLinkedList<Instance> dst) {
+			
+			Instance instance = this;
+			
+			dst.removeAll();
+			
+			while(instance != null) {
+				dst.insertAtFront(instance);
+				instance = instance._parent;
+			}
+			
+			return dst;
 		}
 		
 		public final boolean isStatic() {
@@ -198,8 +218,6 @@ public class Entity<T> {
 		instance._firstChild  = firstChild;
 		instance._nextSibling = nextSibling;
 		instance._level       = level;
-		instance._static      =
-			(parent != null ? parent._static : true) && noTF;
 		
 		_instances.insertAtEnd(instance);
 		
@@ -211,12 +229,20 @@ public class Entity<T> {
 		if(!(obj instanceof Entity<?>)) return false;
 		return name.equals(((Entity<?>)obj).name);
 	}
+
+	public final int getChildCount() {
+		return _childrenByOrder.getSize();
+	}
 	
 	public final Instance getInstance() {
 		return multiInstance || _instances.isEmpty() ?
 			null : _instances.getFirst();
 	}
 
+	public final int getInstanceCount() {
+		return _instances.getSize();
+	}
+	
 	public static final Entity<?> group(
 			final String        name,
 			final boolean       hasTransformation,

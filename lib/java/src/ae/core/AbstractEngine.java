@@ -66,6 +66,7 @@ public final class AbstractEngine {
 	
 	private State   _state        = State.CREATED;
 	private boolean _isFullscreen = false;
+	private int     _frameCounter = 0;
 	
 	// Größe der Renderfläche in Bildschirmkoordinaten
 	private int _windowPosX;
@@ -221,6 +222,10 @@ public final class AbstractEngine {
 		return _fbWidth;
 	}
 	
+	public final int getFrameIndex() {
+		return _frameCounter;
+	}
+	
 	public final SceneGraph getSceneGraph() {
 		return _sceneGraph;
 	}
@@ -336,11 +341,13 @@ public final class AbstractEngine {
 			glClearColor(background.x, background.y, background.z, 1);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			_sceneGraph.prepareForDrawing(_time, delta);
+			_sceneGraph.prepareForDrawing(_frameCounter, _time, delta);
 			_display   .render(this);
 			
 			glfwSwapBuffers(_window);
 			glfwPollEvents();
+			
+			_frameCounter++;
 		}
 		
 		_state = State.STOPPING;

@@ -14,14 +14,74 @@ import ae.entity.Entity;
 import ae.entity.Marker;
 import ae.entity.Model;
 import ae.math.Matrix4D;
+import ae.util.OrganizedObject;
 
 public class SceneGraph {
+	
+	private final class UnrollError extends OrganizedObject<UnrollError> {
+		
+		private final PooledLinkedList<Entity.Instance> _instanceScope =
+			new PooledLinkedList<>();
+		
+		private Entity<?>       _entity;
+		private Entity.Instance _instance;
+		private String          _msg;
+		
+		private final void _print() {
+			
+			_engine.err.println("\tERROR: " + _msg);
+			_engine.err.println(
+				"\t\tin entity '" + _entity.name + "' (" + _entity.type + ")");
+			
+			if(_instance != null) {
+				
+				_instance.getScope(_instanceScope);
+				
+				_engine.err.print("\t\tin instance [");
+				for(Entity.Instance i : _instanceScope)
+					_engine.err.print(
+						i.getEntity().name + (i != _instance ? " -> " : ""));
+				_engine.err.println("]");
+			}
+		}
+		
+		private final UnrollError _set(
+				final Entity<?> entity,
+				final String    msg) {
+			
+			_entity   = entity;
+			_instance = null;
+			_msg      = msg;
+			
+			return this;
+		}
+		
+		private final UnrollError _set(
+				final Entity.Instance instance,
+				final String          msg) {
+			
+			_entity   = instance.getEntity();
+			_instance = instance;
+			_msg      = msg;
+			
+			return this;
+		}
+	}
+	
+	private static final String _ERROR_NOT_STATIC     = 
+		"Scope transformations must be static";
+	private static final String _ERROR_MULTI_INSTANCE =
+		"Only one instance is allowed";
 	
 	private final Random                           _random   = new Random();
 	private final PooledHashMap<String, Entity<?>> _entities =
 		new PooledHashMap<>();
 	private final ObjectPool<Entity.Instance> _treeNodePool =
 		new ObjectPool<>(() -> new Entity.Instance());
+	
+	// The errors during graph unrolling are stored here
+	private final ObjectPool<UnrollError> _unrollErrors =
+		new ObjectPool<>(() -> new UnrollError());
 	
 	// Some entities are stored in separate lists
 	private final PooledLinkedList<Camera> _cameras = new PooledLinkedList<>();
@@ -38,6 +98,18 @@ public class SceneGraph {
 	
 	// Used in scene graph to tree conversion
 	private Entity.Instance _tempLatestNode;
+	
+	private final Consumer<Entity.Instance> _propertyComputer =
+		(instance) -> {
+			
+			instance.computeProperties();
+			
+			final Entity<?>       entity = instance.getEntity();
+			final Entity.Instance parent = instance.getParent();
+			
+			if(entity.noInheritedTF && parent != null && !parent.isStatic())
+				_unrollErrors.provideObject()._set(instance, _ERROR_NOT_STATIC);
+		};
 	
 	private final Consumer<Entity.Instance> _transformationUpdater =
 		(node) -> {
@@ -86,18 +158,39 @@ public class SceneGraph {
 	// The root cannot be transformed, the matrix will be reseted to identity
 	public final Entity<?> root;
 	
-	private final void _unrollGraph() {
+	private final void _unrollGraph(
+			final int    frameIndex,
+			final double time) {
 		
 		if(_rootInstance != null) return;
-			
+		
 		// Discard all previous instances
 		_treeNodePool   .reset();
 		_dirLightNodes  .removeAll();
 		_pointLightNodes.removeAll();
 		for(Entity<?> i : _entities.values) i.resetInstances();
 		
+		_unrollErrors.reset();
+		
 		// Start the recursive tree creation
 		_rootInstance = _instantiateEntity(root, null, null, 0);
+		
+		_traversePrefix(_rootInstance, _propertyComputer);
+		
+		// Check for graph related errors
+		for(Entity<?> i : _entities.values)
+			if(i.getInstanceCount() > 1 && !i.multiInstance)
+				_unrollErrors.provideObject()._set(i, _ERROR_MULTI_INSTANCE);
+		
+		// Abort if no errors occured during unrolling
+		if(_unrollErrors.getSize() == 0) return;
+		
+		_engine.err.println(
+			_unrollErrors.getSize() +
+			" errors occured during scene graph unrolling (frame " +
+			frameIndex + ")");
+		
+		for(UnrollError i : _unrollErrors) i._print();
 	}
 	
 	private final Entity.Instance _instantiateEntity(
@@ -163,10 +256,11 @@ public class SceneGraph {
 	}
 	
 	final void prepareForDrawing(
+			final int    frameIndex,
     		final double time,
     		final double delta) {
 
-		_unrollGraph();
+		_unrollGraph(frameIndex, time);
 		
 		// Call the specific update callbacks for each entity instance
 		for(PooledHashMap.KeyValuePair<String, Entity<?>> i : _entities)
@@ -226,7 +320,7 @@ public class SceneGraph {
 	}
 	
 	public final void print() {
-		_unrollGraph();
+		_unrollGraph(-1, -1);
 		_traversePrefix(_rootInstance, _treePrinter);
 	}
 	

@@ -190,7 +190,7 @@ public final class Testing {
 		
 		final Camera cameraGlobal = new Camera(sceneGraph, null).
 			setProjectionMode(
-				new Camera.AdaptiveFOV().setMinHorFOV(Camera.RATIO_16_9, 40));
+				new Camera.AdaptiveFOV().setMinHorFOV(Camera.RATIO_SQUARE, 30));
 
 		final Camera cameraLocal = new Camera(sceneGraph, null).
 			setProjectionMode(

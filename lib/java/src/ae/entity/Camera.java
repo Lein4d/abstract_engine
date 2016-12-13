@@ -141,10 +141,11 @@ public final class Camera extends Entity<Camera> {
 		}
 	}
 
-	public static final float RATIO_3_2  = 3f / 2f;
-	public static final float RATIO_4_3  = 4f / 3f;
-	public static final float RATIO_16_9 = 16f / 9f;
-	public static final float RATIO_21_9 = 21f / 9f;
+	public static final float RATIO_SQUARE = 1;
+	public static final float RATIO_3_2    = 3f / 2f;
+	public static final float RATIO_4_3    = 4f / 3f;
+	public static final float RATIO_16_9   = 16f / 9f;
+	public static final float RATIO_21_9   = 21f / 9f;
 	
 	public final Attribute<Float> near = new Attribute<Float>(1f);
 	public final Attribute<Float> far  = new Attribute<Float>(0f);
