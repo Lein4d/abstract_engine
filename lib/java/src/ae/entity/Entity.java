@@ -45,6 +45,11 @@ public class Entity<T> {
 			return _value;
 		}
 		
+		public final void resetExternal() {
+			_extValueDir   = null;
+			_extValueTrans = null;
+		}
+		
 		public final void setExternalValue(final T externalValue) {
 			_extValueDir = externalValue;
 		}
@@ -78,6 +83,7 @@ public class Entity<T> {
 		
 		private Entity<?> _entity;
 		private int       _level;
+		private boolean   _static;
 		
 		// 'null', falls Knoten zur Wurzel gehört
 		private Instance _parent;
@@ -108,6 +114,10 @@ public class Entity<T> {
 			return _parent;
 		}
 		
+		public final boolean isStatic() {
+			return _static;
+		}
+		
 		public final Instance transformToCameraSpace(
 				final Matrix4D tfCameraInverse) {
 			
@@ -128,6 +138,8 @@ public class Entity<T> {
 	public final Type       type;
 	public final T          downCasted;
 	public final SceneGraph sceneGraph;
+	public final boolean    noTF;
+	public final boolean    noInheritedTF;
 	public final boolean    multiInstance;
 	
 	// Attributes
@@ -139,6 +151,8 @@ public class Entity<T> {
 			final SceneGraph sceneGraph,
 			final Type       type,
 			final String     name,
+			final boolean    noTF,
+			final boolean    noInheritedTF,
 			final boolean    multiInstance) {
 		
 		this.name          =
@@ -146,6 +160,8 @@ public class Entity<T> {
 		this.type          = type;
 		this.downCasted    = (T)this;
 		this.sceneGraph    = sceneGraph;
+		this.noTF          = noTF;
+		this.noInheritedTF = noInheritedTF;
 		this.multiInstance = multiInstance;
 		
 		sceneGraph.addEntity(this);
@@ -153,16 +169,9 @@ public class Entity<T> {
 		_childrenByOrder =
 			new PooledLinkedList<>(sceneGraph.nodePoolChildrenLL, false);
 		_childrenByName  =
-			new PooledHashMap<>(sceneGraph.nodePoolChildrenHM, false);
+			new PooledHashMap   <>(sceneGraph.nodePoolChildrenHM, false);
 		_instances       =
-			new PooledLinkedList<>(sceneGraph.nodePoolInstances, false);
-	}
-	
-	public Entity(
-    		final SceneGraph sceneGraph,
-    		final String     name) {
-		
-		this(sceneGraph, Type.NONE, name, true);
+			new PooledLinkedList<>(sceneGraph.nodePoolInstances,  false);
 	}
 	
 	public final void addChild(final Entity<?> entity) {
@@ -189,6 +198,8 @@ public class Entity<T> {
 		instance._firstChild  = firstChild;
 		instance._nextSibling = nextSibling;
 		instance._level       = level;
+		instance._static      =
+			(parent != null ? parent._static : true) && noTF;
 		
 		_instances.insertAtEnd(instance);
 		
@@ -205,13 +216,15 @@ public class Entity<T> {
 		return multiInstance || _instances.isEmpty() ?
 			null : _instances.getFirst();
 	}
-	
+
 	public static final Entity<?> group(
 			final String        name,
+			final boolean       hasTransformation,
 			final Entity<?> ... children) {
 		
-		final Entity<?> entity =
-			new Entity<Entity<?>>(children[0].sceneGraph, name);
+		final Entity<?> entity = new Entity<Entity<?>>(
+			children[0].sceneGraph, Type.NONE, name,
+			!hasTransformation, false, true);
 		
 		for(Entity<?> i : children) entity.addChild(i);
 		
@@ -230,7 +243,12 @@ public class Entity<T> {
 	public final void iterateInstances(final Consumer<Instance> worker) {
 		for(Instance i : _instances) worker.accept(i);
 	}
-	
+
+	public static final Entity<?> makeRoot(final SceneGraph sceneGraph) {
+		return new Entity<Entity<?>>(
+			sceneGraph, Type.NONE, "root", true, true, false);
+	}
+
 	public final void resetInstances() {
 		_instances.removeAll();
 	}
@@ -244,6 +262,9 @@ public class Entity<T> {
 			final double time,
 			final double delta) {
 		
-		if(_updater != null) _updater.update(downCasted, time, delta);
+		if(_updater == null) return;
+		
+		_updater.update(downCasted, time, delta);
+		if(noTF) transformation.resetExternal();
 	}
 }

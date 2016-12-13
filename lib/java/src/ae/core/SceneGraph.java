@@ -1,5 +1,6 @@
 package ae.core;
 
+import java.io.PrintStream;
 import java.util.Random;
 import java.util.function.Consumer;
 
@@ -56,12 +57,14 @@ public class SceneGraph {
 	private final Consumer<Entity.Instance> _treePrinter =
 		(instance) -> {
 			
-			final Entity<?> entity = instance.getEntity();
+			final Entity<?>   entity = instance.getEntity();
+			final PrintStream out    = getEngine().out;
 			
-			for(int i = 0; i < instance.getLevel(); i++)
-				getEngine().out.print("|\t");
+			for(int i = 0; i < instance.getLevel(); i++) out.print("|\t");
 			
-			getEngine().out.println("[" + entity.type + "] " + entity.name);
+			out.print("[" + entity.type + "] " + entity.name);
+			if(instance.isStatic()) out.print(" [S]");
+			out.println();
 		};
 	
 	private AbstractEngine  _engine       = null;
@@ -80,6 +83,7 @@ public class SceneGraph {
 	public final ObjectPool<LinkedListNode<Entity.Instance>> nodePoolInstances =
 		PooledLinkedList.<Entity.Instance>createNodePool();
 	
+	// The root cannot be transformed, the matrix will be reseted to identity
 	public final Entity<?> root;
 	
 	private final void _unrollGraph() {
@@ -162,11 +166,15 @@ public class SceneGraph {
     		final double time,
     		final double delta) {
 
+		_unrollGraph();
+		
 		// Call the specific update callbacks for each entity instance
 		for(PooledHashMap.KeyValuePair<String, Entity<?>> i : _entities)
 			i.getValue().update(time, delta);
 		
-		_unrollGraph();
+		// Reset the root transformation
+		root.transformation.resetExternal();
+		root.transformation.getValue().toIdentity();
 		
 		// Compute transformation matrices
 		_traversePrefix(_rootInstance, _transformationUpdater);
@@ -176,7 +184,7 @@ public class SceneGraph {
 	}
 	
 	public SceneGraph() {
-		root = new Entity<Entity<?>>(this, "root");
+		root = Entity.makeRoot(this);
 	}
 
 	public final void addEntity(final Entity<?> entity) {

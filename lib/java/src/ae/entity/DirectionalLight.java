@@ -21,7 +21,7 @@ public class DirectionalLight extends Entity<DirectionalLight> {
 			final SceneGraph sceneGraph,
 			final String     name) {
 		
-		super(sceneGraph, Type.DIRECTIONAL_LIGHT, name, true);
+		super(sceneGraph, Type.DIRECTIONAL_LIGHT, name, false, false, true);
 	}
 	
 	public final DirectionalLight makeAmbient() {

@@ -29,7 +29,7 @@ public final class DynamicSpace extends Entity<DynamicSpace> {
 			final SceneGraph sceneGraph,
 			final String     name) {
 		
-		super(sceneGraph, Type.DYNAMIC_SPACE, name, false);
+		super(sceneGraph, Type.DYNAMIC_SPACE, name, false, true, false);
 	}
 	
 	public final void computeTransformation() {

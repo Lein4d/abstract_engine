@@ -18,7 +18,7 @@ public final class Marker extends Entity<Marker> {
 			final SceneGraph sceneGraph,
 			final String     name) {
 		
-		super(sceneGraph, Type.MARKER, name, false);
+		super(sceneGraph, Type.MARKER, name, false, false, false);
 	}
 
 	public final Vector3D getPosition() {

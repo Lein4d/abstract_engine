@@ -32,7 +32,7 @@ public final class Model extends Entity<Model> {
 			final SceneGraph sceneGraph,
 			final String     name) {
 		
-		super(sceneGraph, Type.MODEL, name, true);
+		super(sceneGraph, Type.MODEL, name, false, false, true);
 	}
 	
 	public final void drawInstances(

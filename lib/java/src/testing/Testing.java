@@ -200,8 +200,8 @@ public final class Testing {
 		final Marker torusMarker  = new Marker(sceneGraph, "marker_t");
 		
 		final DynamicSpace cameraSpace = new DynamicSpace(sceneGraph, "cam_space").
-			setOrigin(originMarker).
-			setViewFocus (torusMarker).
+			setOrigin         (originMarker).
+			setViewFocus      (torusMarker).
 			setViewAxisMapping(SignedAxis.Z_NEG);
 		
 		final Model refCube = new Model(sceneGraph, "ref_cube").
@@ -274,8 +274,6 @@ public final class Testing {
 			}).
 			setRange(4).makeLinear();
 		
-		//cameraGlobal.transformation.getValue().rotateY(180);
-		
 		cameraLocal.transformation.getValue().
 			translate(-5, 3, 5).
 			rotateY(-45).
@@ -301,7 +299,6 @@ public final class Testing {
 		pointLightGreen.color.getValue().setData(0.3f, 1, 0.3f);
 		pointLightBlue.color.getValue().setData(0.3f, 0.3f, 1);
 		
-		//sceneGraph.root.addChild(cameraGlobal);
 		sceneGraph.root.addChild(refCube);
 		sceneGraph.root.addChild(originMarker);
 		sceneGraph.root.addChild(cameraSpace);

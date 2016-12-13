@@ -19,7 +19,7 @@ public class PointLight extends Entity<PointLight> {
 			final SceneGraph sceneGraph,
 			final String     name) {
 		
-		super(sceneGraph, Type.POINT_LIGHT, name, true);
+		super(sceneGraph, Type.POINT_LIGHT, name, false, false, true);
 	}
 	
 	public final PointLight makeLinear() {
