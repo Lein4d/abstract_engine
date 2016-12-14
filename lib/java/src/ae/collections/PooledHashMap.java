@@ -178,8 +178,7 @@ public final class PooledHashMap<K, V>
 		
 		// Falls der Schlüssel existiert, wird der Knoten gelöscht
 		if(node != null) {
-			_nodePool.free(node.remove());
-			_size--;
+			_freeNode(node.remove());
 			return true;
 		} else {
 			return false;
@@ -187,7 +186,7 @@ public final class PooledHashMap<K, V>
 	}
 	
 	public final float getLoadFactor() {
-		return _getLoadFactor(_nodePool.getSize());
+		return _getLoadFactor(getSize());
 	}
 	
 	public final float getMaxLoadFactor() {
@@ -220,24 +219,22 @@ public final class PooledHashMap<K, V>
 			throw new IllegalArgumentException();
 		
 		final LinkedListNode<KeyValuePair<K, V>>[] oldBuffer = _buckets;
-		LinkedListNode<KeyValuePair<K, V>>         node;
 		
 		_buckets = (LinkedListNode<KeyValuePair<K, V>>[])
 			new LinkedListNode<?>[newBufferSize];
 		
 		for(int i = 0; i < oldBuffer.length; i++) {
 			
-			node = oldBuffer[i];
+			LinkedListNode<KeyValuePair<K, V>> node = oldBuffer[i];
 			
 			while(node != null) {
 				
-				// Die öffentliche Methoed nutzen, um den Knoten wieder in den
-				// neuen Puffer einzufügen
+				// Use the public method to insert the node at the correct
+				// position in the new bucket array
 				setValue(node.content._key, node.content._value);
-
-				_nodePool.free(node);
 				
-				node = node.next;
+				// Free the old node and move to the next in the current bucket
+				node = _freeNode(node).next;
 			}
 		}
 	}
@@ -269,18 +266,16 @@ public final class PooledHashMap<K, V>
 			
 			// If a new node is created, check whether the hash map should be
 			// enlarged
-			if(_getLoadFactor(_nodePool.getSize() + 1) > _maxLoadFactor)
+			if(_getLoadFactor(getSize() + 1) > _maxLoadFactor)
 				rehash(_buckets.length * _resizeFactor);
 			
 			final int                           bufferPos = _getBufferPos(key);
-			final LinkedListNode<KeyValuePair<K, V>> node =
-				_nodePool.provideObject(); 
+			final LinkedListNode<KeyValuePair<K, V>> node = _provideNode();
 			
 			// The new node is inserted at the beginning of the list
 			_buckets[bufferPos] = node.insertBefore(_buckets[bufferPos]);
 			
 			kvp = node.content;
-			_size++;
 		}
 		
 		kvp._key   = key;

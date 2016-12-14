@@ -10,12 +10,10 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 	
 	private final LinkedListNode<T> _insert(final T element) {
 		
-		final LinkedListNode<T> node = _nodePool.provideObject();
+		final LinkedListNode<T> node = _provideNode();
 		
 		node.content = element;
-		_size++;
-		
-		if(_size == 1) _first = _last = node;
+		if(getSize() == 1) _first = _last = node;
 		
 		return node;
 	}
@@ -57,8 +55,7 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 		if(node == _first) _first = node.next;
 		if(node == _last)  _last  = node.prev;
 		
-		_nodePool.free(node);
-		_size--;
+		_freeNode(node);
 		
 		return true;
 	}
@@ -107,7 +104,7 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 	
 	public final LinkedListNode<T> insertAtEnd(final T element) {
 		
-		if(_size == 0) {
+		if(isEmpty()) {
 			_insert(element);
 		} else {
 			insertAfter(element, _last);
@@ -118,7 +115,7 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 	
 	public final LinkedListNode<T> insertAtFront(final T element) {
 		
-		if(_size == 0) {
+		if(isEmpty()) {
 			_insert(element);
 		} else {
 			insertBefore(element, _first);
@@ -136,26 +133,28 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 	public final boolean removeAll() {
 		
 		if(isEmpty()) return false;
-		/*
-		_nodePool.reset();
+		
+		// Cannot reset the whole node pool, as there might be nodes used by
+		// other collections
+		LinkedListNode<T> node = _first;
+		while(node != null) node = _freeNode(node).next;
+		
 		_first = _last = null;
 		
 		return true;
-		*/
-		throw new UnsupportedOperationException();
 	}
 	
 	public final boolean removeAll(final T element) {
 		
 		LinkedListNode<T> node    = _first;
-		final int         oldSize = _size;
+		final int         oldSize = getSize();
 		
 		while(node != null) {
 			if(node.content == element) remove(node);
 			node = node.next;
 		}
 		
-		return _size < oldSize;
+		return getSize() < oldSize;
 	}
 
 	public final boolean removeFirst() {

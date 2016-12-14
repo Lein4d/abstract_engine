@@ -109,7 +109,7 @@ public class SceneGraph {
 			final int       oldErrorCount = _unrollErrors.getSize();
 			
 			if(entity.noInheritedTF && parent != null && !parent.isStatic())
-				_unrollErrors.provideObject()._set(instance, _ERROR_NOT_STATIC);
+				_unrollErrors.provide()._set(instance, _ERROR_NOT_STATIC);
 			
 			// Deactivate the instance in case of errors
 			if(_unrollErrors.getSize() > oldErrorCount) instance.deactivate();
@@ -198,7 +198,7 @@ public class SceneGraph {
 			final int oldErrorCount = _unrollErrors.getSize();
 			
 			if(i.getInstanceCount() > 1 && !i.multiInstance)
-				_unrollErrors.provideObject()._set(i, _ERROR_MULTI_INSTANCE);
+				_unrollErrors.provide()._set(i, _ERROR_MULTI_INSTANCE);
 			
 			// Check whether some errors occurred on this entity and deactivate
 			// its instances
@@ -226,7 +226,7 @@ public class SceneGraph {
 			final Instance  nextSibling,
 			final int       level) {
 		
-		final Instance node = _instances.provideObject();
+		final Instance node = _instances.provide();
 		
 		_tempLatestNode = null;
 		

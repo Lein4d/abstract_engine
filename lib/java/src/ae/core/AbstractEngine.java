@@ -96,9 +96,11 @@ public final class AbstractEngine {
 	
 	private SceneGraph _sceneGraph = null;
 
-	public static final int VERSION_MAJOR    = 0;
-	public static final int VERSION_MINOR    = 9;
-	public static final int VERSION_REVISION = 2;
+	public static final int    VERSION_MAJOR    = 0;
+	public static final int    VERSION_MINOR    = 9;
+	public static final int    VERSION_REVISION = 2;
+	public static final String VERSION_STRING   =
+		"v" + VERSION_MAJOR + "." + VERSION_MINOR + "." + VERSION_REVISION;
 	
 	public static final int SIZE_BYTE   = 1;
 	public static final int SIZE_SHORT  = 2;

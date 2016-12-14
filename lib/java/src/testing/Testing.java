@@ -77,7 +77,7 @@ public final class Testing {
     		logAction("allocate 10 objects");
     		
     		for(int i = 0; i < 10; i++) {
-    			integers[i]       = list.provideObject();
+    			integers[i]       = list.provide();
     			integers[i].value = i;
     		}
     		
@@ -159,11 +159,7 @@ public final class Testing {
 			" tests successful!");
 		
 		final AbstractEngine engine = new AbstractEngine(
-			"Abstract Engine v" +
-				AbstractEngine.VERSION_MAJOR + "." +
-				AbstractEngine.VERSION_MINOR + "." +
-				AbstractEngine.VERSION_REVISION,
-			null, null);
+			"Abstract Engine " + AbstractEngine.VERSION_STRING, null, null);
 		
 		final SceneGraph sceneGraph = new SceneGraph();
 		

@@ -60,7 +60,7 @@ public final class ObjectPool<T extends OrganizedObject<T>>
 		return new LinkedListNode.NodeIteratorForward<T>(_used);
 	}
 	
-	public final T provideObject() {
+	public final T provide() {
 		
 		ListNode<T> node;
 		
