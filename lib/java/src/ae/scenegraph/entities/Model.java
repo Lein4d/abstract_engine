@@ -8,6 +8,8 @@ import ae.math.Matrix4D;
 import ae.math.Vector3D;
 import ae.math.Vector4D;
 import ae.mesh.Mesh;
+import ae.scenegraph.Attribute;
+import ae.scenegraph.ConstAttribute;
 import ae.scenegraph.Entity;
 import ae.scenegraph.Instance;
 import ae.scenegraph.SceneGraph;

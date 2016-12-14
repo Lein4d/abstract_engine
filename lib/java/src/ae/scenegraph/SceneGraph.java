@@ -99,7 +99,7 @@ public class SceneGraph {
 	private final Consumer<Instance> _instanceDeactivator =
 		(instance) -> instance.deactivate();
 	
-	private final Consumer<Instance> _unrollPostProcessing =
+	private final Consumer<Instance> _unrollPostProcessor =
 		(instance) -> {
 			
 			instance.deriveProperties();
@@ -113,6 +113,16 @@ public class SceneGraph {
 			
 			// Deactivate the instance in case of errors
 			if(_unrollErrors.getSize() > oldErrorCount) instance.deactivate();
+			
+			if(instance.isActive()) {
+				switch(entity.type) {
+					case DIRECTIONAL_LIGHT:
+						_dirLightNodes  .insertAtEnd(instance); break;
+					case POINT_LIGHT:
+						_pointLightNodes.insertAtEnd(instance); break;
+					default: break;
+				}
+			}
 		};
 	
 	private final Consumer<Instance> _transformationUpdater =
@@ -172,7 +182,7 @@ public class SceneGraph {
 		if(_rootInstance != null) return;
 		
 		// Discard all previous instances
-		_instances   .reset();
+		_instances      .reset();
 		_dirLightNodes  .removeAll();
 		_pointLightNodes.removeAll();
 		for(Entity<?> i : _entities.values) i.resetInstances();
@@ -197,7 +207,7 @@ public class SceneGraph {
 		}
 
 		// Derive instance information in a post processing step
-		_traversePrefix(_rootInstance, _unrollPostProcessing);
+		_traversePrefix(_rootInstance, _unrollPostProcessor);
 		
 		// Abort if no errors occurred during unrolling
 		if(_unrollErrors.getSize() == 0) return;
@@ -230,12 +240,6 @@ public class SceneGraph {
 		entity.addInstance(
 			node.assign(entity, parent, _tempLatestNode, nextSibling));
 		
-		switch(entity.type) {
-			case DIRECTIONAL_LIGHT: _dirLightNodes  .insertAtEnd(node); break;
-			case POINT_LIGHT:       _pointLightNodes.insertAtEnd(node); break;
-			default: break;
-		}
-		
 		return node;
 	}
 	
@@ -257,7 +261,7 @@ public class SceneGraph {
 		}
 	}
 	
-	public final void draw(
+	public final void render(
 			final Camera   camera,
 			final Matrix4D projection) {
 		
@@ -277,7 +281,7 @@ public class SceneGraph {
 		_engine = engine;
 	}
 	
-	public final void prepareForDrawing(
+	public final void prepareRendering(
 			final int    frameIndex,
     		final double time,
     		final double delta) {

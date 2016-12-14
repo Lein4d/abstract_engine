@@ -1,6 +1,7 @@
 package ae.scenegraph.entities;
 
 import ae.math.Matrix4D;
+import ae.scenegraph.Attribute;
 import ae.scenegraph.Entity;
 import ae.scenegraph.SceneGraph;
 

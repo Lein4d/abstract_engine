@@ -98,7 +98,7 @@ public abstract class Screen {
 			
 			glViewport(_absRect[0], _absRect[1], _absRect[2], _absRect[3]);
 			
-			camera.sceneGraph.draw(
+			camera.sceneGraph.render(
 				camera,
 				camera.createProjectionMatrix(
 					_absRect[2], _absRect[3], _projection));

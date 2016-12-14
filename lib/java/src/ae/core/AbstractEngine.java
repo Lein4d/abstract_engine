@@ -342,7 +342,7 @@ public final class AbstractEngine {
 			glClearColor(background.x, background.y, background.z, 1);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			_sceneGraph.prepareForDrawing(_frameCounter, _time, delta);
+			_sceneGraph.prepareRendering(_frameCounter, _time, delta);
 			_display   .render(this);
 			
 			glfwSwapBuffers(_window);
