@@ -183,8 +183,8 @@ public class SceneGraph {
 		
 		// Discard all previous instances
 		_instances      .reset();
-		_dirLightNodes  .removeAll();
-		_pointLightNodes.removeAll();
+		_dirLightNodes  .clear();
+		_pointLightNodes.clear();
 		for(Entity<?> i : _entities.values) i.resetInstances();
 		
 		_unrollErrors.reset();

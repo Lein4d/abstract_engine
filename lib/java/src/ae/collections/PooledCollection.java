@@ -18,6 +18,9 @@ public abstract class PooledCollection<T, P> implements Iterable<T> {
 		sharedNodePool = poolSharing ? nodePool : null;
 	}
 	
+	// Doesn't need to be overridden if the standard clear method is overridden
+	protected void _clear() {}
+	
 	protected final LinkedListNode<P> _freeNode(final LinkedListNode<P> node) {
 		
 		_size--;
@@ -31,11 +34,21 @@ public abstract class PooledCollection<T, P> implements Iterable<T> {
 		return _nodePool.provide();
 	}
 	
-	public final int getSize() {
+	public boolean clear() {
+		
+		if(isEmpty()) {
+			return false;
+		} else {
+			_clear();
+			return true;
+		}
+	}
+	
+	public int getSize() {
 		return _size;
 	}
 	
-	public final boolean isEmpty() {
-		return _size == 0;
+	public boolean isEmpty() {
+		return getSize() == 0;
 	}
 }

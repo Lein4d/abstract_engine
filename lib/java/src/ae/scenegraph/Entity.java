@@ -137,7 +137,7 @@ public class Entity<T> {
 	}
 
 	public final void resetInstances() {
-		_instances.removeAll();
+		_instances.clear();
 	}
 	
 	public final T setUpdater(final Updater<T> updater) {

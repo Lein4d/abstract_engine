@@ -29,6 +29,10 @@ public final class PooledHashSet<T> extends PooledCollection<T, T> {
 		_hashMap = backend;
 		for(T i : elements) insert(i);
 	}
+
+	public final boolean clear() {
+		return _hashMap.clear();
+	}
 	
 	public final boolean exists(final T element) {
 		return _hashMap.hasKey(element);
@@ -46,8 +50,18 @@ public final class PooledHashSet<T> extends PooledCollection<T, T> {
 		return _hashMap.getResizeFactor();
 	}
 	
+	@Override
+	public final int getSize() {
+		return _hashMap.getSize();
+	}
+	
 	public final boolean insert(final T element) {
 		return _hashMap.setValue(element, null);
+	}
+
+	@Override
+	public final boolean isEmpty() {
+		return _hashMap.isEmpty();
 	}
 	
 	public final boolean remove(final T element) {

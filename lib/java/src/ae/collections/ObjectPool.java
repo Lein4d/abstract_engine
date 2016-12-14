@@ -38,7 +38,8 @@ public final class ObjectPool<T extends OrganizedObject<T>>
 		
 		final ListNode<T> node = object.getPoolNode();
 		
-		node.remove();
+		object.finalizePooled();
+		node  .remove();
 		
 		if(node == _used) _used = (ListNode<T>)node.next;
 		

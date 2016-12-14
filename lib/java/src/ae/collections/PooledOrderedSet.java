@@ -9,7 +9,7 @@ public final class PooledOrderedSet<T> extends PooledCollection<T, T> {
 	
 	@SuppressWarnings("unchecked")
 	private final LinkedListNode<T>[] _tempNode = new LinkedListNode[1];
-	
+
 	public PooledOrderedSet() {
 		this(new PooledHashMap<>(), new PooledLinkedList<>());
 	}
@@ -42,6 +42,12 @@ public final class PooledOrderedSet<T> extends PooledCollection<T, T> {
 		for(T i : elements) tryInsertAtEnd(i);
 	}
 	
+	@Override
+	public final boolean clear() {
+		_hashMap.clear();
+		return _list.clear();
+	}
+	
 	public final boolean exists(final T element) {
 		return _hashMap.hasKey(element);
 	}
@@ -56,6 +62,11 @@ public final class PooledOrderedSet<T> extends PooledCollection<T, T> {
 	
 	public final int getResizeFactor() {
 		return _hashMap.getResizeFactor();
+	}
+	
+	@Override
+	public final int getSize() {
+		return _list.getSize();
 	}
 	
 	public final boolean insertAfter(
@@ -108,6 +119,11 @@ public final class PooledOrderedSet<T> extends PooledCollection<T, T> {
 		return !exists;
 	}
 
+	@Override
+	public final boolean isEmpty() {
+		return _list.isEmpty();
+	}
+	
 	@Override
 	public Iterator<T> iterator() {
 		return _list.iterator();

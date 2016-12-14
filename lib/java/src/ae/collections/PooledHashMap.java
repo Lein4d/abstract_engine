@@ -123,6 +123,18 @@ public final class PooledHashMap<K, V>
 		return kvpCount / _buckets.length;
 	}
 
+	@Override
+	protected final void _clear() {
+		
+		for(int i = 0; i < _buckets.length; i++) {
+			
+			LinkedListNode<KeyValuePair<K, V>> node = _buckets[i];
+			
+			while(node != null) node = _freeNode(node).next;
+			_buckets[i] = null;
+		}
+	}
+	
 	public PooledHashMap() {
 		this(10);
 	}
@@ -223,9 +235,9 @@ public final class PooledHashMap<K, V>
 		_buckets = (LinkedListNode<KeyValuePair<K, V>>[])
 			new LinkedListNode<?>[newBufferSize];
 		
-		for(int i = 0; i < oldBuffer.length; i++) {
+		for(LinkedListNode<KeyValuePair<K, V>> i : oldBuffer) {
 			
-			LinkedListNode<KeyValuePair<K, V>> node = oldBuffer[i];
+			LinkedListNode<KeyValuePair<K, V>> node = i;
 			
 			while(node != null) {
 				

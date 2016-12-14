@@ -22,6 +22,10 @@ public abstract class OrganizedObject<T extends OrganizedObject<T>> {
 		_listeners.insert(listener);
 	}
 	
+	public void finalizePooled() {
+		//_listeners.re
+	}
+	
 	public final ObjectPool.ListNode<T> getPoolNode() {
 		return _poolNode;
 	}

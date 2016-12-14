@@ -81,7 +81,7 @@ public final class Instance extends OrganizedObject<Instance> {
 		
 		Instance instance = this;
 		
-		dst.removeAll();
+		dst.clear();
 		
 		while(instance != null) {
 			dst.insertAtFront(instance);

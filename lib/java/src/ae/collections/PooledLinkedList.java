@@ -60,6 +60,17 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 		return true;
 	}
 
+	@Override
+	protected final void _clear() {
+		
+		// Cannot reset the whole node pool, as there might be nodes used by
+		// other collections
+		LinkedListNode<T> node = _first;
+		while(node != null) node = _freeNode(node).next;
+		
+		_first = _last = null;
+	}
+	
 	public PooledLinkedList() {
 		this(LinkedListNode.<T>createObjectPool(), false);
 	}
@@ -83,7 +94,7 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 		super(LinkedListNode.<T>createObjectPool(), false);
 		for(T i : elements) insertAtEnd(i);
 	}
-	
+
 	public static final <T> ObjectPool<LinkedListNode<T>> createNodePool() {
 		return LinkedListNode.<T>createObjectPool();
 	}
@@ -128,20 +139,6 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 	public final Iterator<T> iterator() {
 		// TODO: Hier wird ein neues Objekt angelegt
 		return new LinkedListNode.NodeIteratorForward<T>(_first);
-	}
-
-	public final boolean removeAll() {
-		
-		if(isEmpty()) return false;
-		
-		// Cannot reset the whole node pool, as there might be nodes used by
-		// other collections
-		LinkedListNode<T> node = _first;
-		while(node != null) node = _freeNode(node).next;
-		
-		_first = _last = null;
-		
-		return true;
 	}
 	
 	public final boolean removeAll(final T element) {
