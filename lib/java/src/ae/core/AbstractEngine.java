@@ -98,7 +98,7 @@ public final class AbstractEngine {
 
 	public static final int VERSION_MAJOR    = 0;
 	public static final int VERSION_MINOR    = 9;
-	public static final int VERSION_REVISION = 1;
+	public static final int VERSION_REVISION = 2;
 	
 	public static final int SIZE_BYTE   = 1;
 	public static final int SIZE_SHORT  = 2;

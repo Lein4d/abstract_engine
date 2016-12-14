@@ -158,8 +158,12 @@ public final class Testing {
 			"Testing complete: " + successCount + " of " + testCount +
 			" tests successful!");
 		
-		final AbstractEngine engine =
-			new AbstractEngine("Engine Test", null, null);
+		final AbstractEngine engine = new AbstractEngine(
+			"Abstract Engine v" +
+				AbstractEngine.VERSION_MAJOR + "." +
+				AbstractEngine.VERSION_MINOR + "." +
+				AbstractEngine.VERSION_REVISION,
+			null, null);
 		
 		final SceneGraph sceneGraph = new SceneGraph();
 		
