@@ -4,21 +4,29 @@ import static org.lwjgl.glfw.GLFW.*;
 
 import ae.core.AbstractEngine;
 import ae.core.InputListener;
-import ae.core.SceneGraph;
 import ae.core.Texture;
 import ae.core.TextureBuilder;
-import ae.entity.DirectionalLight;
-import ae.entity.Model;
 import ae.math.Vector4D;
 import ae.mesh.Meshes;
+import ae.scenegraph.SceneGraph;
+import ae.scenegraph.entities.Camera;
+import ae.scenegraph.entities.DirectionalLight;
+import ae.scenegraph.entities.Model;
 
 public final class TexturedCube {
 	
 	public static void main(final String[] args) {
 		
 		// The engine and a scenegraph are the basic components
-		final AbstractEngine engine     = new AbstractEngine("Triangle");
+		final AbstractEngine engine     =
+			new AbstractEngine("Textured Cube", null, null);
 		final SceneGraph     sceneGraph = new SceneGraph();
+		
+		// The camera is adaptive and doesn't need to be updated
+		final Camera camera = new Camera(
+			sceneGraph,
+			"camera",
+			new Camera.AdaptiveFOV().setMinHorFOV(Camera.RATIO_SQUARE, 60));
 		
 		// The crate texture is loaded from a file and the filtering is
 		// properly set to remove visual artifacts like anti-aliasing
@@ -33,10 +41,11 @@ public final class TexturedCube {
 			setMesh(Meshes.createCube(1, true).createMesh()).
 			setMaterial(
 				engine.standardMaterials.get(true, false, true, false, false)).
+			setDiffuseTexture(crateTexture).
 			setUpdater((model, time, delta) -> {
 				model.transformation.getValue().
 					toIdentity().
-					translate(0, 0, -4).
+					translate(0, 0, -2).
 					rotateZ((float)time / 200f).
 					rotateY((float)time / 140f).
 					rotateX((float)time / 90f);
@@ -47,20 +56,21 @@ public final class TexturedCube {
 		final DirectionalLight light =
 			new DirectionalLight(sceneGraph).makeAmbient();
 		
-		// Set the diffuse crate texture
-		crate.textures.getValue().diffuse = crateTexture;
-		
 		// Set light parameters
 		light.color    .getValue().setData(Vector4D.WHITE.xyz);
 		light.direction.getValue().setData(0, 1, 1);
 		
-		// Add the crate and the light source to the scenegraph
-		// Both entities will be children of the root entity
+		// Add the camera, the crate and the light source to the scenegraph
+		// All entities will be children of the root entity
+		sceneGraph.root.addChild(camera);
 		sceneGraph.root.addChild(crate);
 		sceneGraph.root.addChild(light);
 		
 		// Make the background black
 		engine.background.setData(Vector4D.BLACK.xyz);
+		
+		// Apply the camera to the whole screen
+		engine.display.setCamera(camera);
 		
 		// Attach the scenegraph to the engine
 		engine.setSceneGraph(sceneGraph);
@@ -81,13 +91,6 @@ public final class TexturedCube {
 					case GLFW_KEY_3:      engine.setSpeed(2);        break;
 				}
 			}
-		});
-		
-		// Recompute the projection matrix on window resize
-		engine.setResizeCallback((eng) -> {
-			engine.projection.toIdentity().projectPerspectiveHorFOV(
-				engine.getFramebufferWidth(), engine.getFramebufferHeight(),
-				60, 2);
 		});
 		
 		// Begin rendering
