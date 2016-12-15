@@ -1,38 +1,8 @@
 package ae.collections;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
 import ae.util.OrganizedObject;
 
 public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
-	
-	static abstract class NodeIterator<T> implements Iterator<T> {
-		
-		protected LinkedListNode<T> _node;
-		
-		protected NodeIterator(final LinkedListNode<T> node) {
-			_node = node;
-		}
-
-		protected abstract void moveToNext();
-		
-		@Override
-		public final boolean hasNext() {
-			return _node != null;
-		}
-
-		@Override
-		public final T next() {
-			
-			if(!hasNext()) throw new NoSuchElementException();
-			
-			final T result = _node.content;
-			moveToNext();
-			
-			return result;
-		}
-	}
 	
 	static final class NodeIteratorForward<T> extends NodeIterator<T> {
 
@@ -41,7 +11,7 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 		}
 
 		@Override
-		protected final void moveToNext() {
+		protected final void _moveToNextNode() {
 			_node = _node.next;
 		}
 	}
@@ -53,7 +23,7 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 		}
 
 		@Override
-		protected final void moveToNext() {
+		protected final void _moveToNextNode() {
 			_node = _node.prev;
 		}
 	}

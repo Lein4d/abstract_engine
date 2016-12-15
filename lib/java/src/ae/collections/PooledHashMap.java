@@ -1,12 +1,9 @@
 package ae.collections;
 
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 public final class PooledHashMap<K, V>
-		extends PooledCollection<
-			PooledHashMap.KeyValuePair<K, V>,
-			PooledHashMap.KeyValuePair<K, V>> {
+		extends PooledCollection<PooledHashMap.KeyValuePair<K, V>> {
 	
 	public static final class KeyValuePair<K, V> {
 		
@@ -39,40 +36,31 @@ public final class PooledHashMap<K, V>
 		}
 	}
 	
-	private final class KvpIterator implements Iterator<KeyValuePair<K, V>> {
+	private final class KvpIterator extends NodeIterator<KeyValuePair<K, V>> {
 
-		private int                                _bucketPos = -1;
-		private LinkedListNode<KeyValuePair<K, V>> _node      = null;
+		private int _bucketPos = -1;
 		
-		private final void moveToNextBucket() {
+		private final void _findNextNonEmptyBucket() {
 			while(_node == null && _bucketPos < _buckets.length - 1)
 				_node = _buckets[++_bucketPos];
 		}
 		
-		public KvpIterator() {
-			moveToNextBucket();
+		@Override
+		protected final void _moveToFirstNode() {
+			_findNextNonEmptyBucket();
 		}
 		
 		@Override
-		public final boolean hasNext() {
-			return _node != null;
-		}
-
-		@Override
-		public final KeyValuePair<K, V> next() {
-			
-			if(!hasNext()) throw new NoSuchElementException();
-			
-			final KeyValuePair<K, V> result = _node.content;
+		protected final void _moveToNextNode() {
 			
 			// Zuerst wird vesucht innerhalb des Buckets einen Knoten zu finden
 			_node = _node.next;
 			
 			// Anschlieﬂend wird nach dem n‰chsten vollen Bucket gesucht
-			moveToNextBucket();
-			
-			return result;
+			_findNextNonEmptyBucket();
 		}
+
+		public KvpIterator() {}
 	}
 
 	private final class ValueIterator implements Iterator<V> {
@@ -133,6 +121,12 @@ public final class PooledHashMap<K, V>
 			while(node != null) node = _freeNode(node).next;
 			_buckets[i] = null;
 		}
+	}
+
+	@Override
+	protected final Iterator<KeyValuePair<K, V>> _getReverseIterator() {
+		// TODO: A new object is created
+		return new KvpIterator();
 	}
 	
 	public PooledHashMap() {

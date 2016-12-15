@@ -2,7 +2,7 @@ package ae.collections;
 
 import java.util.Iterator;
 
-public final class PooledOrderedSet<T> extends PooledCollection<T, T> {
+public final class PooledOrderedSet<T> extends PooledCollection<T> {
 	
 	private final PooledHashMap<T, LinkedListNode<T>> _hashMap;
 	private final PooledLinkedList<T>                 _list;
@@ -10,6 +10,11 @@ public final class PooledOrderedSet<T> extends PooledCollection<T, T> {
 	@SuppressWarnings("unchecked")
 	private final LinkedListNode<T>[] _tempNode = new LinkedListNode[1];
 
+	@Override
+	protected final Iterator<T> _getReverseIterator() {
+		return _list.reverse.iterator();
+	}
+	
 	public PooledOrderedSet() {
 		this(new PooledHashMap<>(), new PooledLinkedList<>());
 	}

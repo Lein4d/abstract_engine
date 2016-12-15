@@ -3,7 +3,7 @@ package ae.collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public final class PooledLinkedList<T> extends PooledCollection<T, T> {
+public final class PooledLinkedList<T> extends PooledCollection<T> {
 	
 	private LinkedListNode<T> _first = null;
 	private LinkedListNode<T> _last  = null;
@@ -69,6 +69,12 @@ public final class PooledLinkedList<T> extends PooledCollection<T, T> {
 		while(node != null) node = _freeNode(node).next;
 		
 		_first = _last = null;
+	}
+
+	@Override
+	protected final Iterator<T> _getReverseIterator() {
+		// TODO: A new object is created
+		return new LinkedListNode.NodeIteratorReverse<T>(_last);
 	}
 	
 	public PooledLinkedList() {

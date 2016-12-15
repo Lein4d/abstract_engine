@@ -2,10 +2,16 @@ package ae.collections;
 
 import java.util.Iterator;
 
-public final class PooledHashSet<T> extends PooledCollection<T, T> {
+public final class PooledHashSet<T> extends PooledCollection<T> {
 
 	// Die Value-Komponente wird immer auf 'null' gesetzt
 	private final PooledHashMap<T, Object> _hashMap;
+
+	@Override
+	protected final Iterator<T> _getReverseIterator() {
+		// TODO: A new object is created
+		return _hashMap.keys.iterator();
+	}
 	
 	public PooledHashSet() {
 		this(new PooledHashMap<>());
