@@ -301,6 +301,7 @@ public final class AbstractEngine {
 		glClearDepth(1);
 		glDepthFunc(GL_LEQUAL);
 		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_SCISSOR_TEST);
 		
 		_state = State.RUNNING;
 		
@@ -321,15 +322,13 @@ public final class AbstractEngine {
 			
 			background.copyStaticValues();
 			glClearColor(background.x, background.y, background.z, 1);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			_sceneGraph.prepareRendering(_frameCounter, _time, delta);
 			_display   .render(this);
 			
 			glfwSwapBuffers(_window);
-			//glfwPollEvents();
-			input.processInput();
 			
+			input.processInput();
 			_frameCounter++;
 		}
 		

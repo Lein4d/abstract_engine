@@ -97,6 +97,9 @@ public abstract class Screen {
 			_computeAbsRect(width, height, _absRect);
 			
 			glViewport(_absRect[0], _absRect[1], _absRect[2], _absRect[3]);
+			glScissor (_absRect[0], _absRect[1], _absRect[2], _absRect[3]);
+			
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			
 			camera.sceneGraph.render(
 				camera,
