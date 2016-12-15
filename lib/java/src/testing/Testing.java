@@ -5,7 +5,6 @@ import static org.lwjgl.glfw.GLFW.*;
 import ae.collections.ObjectPool;
 import ae.collections.PooledLinkedList;
 import ae.core.AbstractEngine;
-import ae.core.InputListener;
 import ae.core.Texture;
 import ae.core.TextureBuilder;
 import ae.material.GlslType;
@@ -23,6 +22,7 @@ import ae.scenegraph.entities.Marker;
 import ae.scenegraph.entities.Model;
 import ae.scenegraph.entities.PointLight;
 import ae.util.OrganizedObject;
+import ae.util.Wrapper;
 
 public final class Testing {
 	
@@ -324,30 +324,25 @@ public final class Testing {
 		
 		sceneGraph.print();
 		
-		engine.setInputListener(new InputListener() {
+		final Wrapper<Integer> materialHeightState = new Wrapper<Integer>(2);
+		
+		engine.input.onKeyDown = (key) -> {
 			
-			private int materialHeightState = 2;
-			
-			@Override
-			public final void onKeyDown(
-					final int key) {
+			switch(key) {
+				case GLFW_KEY_ESCAPE: engine.stop(); break;
+				case GLFW_KEY_T: engine.toggleFullscreen(); break;
+				case GLFW_KEY_0: engine.setSpeed(0); break;
+				case GLFW_KEY_1: engine.setSpeed(0.5); break;
+				case GLFW_KEY_2: engine.setSpeed(1); break;
+				case GLFW_KEY_3: engine.setSpeed(2); break;
 				
-				switch(key) {
-					case GLFW_KEY_ESCAPE: engine.stop(); break;
-					case GLFW_KEY_T: engine.toggleFullscreen(); break;
-					case GLFW_KEY_0: engine.setSpeed(0); break;
-					case GLFW_KEY_1: engine.setSpeed(0.5); break;
-					case GLFW_KEY_2: engine.setSpeed(1); break;
-					case GLFW_KEY_3: engine.setSpeed(2); break;
-					
-					case GLFW_KEY_H:
-						materialHeightState = (materialHeightState + 1) % 3;
-						testMaterial.setParam(
-							"height", materialHeightState * 0.025f);
-						break;
-				}
+				case GLFW_KEY_H:
+					materialHeightState.v = (materialHeightState.v + 1) % 3;
+					testMaterial.setParam(
+						"height", materialHeightState.v * 0.025f);
+					break;
 			}
-		});
+		};
 		
 		engine.start();
 	}

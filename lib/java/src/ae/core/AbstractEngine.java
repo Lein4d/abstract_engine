@@ -28,7 +28,7 @@ public final class AbstractEngine {
 		STOPPING,
 		STOPPED
 	}
-	
+
 	public interface ResizeCallback {
 		void onResize(AbstractEngine engine);
 	}
@@ -98,7 +98,7 @@ public final class AbstractEngine {
 
 	public static final int    VERSION_MAJOR    = 0;
 	public static final int    VERSION_MINOR    = 9;
-	public static final int    VERSION_REVISION = 2;
+	public static final int    VERSION_REVISION = 3;
 	public static final String VERSION_STRING   =
 		"v" + VERSION_MAJOR + "." + VERSION_MINOR + "." + VERSION_REVISION;
 	
@@ -121,6 +121,7 @@ public final class AbstractEngine {
 	
 	public final Vector3D     background = Vector4D.BLACK.xyz.cloneStatic();
 	public final Screen.Layer display    = _display._layer;
+	public final InputManager input;
 	
 	static {
 		
@@ -206,6 +207,7 @@ public final class AbstractEngine {
 		GL.createCapabilities();
 
 		standardMaterials = new StandardMaterials(this);
+		input             = new InputManager(_window);
 	}
 
 	public final void addMaterial(final Material material) {
@@ -255,29 +257,6 @@ public final class AbstractEngine {
 	
 	public final AbstractEngine setSpeed(final double speed) {
 		_speed = speed;
-		return this;
-	}
-	
-	public final AbstractEngine setInputListener(
-			final InputListener inputListener) {
-		
-		glfwSetKeyCallback(
-			_window,
-			(window, key, scancode, action, mods) -> {
-				
-				switch(action) {
-					case GLFW_PRESS:
-						inputListener.onKeyDown(key);
-						break;
-					case GLFW_RELEASE:
-						inputListener.onKeyUp(key);
-						break;
-					case GLFW_REPEAT:
-						//err.println("Unsupported key event");
-						break;
-				}
-			});
-		
 		return this;
 	}
 	
@@ -348,7 +327,8 @@ public final class AbstractEngine {
 			_display   .render(this);
 			
 			glfwSwapBuffers(_window);
-			glfwPollEvents();
+			//glfwPollEvents();
+			input.processInput();
 			
 			_frameCounter++;
 		}
