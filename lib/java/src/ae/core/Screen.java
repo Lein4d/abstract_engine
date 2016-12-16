@@ -5,6 +5,7 @@ import static org.lwjgl.opengl.GL11.*;
 import ae.collections.PooledOrderedSet;
 import ae.math.Matrix4D;
 import ae.scenegraph.entities.Camera;
+import ae.util.CachedObject;
 
 public abstract class Screen {
 
@@ -12,14 +13,34 @@ public abstract class Screen {
 		
 		private final PooledOrderedSet<Rect> _rects = new PooledOrderedSet<>();
 		
-		protected final void _render() {
+		protected final void _invalidateRects() {
 			for(Rect i : _rects)
-				i._render(Screen.this._width, Screen.this._height);
+				i._invalidate(Screen.this._width, Screen.this._height);
+		}
+		
+		protected final void _render() {
+			for(Rect i : _rects) i._render();
 		}
 		
 		public final Layer appendRects(final Rect ... rects) {
 			for(Rect i : rects) _rects.insertAtEnd(i);
 			return this;
+		}
+
+		public final int getHeight() {
+			return Screen.this._height;
+		}
+		
+		public final Rect getRectAtPosition(
+				final int x,
+				final int y) {
+			
+			for(Rect i : _rects.reverse) if(i._containsPoint(x, y)) return i;
+			return null;
+		}
+		
+		public final int getWidth() {
+			return Screen.this._width;
 		}
 		
 		public final Layer moveAfter(
@@ -49,8 +70,10 @@ public abstract class Screen {
 		}
 		
 		public final Layer setCamera(final Camera camera) {
-			// TODO: Remove all rects
+			
+			_rects.clear();
 			_rects.insertAtEnd(new RelativeRect(camera));
+			
 			return this;
 		}
 		
@@ -59,7 +82,7 @@ public abstract class Screen {
 				final int        columnCount,
 				final Camera ... cameras) {
 			
-			// TODO: Remove all rects
+			_rects.clear();
 			
 			final float rowCountF    = rowCount;
 			final float columnCountF = columnCount;
@@ -83,28 +106,56 @@ public abstract class Screen {
 	
 	public static abstract class Rect {
 		
-		private final Matrix4D _projection = new Matrix4D();
-		private final int[]    _absRect    = new int[4];
+		private final Matrix4D            _projection = new Matrix4D();
+		private final CachedObject<int[]> _absRect    = new CachedObject<int[]>(
+			new int[4], (rect) -> _computeCachedRect(rect));
+		
+		private int _screenWidth;
+		private int _screenHeight;
 		
 		public Camera camera;
+
+		private final int[] _computeCachedRect(final int[] dst) {
+			_computeAbsRect(_screenWidth, _screenHeight, dst);
+			return dst;
+		}
 		
-		private void _render(
-				final int width,
-				final int height) {
+		private final boolean _containsPoint(
+				final int x,
+				final int y) {
+			
+			final int[] absRect = _absRect.getObject();
+			
+			return
+				x >= absRect[0] && x < absRect[0] + absRect[2] &&
+				y >= absRect[1] && x < absRect[1] + absRect[3];
+		}
+		
+		private final void _invalidate(
+				final int screenWidth,
+				final int screenHeight) {
+			
+			_screenWidth  = screenWidth;
+			_screenHeight = screenHeight;
+			
+			_absRect.invalidate();
+		}
+		
+		private void _render() {
 			
 			if(camera == null || camera.getInstance() == null) return;
 			
-			_computeAbsRect(width, height, _absRect);
+			final int[] absRect = _absRect.getObject();
 			
-			glViewport(_absRect[0], _absRect[1], _absRect[2], _absRect[3]);
-			glScissor (_absRect[0], _absRect[1], _absRect[2], _absRect[3]);
+			glViewport(absRect[0], absRect[1], absRect[2], absRect[3]);
+			glScissor (absRect[0], absRect[1], absRect[2], absRect[3]);
 			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			
 			camera.sceneGraph.render(
 				camera,
 				camera.createProjectionMatrix(
-					_absRect[2], _absRect[3], _projection));
+					absRect[2], absRect[3], _projection));
 		}
 		
 		protected Rect(final Camera camera) {
@@ -113,6 +164,10 @@ public abstract class Screen {
 		
 		protected abstract void _computeAbsRect(
 			int width, int height, int[] dst);
+		
+		protected final void _invalidate() {
+			_absRect.invalidate();
+		}
 	}
 	
 	public static final class AbsoluteRect extends Rect {
@@ -158,6 +213,7 @@ public abstract class Screen {
 			_x = x;
 			_y = y;
 			
+			_invalidate();
 			return this;
 		}
 		
@@ -168,6 +224,7 @@ public abstract class Screen {
 			_width  = _checkSizeDimension(width);
 			_height = _checkSizeDimension(height);
 			
+			_invalidate();
 			return this;
 		}
 	}
@@ -215,6 +272,7 @@ public abstract class Screen {
 			_x = x;
 			_y = y;
 			
+			_invalidate();
 			return this;
 		}
 		
@@ -225,6 +283,7 @@ public abstract class Screen {
 			_width  = _checkSizeDimension(width);
 			_height = _checkSizeDimension(height);
 			
+			_invalidate();
 			return this;
 		}
 	}
@@ -232,6 +291,7 @@ public abstract class Screen {
 	private int _width;
 	private int _height;
 	
+	// Must invalidate all rects in all layers
 	protected abstract void _setSize(int width, int height);
 	
 	public final int getWidth() {

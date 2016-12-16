@@ -45,8 +45,11 @@ public final class AbstractEngine {
 		
 		@Override
 		protected final void _setSize(
-			final int width,
-			final int height) {}
+    			final int width,
+    			final int height) {
+			
+			_layer._invalidateRects();
+		}
 		
 		@Override
 		public final void render(final AbstractEngine engine) {

@@ -60,6 +60,8 @@ public final class TextureScreen extends Screen {
 				GL_TEXTURE_2D, 0, 0);
 			
 			glBindTexture(GL_TEXTURE_2D, 0);
+			
+			_invalidateRects();
 		}
 		
 		private final boolean _isActive() {
