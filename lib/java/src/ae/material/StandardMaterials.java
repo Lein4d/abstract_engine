@@ -71,7 +71,11 @@ public final class StandardMaterials {
 			mb.setColor(
 				curColorNode != null ? curColorNode : mb.constF(1, 1, 1));
 			
-			_material = mb.createMaterial(engine);
+			_material = mb.createMaterial(
+				engine,
+				(diffuse ? "D" : "_") + (lighten ? "L" : "_") +
+					(normalMap ? "N" : "_") + (emissive ? "E" : "_") +
+					(colorMask ? "C" : "_"));
 		}
 		
 		private final void _setColorMask(final Vector3D colorMask) {

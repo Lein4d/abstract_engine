@@ -39,9 +39,10 @@ public final class ObjectPicker {
 	
 	// The shader program is created outside the object picker, so it can be
 	// reused among multiple object pickers
-	public static final int createShaderProgram() {
-		
-		
-		return 0;
+	public static final int createShaderProgram(final AbstractEngine engine) {
+		return ShaderCompiler.createShaderProgram(
+			engine, "Object Picker",
+			_VS_SOURCE, _FS_SOURCE,
+			"out_color", "in_position");
 	}
 }

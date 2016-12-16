@@ -256,9 +256,12 @@ public final class MaterialBuilder {
 		return _FUNC_COS.createNode(x);
 	}
 	
-	public final Material createMaterial(final AbstractEngine engine) {
+	public final Material createMaterial(
+			final AbstractEngine engine,
+			final String         name) {
+		
 		return new Material(
-			engine,
+			engine, name,
 			_variables, _functions,
 			_parameters.values(), _textures.values(), _valuesOrdered,
 			_color, _updater);

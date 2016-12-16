@@ -1,8 +1,6 @@
 package ae.material;
 
-import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.opengl.GL30.*;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -11,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import ae.core.AbstractEngine;
+import ae.core.ShaderCompiler;
 
 final class ShaderProgram {
 	
@@ -31,10 +30,6 @@ final class ShaderProgram {
 			_name     = name;
 			_index    = index;
 			_glslLine = glslLine;
-		}
-		
-		final void bindLocation(final int program) {
-			glBindAttribLocation(program, _index, _name);
 		}
 	}
 	
@@ -503,30 +498,9 @@ final class ShaderProgram {
 		if(components.contains(VARY_TEXCOORD)) components.add(_ATTR_TEXCOORD);
 	}
 
-	private static final boolean _createShader(
-			final AbstractEngine engine,
-			final int            shaderType,
-			final int            program,
-			final String         shaderSource) {
-		
-		final int shader = glCreateShader(shaderType);
-		
-		glShaderSource (shader, shaderSource);
-		glCompileShader(shader);
-		
-		engine.out.println(glGetShaderInfoLog(shader));
-		
-		// Abort if the shader has not been compiled
-		if(glGetShaderi(shader, GL_COMPILE_STATUS) == GL_FALSE) return false;
-		
-		glAttachShader(program, shader);
-		glDeleteShader(shader);
-		
-		return true;
-	}
-
 	private static final int _createShaderProgram(
 			final AbstractEngine             engine,
+			final String                     name,
     		final List<UniformVS>            uniformsVS,
     		final List<UniformFS>            uniformsFS,
     		final List<CustomUniformParam>   uniformParams,
@@ -538,41 +512,24 @@ final class ShaderProgram {
     		final List<Function>             functions,
 			final Node                       color) {
 
-		final int program = glCreateProgram();
-
-		// Create the vertex shader
-		final boolean vsSuccess = _createShader(
-			engine, GL_VERTEX_SHADER, program,
-			_assembleVertexShaderSource(uniformsVS, attributes, varyings));
+		final String[] attributeNames = new String[5];
 		
-		// Create the fragment shader
-		final boolean fsSuccess = _createShader(
-			engine, GL_FRAGMENT_SHADER, program,
+		for(Attribute i : attributes) attributeNames[i._index] = i._name;
+		
+		return ShaderCompiler.createShaderProgram(
+			engine,
+			"[Material] " + name,
+			_assembleVertexShaderSource(uniformsVS, attributes, varyings),
 			_assembleFragmentShaderSource(
 				uniformsFS, uniformParams, uniformTextures,
-				varyings, lVariables, customLVariables, functions, color));
-		
-		// If one of shader components failed, no program will be used
-		if(!vsSuccess || !fsSuccess) return 0;
-
-		// Bind the vertex attribute locations
-		for(Attribute i : attributes) i.bindLocation(program);
-		
-		// Bind fragment data locations
-		glBindFragDataLocation(program, 0, "out_color");
-
-		// Link the whole program
-		glLinkProgram(program);
-		engine.out.println(glGetProgramInfoLog(program));
-		
-		// If the linking has failed, no program will be used
-		if(glGetProgrami(program, GL_LINK_STATUS) == GL_FALSE) return 0;
-		
-		return program;
+				varyings, lVariables, customLVariables, functions, color),
+			"out_color",
+			attributeNames);
 	}
 	
 	ShaderProgram(
     		final AbstractEngine       engine,
+    		final String               name,
     		final Set<ShaderComponent> components,
     		final List<LocalVariable>  customLVariables,
     		final Node                 color) {
@@ -607,7 +564,7 @@ final class ShaderProgram {
 		}
 		
 		programId = _createShaderProgram(
-			engine,
+			engine, name,
 			uniformsVS, uniformsFS, uniformParams, uniformTextures,
 			attributes, varyings, lVariables, customLVariables, functions,
 			color);

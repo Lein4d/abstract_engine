@@ -64,6 +64,7 @@ public final class AbstractEngine {
 	
 	private final long    _window;
 	private final Display _display = new Display();
+	private final int     _opShaderProgram;
 	
 	private final PooledLinkedList<Material> _materials   =
 		new PooledLinkedList<>();
@@ -209,6 +210,7 @@ public final class AbstractEngine {
 
 		GL.createCapabilities();
 
+		_opShaderProgram  = ObjectPicker.createShaderProgram(this);
 		standardMaterials = new StandardMaterials(this);
 		input             = new InputManager(_window);
 	}

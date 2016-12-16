@@ -186,7 +186,7 @@ public final class Testing {
 			setColor(mb.mult(
 				mb.phong(mb.normalMapping(mb.normalTexture("normal", mb.value("tcMod")))),
 				mb.textureRGB("diffuse", mb.value("tcMod")))).
-			createMaterial(engine);
+			createMaterial(engine, "Parallax");
 		
 		final Camera cameraGlobal = new Camera(sceneGraph, null).
 			setProjectionMode(

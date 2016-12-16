@@ -227,6 +227,7 @@ public class Material {
 	
 	Material(
 			final AbstractEngine          engine,
+			final String                  name,
 			final Set<BuiltInVariable>    variables,
 			final Set<BuiltInFunction>    functions,
 			final Iterable<CustomParam>   params,
@@ -253,7 +254,7 @@ public class Material {
 		for(Value           i : values)    valueVariables.add(i._lVariable);
 		
 		final ShaderProgram program =
-			new ShaderProgram(engine, components, valueVariables, color);
+			new ShaderProgram(engine, name, components, valueVariables, color);
 		
 		_shaderProgram = program.programId;
 		
