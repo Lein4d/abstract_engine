@@ -11,6 +11,9 @@ public final class Instance extends OrganizedObject<Instance> {
 	
 	// Link to the original entity that contains most of the meta information
 	private Entity<?> _entity;
+
+	// The ID may be used for object picking
+	private int _id;
 	
 	// Used to skip this instance in case of consistency errors
 	private boolean _active;
@@ -23,6 +26,8 @@ public final class Instance extends OrganizedObject<Instance> {
 	// Derived properties
 	private int     _level;
 	private boolean _static;
+	private boolean _rendered;
+	private boolean _pickable;
 	
 	public final Instance assign(
 			final Entity<?> entity,
@@ -47,12 +52,19 @@ public final class Instance extends OrganizedObject<Instance> {
 	public final void deriveProperties() {
 		
 		if(_parent != null) {
-	    	_active = _parent._active && _active;
-			_level  = _parent._level + 1;
-			_static = _parent._static && _entity.noTF;
+	    	
+			_active   = _parent._active   && _active;
+			_level    = _parent._level + 1;
+			_static   = _parent._static   && _entity.noTF;
+			_rendered = _parent._rendered && _entity.rendered;
+			_pickable = _parent._pickable && _entity.pickable;
+			
 		} else {
-			_level  = 0;
-			_static = _entity.noTF;
+			
+			_level    = 0;
+			_static   = _entity.noTF;
+			_rendered = _entity.rendered;
+			_pickable = _entity.pickable;
 		}
 	}
 
@@ -62,6 +74,10 @@ public final class Instance extends OrganizedObject<Instance> {
 	
 	public final Instance getFirstChild() {
 		return _firstChild;
+	}
+	
+	public final int getId() {
+		return _id;
 	}
 	
 	public final int getLevel() {
@@ -97,6 +113,10 @@ public final class Instance extends OrganizedObject<Instance> {
 	
 	public final boolean isStatic() {
 		return _static;
+	}
+	
+	public final void setId(final int id) {
+    	_id = id;
 	}
 	
 	public final Instance transformToCameraSpace(

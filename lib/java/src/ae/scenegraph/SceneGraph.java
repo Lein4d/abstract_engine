@@ -209,6 +209,10 @@ public class SceneGraph {
 		// Derive instance information in a post processing step
 		_traversePrefix(_rootInstance, _unrollPostProcessor);
 		
+		// Assign a unique ID to each instance
+		int instanceId = 1;
+		for(Instance i : _instances) i.setId(instanceId++);
+		
 		// Abort if no errors occurred during unrolling
 		if(_unrollErrors.getSize() == 0) return;
 		

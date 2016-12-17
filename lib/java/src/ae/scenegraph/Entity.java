@@ -31,6 +31,9 @@ public class Entity<T> {
 	public final boolean    noInheritedTF;
 	public final boolean    multiInstance;
 	
+	public boolean rendered = true;
+	public boolean pickable = true;
+	
 	// Attributes
 	public final ConstAttribute<Matrix4D> transformation =
 		new ConstAttribute<>(new Matrix4D());
