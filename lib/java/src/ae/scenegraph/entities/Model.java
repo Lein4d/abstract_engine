@@ -1,6 +1,7 @@
 package ae.scenegraph.entities;
 
 import ae.collections.PooledLinkedList;
+import ae.core.SceneGraph;
 import ae.core.Texture;
 import ae.material.Material;
 import ae.material.StandardMaterials;
@@ -12,7 +13,6 @@ import ae.scenegraph.Attribute;
 import ae.scenegraph.ConstAttribute;
 import ae.scenegraph.Entity;
 import ae.scenegraph.Instance;
-import ae.scenegraph.SceneGraph;
 
 import static org.lwjgl.opengl.GL11.*;
 
@@ -42,7 +42,8 @@ public final class Model extends Entity<Model> {
 	public final void drawInstances(
 			final Matrix4D                   projection,
 			final PooledLinkedList<Instance> dirLights,
-			final PooledLinkedList<Instance> pointLights) {
+			final PooledLinkedList<Instance> pointLights,
+			final Material                   extMaterial) {
 		
 		final Mesh     activeMesh     = mesh    .getActiveValue();
 		final Material activeMaterial = material.getActiveValue();
@@ -65,7 +66,7 @@ public final class Model extends Entity<Model> {
 		iterateInstances((instance) -> {
 			
 			// Pass the global scene data to the material shader
-			activeMaterial.use(
+			(extMaterial != null ? extMaterial : activeMaterial).use(
 				instance.tfToCameraSpace, projection, dirLights, pointLights);
 
 			activeMesh.draw();

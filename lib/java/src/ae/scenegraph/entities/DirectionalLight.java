@@ -1,10 +1,10 @@
 package ae.scenegraph.entities;
 
+import ae.core.SceneGraph;
 import ae.math.Vector3D;
 import ae.math.Vector4D;
 import ae.scenegraph.ConstAttribute;
 import ae.scenegraph.Entity;
-import ae.scenegraph.SceneGraph;
 
 public class DirectionalLight extends Entity<DirectionalLight> {
 

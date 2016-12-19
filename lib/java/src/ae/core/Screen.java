@@ -3,6 +3,7 @@ package ae.core;
 import static org.lwjgl.opengl.GL11.*;
 
 import ae.collections.PooledOrderedSet;
+import ae.material.Material;
 import ae.math.Matrix4D;
 import ae.scenegraph.entities.Camera;
 import ae.util.CachedObject;
@@ -13,13 +14,26 @@ public abstract class Screen {
 		
 		private final PooledOrderedSet<Rect> _rects = new PooledOrderedSet<>();
 		
+		final void _renderObjectPicking(
+				final ObjectPicker objectPicker,
+    			final int          x,
+    			final int          y) {
+			
+			for(Rect i : _rects.reverse) {
+				if(i._containsPoint(x, y)) {
+					i._render(null, false, 0, 0);
+					break;
+				}
+			}
+		}
+		
 		protected final void _invalidateRects() {
 			for(Rect i : _rects)
 				i._invalidate(Screen.this._width, Screen.this._height);
 		}
 		
-		protected final void _render() {
-			for(Rect i : _rects) i._render();
+		protected final void _renderVisual() {
+			for(Rect i : _rects) i._render(null, false, 0, 0);
 		}
 		
 		public final Layer appendRects(final Rect ... rects) {
@@ -29,14 +43,6 @@ public abstract class Screen {
 
 		public final int getHeight() {
 			return Screen.this._height;
-		}
-		
-		public final Rect getRectAtPosition(
-				final int x,
-				final int y) {
-			
-			for(Rect i : _rects.reverse) if(i._containsPoint(x, y)) return i;
-			return null;
 		}
 		
 		public final int getWidth() {
@@ -141,7 +147,11 @@ public abstract class Screen {
 			_absRect.invalidate();
 		}
 		
-		private void _render() {
+		private void _render(
+				final Material extMaterial,
+				final boolean  singlePixel,
+				final int      x,
+				final int      y) {
 			
 			if(camera == null || camera.getInstance() == null) return;
 			
@@ -155,7 +165,8 @@ public abstract class Screen {
 			camera.sceneGraph.render(
 				camera,
 				camera.createProjectionMatrix(
-					absRect[2], absRect[3], _projection));
+					absRect[2], absRect[3], _projection),
+				extMaterial);
 		}
 		
 		protected Rect(final Camera camera) {

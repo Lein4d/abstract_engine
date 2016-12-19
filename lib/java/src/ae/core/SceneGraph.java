@@ -1,4 +1,4 @@
-package ae.scenegraph;
+package ae.core;
 
 import java.io.PrintStream;
 import java.util.Random;
@@ -8,8 +8,10 @@ import ae.collections.LinkedListNode;
 import ae.collections.ObjectPool;
 import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;
-import ae.core.AbstractEngine;
+import ae.material.Material;
 import ae.math.Matrix4D;
+import ae.scenegraph.Entity;
+import ae.scenegraph.Instance;
 import ae.scenegraph.entities.Camera;
 import ae.scenegraph.entities.DynamicSpace;
 import ae.scenegraph.entities.Marker;
@@ -267,7 +269,8 @@ public class SceneGraph {
 	
 	public final void render(
 			final Camera   camera,
-			final Matrix4D projection) {
+			final Matrix4D projection,
+			final Material extMaterial) {
 		
 		final Matrix4D tfCameraInverse =
 			camera.getInstance().tfToEyeSpace.invert();
@@ -278,7 +281,8 @@ public class SceneGraph {
 		
 		// Render all solid models
 		for(Model i : _models)
-			i.drawInstances(projection, _dirLightNodes, _pointLightNodes);
+			i.drawInstances(
+				projection, _dirLightNodes, _pointLightNodes, extMaterial);
 	}
 	
 	public final void setEngine(final AbstractEngine engine) {

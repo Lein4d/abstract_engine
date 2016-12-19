@@ -138,7 +138,7 @@ public final class TextureScreen extends Screen {
 		
 		for(TextureLayer i : _layers) {
 			glDrawBuffers(GL_COLOR_ATTACHMENT0 + i._level);
-			i._render();
+			i._renderVisual();
 		}
 	}
 }

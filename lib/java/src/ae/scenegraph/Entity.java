@@ -4,6 +4,7 @@ import java.util.function.Consumer;
 
 import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;
+import ae.core.SceneGraph;
 import ae.math.Matrix4D;
 
 public class Entity<T> {

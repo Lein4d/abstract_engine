@@ -9,11 +9,11 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
 import ae.collections.PooledLinkedList;
+import ae.collections.PooledQueue;
 import ae.material.Material;
 import ae.material.StandardMaterials;
 import ae.math.Vector3D;
 import ae.math.Vector4D;
-import ae.scenegraph.SceneGraph;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL30.*;
@@ -58,16 +58,18 @@ public final class AbstractEngine {
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			
 			// Render the only layer available
-			_layer._render();
+			_layer._renderVisual();
 		}
 	}
 	
 	private final long    _window;
 	private final Display _display = new Display();
-	private final int     _opShaderProgram;
 	
 	private final PooledLinkedList<Material> _materials   =
 		new PooledLinkedList<>();
+	
+	private final PooledQueue<ObjectPicker> _objectPickers =
+		new PooledQueue<>();
 	
 	private State   _state        = State.CREATED;
 	private boolean _isFullscreen = false;
@@ -100,6 +102,8 @@ public final class AbstractEngine {
 	
 	private SceneGraph _sceneGraph = null;
 
+	final int opShaderProgram;
+	
 	public static final int    VERSION_MAJOR    = 0;
 	public static final int    VERSION_MINOR    = 9;
 	public static final int    VERSION_REVISION = 3;
@@ -159,6 +163,10 @@ public final class AbstractEngine {
 		_display.setSize(_fbWidth, _fbHeight);
 	}
 	
+	final void registerObjectPicker(final ObjectPicker objectPicker) {
+		_objectPickers.push(objectPicker);
+	}
+	
 	public AbstractEngine(
 			final String      title,
 			final PrintStream out,
@@ -210,7 +218,7 @@ public final class AbstractEngine {
 
 		GL.createCapabilities();
 
-		_opShaderProgram  = ObjectPicker.createShaderProgram(this);
+		opShaderProgram   = ObjectPicker.createShaderProgram(this);
 		standardMaterials = new StandardMaterials(this);
 		input             = new InputManager(_window);
 	}
@@ -330,6 +338,8 @@ public final class AbstractEngine {
 
 			_sceneGraph.prepareRendering(_frameCounter, _time, delta);
 			_display   .render(this);
+			
+			while(_objectPickers.hasNext()) _objectPickers.pop()._render();
 			
 			glfwSwapBuffers(_window);
 			
