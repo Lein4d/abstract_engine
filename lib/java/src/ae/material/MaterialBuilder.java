@@ -6,8 +6,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import ae.core.AbstractEngine;
+import ae.core.Frame;
 
 public final class MaterialBuilder {
 	
@@ -116,8 +118,8 @@ public final class MaterialBuilder {
 	private final Set<Material.BuiltInVariable> _variables = new HashSet<>();
 	private final Set<Material.BuiltInFunction> _functions = new HashSet<>();
 	
-	private Node             _color   = null;
-	private Material.Updater _updater = null; 
+	private Node                        _color    = null;
+	private BiConsumer<Material, Frame> _cbUpdate = null; 
 	
 	private static final NodeTemplate _createFuncTemplate(
 			final String        name,
@@ -264,7 +266,7 @@ public final class MaterialBuilder {
 			engine, name,
 			_variables, _functions,
 			_parameters.values(), _textures.values(), _valuesOrdered,
-			_color, _updater);
+			_color, _cbUpdate);
 	}
 
 	public final Node cross(
@@ -588,8 +590,10 @@ public final class MaterialBuilder {
 		return this;
 	}
 	
-	public final MaterialBuilder setUpdater(final Material.Updater updater) {
+	public final MaterialBuilder setUpdateCallback(
+			final BiConsumer<Material, Frame> cbUpdate) {
 		
+		_cbUpdate = cbUpdate;
 		return this;
 	}
 

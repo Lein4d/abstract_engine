@@ -73,7 +73,6 @@ public final class AbstractEngine {
 	
 	private State   _state        = State.CREATED;
 	private boolean _isFullscreen = false;
-	private int     _frameCounter = 0;
 	
 	// Größe der Renderfläche in Bildschirmkoordinaten
 	private int _windowPosX;
@@ -94,14 +93,9 @@ public final class AbstractEngine {
 	
 	// Daten zur Steueurung des zeitlichen Ablaufs
 	private double _speed = 1;
-	private double _time;
-	private long   _absTime;
 
-	private ResizeCallback     _cbResize     = null;
-	private TimeChangeCallback _cbTimeChange = null;
+	private ResizeCallback _cbResize = null;
 	
-	private SceneGraph _sceneGraph = null;
-
 	final int opShaderProgram;
 	
 	public static final int    VERSION_MAJOR    = 0;
@@ -127,10 +121,14 @@ public final class AbstractEngine {
 	
 	public final StandardMaterials standardMaterials;
 	
+	public final Frame        frame;
 	public final Vector3D     background = Vector4D.BLACK.xyz.cloneStatic();
 	public final Screen.Layer display    = _display._layer;
 	public final InputManager input;
-	
+
+	// For the actual scene graph, refer to 'frame.getSceneGraph()'
+	public SceneGraph sceneGraph = null;
+
 	static {
 		
 		Path fullPath = Paths.get("");
@@ -220,6 +218,7 @@ public final class AbstractEngine {
 
 		opShaderProgram   = ObjectPicker.createShaderProgram(this);
 		standardMaterials = new StandardMaterials(this);
+		frame             = new Frame(this);
 		input             = new InputManager(_window);
 	}
 
@@ -240,12 +239,8 @@ public final class AbstractEngine {
 		return _fbWidth;
 	}
 	
-	public final int getFrameIndex() {
-		return _frameCounter;
-	}
-	
 	public final SceneGraph getSceneGraph() {
-		return _sceneGraph;
+		return sceneGraph;
 	}
 	
 	public final double getSpeed() {
@@ -256,10 +251,6 @@ public final class AbstractEngine {
 		return _state;
 	}
 	
-	public final double getTime() {
-		return _time;
-	}
-
 	public final int getWindowHeight() {
 		return _windowHeight;
 	}
@@ -280,31 +271,9 @@ public final class AbstractEngine {
 		return this;
 	}
 	
-	public final AbstractEngine setSceneGraph(final SceneGraph sceneGraph) {
-		
-		if(_sceneGraph == sceneGraph) return this;
-
-		if(_sceneGraph != null) _sceneGraph.setEngine(null);
-		if( sceneGraph != null)  sceneGraph.setEngine(this);
-		
-		_sceneGraph = sceneGraph;
-		
-		return this;
-	}
-
-	public final AbstractEngine setTimeChangeCallback(
-			final TimeChangeCallback cbTimeChange) {
-		
-		_cbTimeChange = cbTimeChange;
-		return this;
-	}
-
 	public final void start() {
 
 		_state = State.STARTING;
-
-		_time    = 0;
-		_absTime = System.currentTimeMillis();
 
 		glfwShowWindow(_window);
 		if(_cbResize != null) _cbResize.onResize(this);
@@ -323,28 +292,20 @@ public final class AbstractEngine {
 		
 		while(!glfwWindowShouldClose(_window)) {
 
-			final long absTimeNew = System.currentTimeMillis();
-			final double delta = _speed * (absTimeNew - _absTime);
+			frame.moveToNext(_speed, sceneGraph);
 			
-			_time   += delta;
-			_absTime = absTimeNew;
-			
-			if(_cbTimeChange != null) _cbTimeChange.update(_time, delta);
-			
-			for(Material i : _materials) i.update(_time, delta);
+			for(Material i : _materials) i.update();
 			
 			background.copyStaticValues();
 			glClearColor(background.x, background.y, background.z, 1);
 
-			_sceneGraph.prepareRendering(_frameCounter, _time, delta);
-			_display   .render(this);
+			_display.render(this);
 			
 			while(_objectPickers.hasNext()) _objectPickers.pop()._render();
 			
 			glfwSwapBuffers(_window);
 			
 			input.processInput();
-			_frameCounter++;
 		}
 		
 		_state = State.STOPPING;
@@ -397,7 +358,7 @@ public final class AbstractEngine {
 		
 		return _isFullscreen;
 	}
-	
+	/*
 	public final double updateTime() {
 		
 		final long absTimeNew = System.currentTimeMillis();
@@ -420,4 +381,5 @@ public final class AbstractEngine {
 		
 		return _time;
 	}
+	*/
 }

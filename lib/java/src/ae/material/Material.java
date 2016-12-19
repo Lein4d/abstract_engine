@@ -8,15 +8,13 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import ae.collections.PooledHashMap;
-import ae.collections.PooledLinkedList;
 import ae.core.AbstractEngine;
+import ae.core.Frame;
 import ae.core.Texture;
 import ae.math.Matrix4D;
-import ae.scenegraph.Instance;
-import ae.scenegraph.entities.DirectionalLight;
-import ae.scenegraph.entities.PointLight;
 
 public class Material {
 
@@ -124,16 +122,11 @@ public class Material {
 		}
 	}
 	
-	public interface Updater {
-		void updateMaterial(Material material, double time, double delta);
-	}
-	
 	private final int     _shaderProgram;
-	private final Updater _updater;
 	private final float[] _temp9  = new float[9];
 	private final float[] _temp16 = new float[16];
-	private final float[] _lightData;
-	
+
+	private final BiConsumer<Material, Frame>          _cbUpdate;
 	private final PooledHashMap<String, CustomTexture> _textures =
 		new PooledHashMap<>();
 	private final PooledHashMap<String, CustomParam>   _params   =
@@ -168,73 +161,16 @@ public class Material {
 	
 	public final AbstractEngine engine;
 
-	private final void _setDirLightData(
-			final PooledLinkedList<Instance> lights) {
-		
-		int offset = 0;
-		
-		for(Instance i : lights) {
-			
-			final DirectionalLight light   = (DirectionalLight)i.getEntity();
-			final float[]          dotBias = light.dotBias.getActiveValue();
-			
-			// Apply the transformation to the light direction and copy it into
-			// the data array
-			light.direction.getActiveValue().getData(_lightData, offset);
-			i.tfToCameraSpace.applyToDirVector(_lightData, offset);
-			
-			// Copy the color to the data array
-			light.color.getActiveValue().getData(_lightData, offset + 4);
-			
-			// Split the bias data and copy it to the data array
-			_lightData[offset + 3] = dotBias[0];
-			_lightData[offset + 7] = dotBias[1];
-
-			offset += 8;
-		}
-		
-		glUniform4fv(_uniDirLights,     _lightData);
-		glUniform1i (_uniDirLightCount, lights.getSize());
-	}
-
-	private final void _setPointLightData(
-			final PooledLinkedList<Instance> lights) {
-		
-		int offset = 0;
-		
-		for(Instance i : lights) {
-			
-			final PointLight light       = (PointLight)i.getEntity();
-			final float[]    attenuation = light.attenuation.getActiveValue();
-			
-			// Apply the transformation to the light position and copy it into
-			// the data array
-			i.tfToCameraSpace.applyToOrigin(_lightData, offset, (byte)3);
-			
-			// Copy the color to the data array
-			light.color.getActiveValue().getData(_lightData, offset + 4);
-			
-			// Split the attenuation data and copy it to the data array
-			_lightData[offset + 3] = attenuation[0];
-			_lightData[offset + 7] = attenuation[1];
-
-			offset += 8;
-		}
-		
-		glUniform4fv(_uniPointLights,     _lightData);
-		glUniform1i (_uniPointLightCount, lights.getSize());
-	}
-	
 	Material(
-			final AbstractEngine          engine,
-			final String                  name,
-			final Set<BuiltInVariable>    variables,
-			final Set<BuiltInFunction>    functions,
-			final Iterable<CustomParam>   params,
-			final Iterable<CustomTexture> textures,
-			final List<Value>             values,
-			final Node                    color,
-			final Updater                 updater) {
+			final AbstractEngine              engine,
+			final String                      name,
+			final Set<BuiltInVariable>        variables,
+			final Set<BuiltInFunction>        functions,
+			final Iterable<CustomParam>       params,
+			final Iterable<CustomTexture>     textures,
+			final List<Value>                 values,
+			final Node                        color,
+			final BiConsumer<Material, Frame> cbUpdate) {
 	
 		final Set<ShaderProgram.ShaderComponent> components = new HashSet<>();
 		final List<ShaderProgram.LocalVariable>  valueVariables =
@@ -242,10 +178,8 @@ public class Material {
 
 		engine.addMaterial(this);
 		
-		this.engine     = engine;
-		this._updater   = updater;
-		this._lightData = new float[
-			Math.max(engine.maxDirLightCount, engine.maxPointLightCount) * 8];
+		this.engine    = engine;
+		this._cbUpdate = cbUpdate;
 		
 		for(BuiltInVariable i : variables) components    .add(i._component);
 		for(BuiltInFunction i : functions) components    .add(i._function);
@@ -305,18 +239,13 @@ public class Material {
 		return this;
 	}
 
-	public final void update(
-			final double time,
-			final double delta) {
-		
-		if(_updater != null) _updater.updateMaterial(this, time, delta);
+	public final void update() {
+		if(_cbUpdate != null) _cbUpdate.accept(this, engine.frame);
 	}
 	
 	public final void use(
-			final Matrix4D                   matModelView,
-			final Matrix4D                   matProjection,
-			final PooledLinkedList<Instance> dirLights,
-			final PooledLinkedList<Instance> pointLights) {
+			final Matrix4D matModelView,
+			final Matrix4D matProjection) {
 		
 		glUseProgram(_shaderProgram);
 		
@@ -332,10 +261,10 @@ public class Material {
 			glUniformMatrix3fv(
 				_uniMatNormal, false, matModelView.getNmData(_temp9));
 		
-		if(_hasLights) {
-    		_setDirLightData  (dirLights);
-    		_setPointLightData(pointLights);
-		}
+		if(_hasLights)
+			engine.frame.applyLightDataToShader(
+				_uniDirLights,   _uniDirLightCount,
+				_uniPointLights, _uniPointLightCount);
 		
 		int curSlot = 0;
 		for(CustomParam   i : _params  .values) i._useParam();

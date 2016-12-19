@@ -161,7 +161,7 @@ public final class Testing {
 		final AbstractEngine engine = new AbstractEngine(
 			"Abstract Engine " + AbstractEngine.VERSION_STRING, null, null);
 		
-		final SceneGraph sceneGraph = new SceneGraph();
+		final SceneGraph sceneGraph = new SceneGraph(engine);
 		
 		final Texture diffuse = new TextureBuilder().
 			setData("data/floor_d.jpg").
@@ -216,63 +216,65 @@ public final class Testing {
 		
 		final Model quad = new Model(sceneGraph, "quad").
 			setMesh(Meshes.createQuad(8, true).createMesh()).
-			setUpdater((model, time, delta) -> {
+			setUpdateCallback((model, frame) -> {
 				model.transformation.getValue().
 					toIdentity().
-					rotateY((float)time / 200f);
+					rotateY(frame.getTimeF() / 200f);
 			});
 		
 		final Model cube = new Model(sceneGraph, "cube").
 			setMesh(Meshes.createCube(2, true).createMesh()).
-			setUpdater((model, time, delta) -> {
+			setUpdateCallback((model, frame) -> {
 				model.transformation.getValue().
 					toIdentity().
 					translate(-2, 2, -2).
-					rotateX((float)time / 200f);
+					rotateX(frame.getTimeF() / 200f);
 			});
 		
 		final Model torus = new Model(sceneGraph, "torus").
 			setMesh(
 				Meshes.createTorus(64, 32, 1, 0.5f, 0.5f, false).
 					transformTexCoords(new Matrix4D().scale(2, 1, 1)).createMesh()).
-			setUpdater((model, time, delta) -> {
+			setUpdateCallback((model, frame) -> {
 				model.transformation.getValue().
 					toIdentity().
 					translate(2, 2, 2).
-					rotateY((float)time / 70f).
-					rotateZ((float)time / 100f).
-					rotateX((float)time / 200f);
+					rotateY(frame.getTimeF() / 70f).
+					rotateZ(frame.getTimeF() / 100f).
+					rotateX(frame.getTimeF() / 200f);
 			});
 		
 		final DirectionalLight ambLight = new DirectionalLight(sceneGraph, "amb").
 			makeAmbient();
 		
 		final PointLight pointLightRed = new PointLight(sceneGraph, "red").
-			setUpdater((light, time, delta) -> {
+			setUpdateCallback((light, frame) -> {
 				light.transformation.getValue().
 					toIdentity().
-					rotateY((float)time / 50f).
+					rotateY(frame.getTimeF() / 50f).
 					translate(2, 1, 0);
 			}).
 			setRange(4).makeLinear();
 		
 		final PointLight pointLightGreen = new PointLight(sceneGraph, "green").
-			setUpdater((light, time, delta) -> {
+			setUpdateCallback((light, frame) -> {
 				light.transformation.getValue().
 					toIdentity().
-					rotateY((float)time / 50f + 120).
+					rotateY(frame.getTimeF() / 50f + 120).
 					translate(2, 1, 0);
 			}).
 			setRange(4).makeLinear();
 
 		final PointLight pointLightBlue = new PointLight(sceneGraph, "blue").
-			setUpdater((light, time, delta) -> {
+			setUpdateCallback((light, frame) -> {
 				light.transformation.getValue().
 					toIdentity().
-					rotateY((float)time / 50f + 240).
+					rotateY(frame.getTimeF() / 50f + 240).
 					translate(2, 1, 0);
 			}).
 			setRange(4).makeLinear();
+		
+		sceneGraph.cbNewTopology = (sg) -> sg.print();
 		
 		cameraLocal.transformation.getValue().
 			translate(-5, 3, 5).
@@ -318,7 +320,6 @@ public final class Testing {
 		cameraSpace.addChild(cameraGlobal);
 		
 		engine.background.setData(0.5f, 0, 0);
-		engine.setSceneGraph(sceneGraph);
 		engine.display.split(1, 2, cameraGlobal, cameraLocal);
 		//engine.display.setCamera(cameraLocal);
 		

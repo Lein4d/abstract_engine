@@ -47,7 +47,7 @@ public abstract class PooledCollection<T> implements Iterable<T> {
 		
 		boolean changed = false;
 		
-		for(T i : src) changed = changed || _addSingle(i);
+		for(T i : src) if(_addSingle(i)) changed = true;
 		return changed;
 	}
 	

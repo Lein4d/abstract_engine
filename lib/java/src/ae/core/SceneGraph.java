@@ -31,19 +31,19 @@ public class SceneGraph {
 		
 		private final void _print() {
 			
-			_engine.err.println("\tERROR: " + _msg);
-			_engine.err.println(
+			engine.err.println("\tERROR: " + _msg);
+			engine.err.println(
 				"\t\tin entity '" + _entity.name + "' (" + _entity.type + ")");
 			
 			if(_instance != null) {
 				
 				_instance.getScope(_instanceScope);
 				
-				_engine.err.print("\t\tin instance [");
+				engine.err.print("\t\tin instance [");
 				for(Instance i : _instanceScope)
-					_engine.err.print(
+					engine.err.print(
 						i.getEntity().name + (i != _instance ? " -> " : ""));
-				_engine.err.println("]");
+				engine.err.println("]");
 			}
 		}
 		
@@ -146,7 +146,7 @@ public class SceneGraph {
 		(instance) -> {
 			
 			final Entity<?>   entity = instance.getEntity();
-			final PrintStream out    = getEngine().out;
+			final PrintStream out    = _getEngine().out;
 			
 			for(int i = 0; i < instance.getLevel(); i++) out.print("|\t");
 			
@@ -155,11 +155,8 @@ public class SceneGraph {
 			out.println();
 		};
 
-	// Used during scene graph unrolling
-	private Instance _tempLatestNode;
-	
-	private AbstractEngine _engine       = null;
-	private Instance       _rootInstance = null;
+	private Instance _tempLatestNode; // Used during scene graph unrolling
+	private Instance _rootInstance = null;
 	
 	// Node pool for the children linked list of an entity
 	public final ObjectPool<LinkedListNode<Entity<?>>> nodePoolChildrenLL =
@@ -173,13 +170,20 @@ public class SceneGraph {
 	// Node pool for the instance list of an entity
 	public final ObjectPool<LinkedListNode<Instance>> nodePoolInstances =
 		PooledLinkedList.<Instance>createNodePool();
+
+	public final AbstractEngine engine;
+	public final Entity<?>      root;
 	
-	// The root cannot be transformed, the matrix will be reseted to identity
-	public final Entity<?> root;
+	public Consumer<SceneGraph> cbNewTopology = null;
+	
+	private final AbstractEngine _getEngine() {
+		return engine;
+	}
 	
 	private final void _unrollGraph(
-			final int    frameIndex,
-			final double time) {
+			final Frame                      frame,
+			final PooledLinkedList<Instance> dirLights,
+			final PooledLinkedList<Instance> pointLights) {
 		
 		if(_rootInstance != null) return;
 		
@@ -215,15 +219,24 @@ public class SceneGraph {
 		int instanceId = 1;
 		for(Instance i : _instances) i.setId(instanceId++);
 		
-		// Abort if no errors occurred during unrolling
-		if(_unrollErrors.getSize() == 0) return;
+		// Copy the light instances to the current frame
+		dirLights  .clear();
+		pointLights.clear();
+		dirLights  .addAll(_dirLightNodes);
+		pointLights.addAll(_pointLightNodes);
 		
-		_engine.err.println(
-			_unrollErrors.getSize() +
-			" errors occured during scene graph unrolling (frame " +
-			frameIndex + ")");
-		
-		for(UnrollError i : _unrollErrors) i._print();
+		// Don't print anything if there are no errors
+		if(_unrollErrors.getSize() > 0) {
+    		
+    		engine.err.println(
+    			_unrollErrors.getSize() +
+    			" errors occured during scene graph unrolling (frame " +
+    			frame.getIndex() + ")");
+    		
+    		for(UnrollError i : _unrollErrors) i._print();
+		}
+		System.out.println(_pointLightNodes.getSize() + "  " + pointLights.getSize());
+		if(cbNewTopology != null) cbNewTopology.accept(this);
 	}
 	
 	private final Instance _instantiateEntity(
@@ -267,38 +280,16 @@ public class SceneGraph {
 		}
 	}
 	
-	public final void render(
-			final Camera   camera,
-			final Matrix4D projection,
-			final Material extMaterial) {
-		
-		final Matrix4D tfCameraInverse =
-			camera.getInstance().tfToEyeSpace.invert();
-		
-		// Transform all entities into the current camera space
-		for(Instance i : _instances)
-			i.transformToCameraSpace(tfCameraInverse);
-		
-		// Render all solid models
-		for(Model i : _models)
-			i.drawInstances(
-				projection, _dirLightNodes, _pointLightNodes, extMaterial);
-	}
-	
-	public final void setEngine(final AbstractEngine engine) {
-		_engine = engine;
-	}
-	
-	public final void prepareRendering(
-			final int    frameIndex,
-    		final double time,
-    		final double delta) {
+	final void prepareRendering(
+			final Frame                      frame,
+			final PooledLinkedList<Instance> dirLights,
+			final PooledLinkedList<Instance> pointLights) {
 
-		_unrollGraph(frameIndex, time);
+		_unrollGraph(frame, dirLights, pointLights);
 		
 		// Call the specific update callbacks for each entity instance
 		for(PooledHashMap.KeyValuePair<String, Entity<?>> i : _entities)
-			i.getValue().update(time, delta);
+			i.getValue().update(frame);
 		
 		// Reset the root transformation
 		root.transformation.resetExternal();
@@ -311,8 +302,37 @@ public class SceneGraph {
 		for(DynamicSpace i : _dynSpaces) i.computeTransformation();
 	}
 	
-	public SceneGraph() {
-		root = Entity.makeRoot(this);
+	final void render(
+			final Camera   camera,
+			final Matrix4D projection,
+			final Material extMaterial) {
+		
+		final Matrix4D tfCameraInverse =
+			camera.getInstance().tfToEyeSpace.invert();
+		
+		// Transform all entities into the current camera space
+		for(Instance i : _instances)
+			i.transformToCameraSpace(tfCameraInverse);
+		
+		engine.frame.cameraChanged();
+		
+		// Render all solid models
+		for(Model i : _models)
+			i.drawInstances(projection, extMaterial);
+	}
+
+	public SceneGraph(final AbstractEngine engine) {
+		this(engine, true);
+	}
+	
+	public SceneGraph(
+			final AbstractEngine engine,
+			final boolean        addToEngine) {
+		
+		this.engine = engine;
+		this.root   = Entity.makeRoot(this);
+		
+		if(addToEngine) engine.sceneGraph = this;
 	}
 
 	public final void addEntity(final Entity<?> entity) {
@@ -345,17 +365,12 @@ public class SceneGraph {
 		return name;
 	}
 	
-	public final AbstractEngine getEngine() {
-		return _engine;
-	}
-	
 	public final void invalidateGraphStructure() {
 		_rootInstance = null;
 	}
 	
 	public final void print() {
-		_unrollGraph(-1, -1);
-		_traversePrefix(_rootInstance, _treePrinter);
+		if(_rootInstance != null) _traversePrefix(_rootInstance, _treePrinter);
 	}
 	
 	public final boolean removeEntity(final Entity<?> entity) {

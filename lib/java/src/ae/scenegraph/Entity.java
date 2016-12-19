@@ -1,9 +1,11 @@
 package ae.scenegraph;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;
+import ae.core.Frame;
 import ae.core.SceneGraph;
 import ae.math.Matrix4D;
 
@@ -14,15 +16,11 @@ public class Entity<T> {
 		DYNAMIC_SPACE
 	}
 	
-	public interface Updater<T> {
-		void update(T entity, double time, double delta);
-	}
-	
 	private final PooledLinkedList<Entity<?>>      _childrenByOrder;
 	private final PooledHashMap<String, Entity<?>> _childrenByName;
 	private final PooledLinkedList<Instance>       _instances;
 	
-	private Updater<T> _updater = null;
+	private BiConsumer<T, Frame> _cbUpdate = null;
 	
 	public final String     name;
 	public final Type       type;
@@ -144,18 +142,16 @@ public class Entity<T> {
 		_instances.clear();
 	}
 	
-	public final T setUpdater(final Updater<T> updater) {
-		_updater = updater;
+	public final T setUpdateCallback(final BiConsumer<T, Frame> cbUpdate) {
+		_cbUpdate = cbUpdate;
 		return downCasted;
 	}
 	
-	public final void update(
-			final double time,
-			final double delta) {
+	public final void update(final Frame frame) {
 		
-		if(_updater == null) return;
+		if(_cbUpdate == null) return;
 		
-		_updater.update(downCasted, time, delta);
+		_cbUpdate.accept(downCasted, frame);
 		if(noTF) transformation.resetExternal();
 	}
 }
