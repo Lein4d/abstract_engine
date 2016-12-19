@@ -22,6 +22,8 @@ public abstract class PooledCollection<T> implements Iterable<T> {
 		this.sharedNodePool = poolSharing ? nodePool : null;
 	}
 	
+	protected abstract boolean _addSingle(final T element);
+	
 	// Doesn't need to be overridden if the standard clear method is overridden
 	protected void _clear() {}
 	
@@ -38,6 +40,15 @@ public abstract class PooledCollection<T> implements Iterable<T> {
 	protected final LinkedListNode<T> _provideNode() {
 		_size++;
 		return _nodePool.provide();
+	}
+	
+	// True if the collection has changed somehow
+	public final boolean addAll(final Iterable<T> src) {
+		
+		boolean changed = false;
+		
+		for(T i : src) changed = changed || _addSingle(i);
+		return changed;
 	}
 	
 	public boolean clear() {

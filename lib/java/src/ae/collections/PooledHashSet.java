@@ -8,6 +8,11 @@ public final class PooledHashSet<T> extends PooledCollection<T> {
 	private final PooledHashMap<T, Object> _hashMap;
 
 	@Override
+	protected final boolean _addSingle(final T element) {
+		return insert(element);
+	}
+	
+	@Override
 	protected final Iterator<T> _getReverseIterator() {
 		// TODO: A new object is created
 		return _hashMap.keys.iterator();

@@ -112,6 +112,11 @@ public final class PooledHashMap<K, V>
 	}
 
 	@Override
+	protected final boolean _addSingle(final KeyValuePair<K, V> element) {
+		return setValue(element._key, element._value);
+	}
+	
+	@Override
 	protected final void _clear() {
 		
 		for(int i = 0; i < _buckets.length; i++) {

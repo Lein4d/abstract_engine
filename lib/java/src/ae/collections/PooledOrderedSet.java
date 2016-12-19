@@ -11,6 +11,11 @@ public final class PooledOrderedSet<T> extends PooledCollection<T> {
 	private final LinkedListNode<T>[] _tempNode = new LinkedListNode[1];
 
 	@Override
+	protected final boolean _addSingle(final T element) {
+		return insertAtEnd(element);
+	}
+	
+	@Override
 	protected final Iterator<T> _getReverseIterator() {
 		return _list.reverse.iterator();
 	}
@@ -46,7 +51,7 @@ public final class PooledOrderedSet<T> extends PooledCollection<T> {
 		
 		for(T i : elements) tryInsertAtEnd(i);
 	}
-	
+
 	@Override
 	public final boolean clear() {
 		_hashMap.clear();

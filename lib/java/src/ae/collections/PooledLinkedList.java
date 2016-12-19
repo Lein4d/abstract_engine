@@ -61,6 +61,12 @@ public final class PooledLinkedList<T> extends PooledCollection<T> {
 	}
 
 	@Override
+	protected final boolean _addSingle(final T element) {
+		insertAtEnd(element);
+		return true;
+	}
+	
+	@Override
 	protected final void _clear() {
 		
 		// Cannot reset the whole node pool, as there might be nodes used by
