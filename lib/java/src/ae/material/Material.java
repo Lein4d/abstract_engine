@@ -13,8 +13,8 @@ import java.util.function.BiConsumer;
 import ae.collections.PooledHashMap;
 import ae.core.AbstractEngine;
 import ae.core.Frame;
+import ae.core.GlslShader;
 import ae.core.Texture;
-import ae.math.Matrix4D;
 
 public class Material {
 
@@ -122,24 +122,13 @@ public class Material {
 		}
 	}
 	
-	private final int     _shaderProgram;
-	private final float[] _temp9  = new float[9];
-	private final float[] _temp16 = new float[16];
-
+	private final GlslShader _glslShader;
+	
 	private final BiConsumer<Material, Frame>          _cbUpdate;
 	private final PooledHashMap<String, CustomTexture> _textures =
 		new PooledHashMap<>();
 	private final PooledHashMap<String, CustomParam>   _params   =
 		new PooledHashMap<>();
-	
-	private final int     _uniMatModelView;
-	private final int     _uniMatProjection;
-	private final int     _uniMatNormal;
-	private final int     _uniDirLights;
-	private final int     _uniDirLightCount;
-	private final int     _uniPointLights;
-	private final int     _uniPointLightCount;
-	private final boolean _hasLights;
 	
 	static final BuiltInVariable BUILTIN_VAR_POSITION =
 		new BuiltInVariable(ShaderProgram.VARY_POSITION);
@@ -190,27 +179,7 @@ public class Material {
 		final ShaderProgram program =
 			new ShaderProgram(engine, name, components, valueVariables, color);
 		
-		_shaderProgram = program.programId;
-		
-		// Read the locations of the internal uniforms
-		_uniMatModelView    =
-			program.getUniformLocation(ShaderProgram.UNI_MAT_MODELVIEW);
-		_uniMatProjection   =
-			program.getUniformLocation(ShaderProgram.UNI_MAT_PROJECTION);
-		_uniMatNormal       =
-			program.getUniformLocation(ShaderProgram.UNI_MAT_NORMAL);
-		_uniDirLights       =
-			program.getUniformLocation(ShaderProgram.UNI_DIR_LIGHTS);
-		_uniDirLightCount   =
-			program.getUniformLocation(ShaderProgram.UNI_DIR_LIGHT_COUNT);
-		_uniPointLights     =
-			program.getUniformLocation(ShaderProgram.UNI_POINT_LIGHTS);
-		_uniPointLightCount =
-			program.getUniformLocation(ShaderProgram.UNI_POINT_LIGHT_COUNT);
-		
-		_hasLights =
-			_uniDirLights   != -1 && _uniDirLightCount   != -1 &&
-			_uniPointLights != -1 && _uniPointLightCount != -1;
+		_glslShader = program.glslShader;
 		
 		for(CustomParam i : params) {
 			i._location = program.getUniformLocation(i._uniform);
@@ -243,28 +212,10 @@ public class Material {
 		if(_cbUpdate != null) _cbUpdate.accept(this, engine.frame);
 	}
 	
-	public final void use(
-			final Matrix4D matModelView,
-			final Matrix4D matProjection) {
+	public final void use() {
 		
-		glUseProgram(_shaderProgram);
-		
-		if(_uniMatModelView != -1)
-			glUniformMatrix4fv(
-				_uniMatModelView, false, matModelView.getData(_temp16));
-		
-		if(_uniMatProjection != -1)
-			glUniformMatrix4fv(
-				_uniMatProjection, false, matProjection.getData(_temp16));
-		
-		if(_uniMatNormal != -1)
-			glUniformMatrix3fv(
-				_uniMatNormal, false, matModelView.getNmData(_temp9));
-		
-		if(_hasLights)
-			engine.frame.applyLightDataToShader(
-				_uniDirLights,   _uniDirLightCount,
-				_uniPointLights, _uniPointLightCount);
+		_glslShader.bind();
+		engine.frame.applyUniformsToShader(_glslShader);
 		
 		int curSlot = 0;
 		for(CustomParam   i : _params  .values) i._useParam();

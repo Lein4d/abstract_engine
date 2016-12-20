@@ -96,7 +96,7 @@ public final class AbstractEngine {
 
 	private ResizeCallback _cbResize = null;
 	
-	final int opShaderProgram;
+	final GlslShader opGlslShader;
 	
 	public static final int    VERSION_MAJOR    = 0;
 	public static final int    VERSION_MINOR    = 9;
@@ -216,7 +216,7 @@ public final class AbstractEngine {
 
 		GL.createCapabilities();
 
-		opShaderProgram   = ObjectPicker.createShaderProgram(this);
+		opGlslShader      = ObjectPicker.createGlslShader(this);
 		standardMaterials = new StandardMaterials(this);
 		frame             = new Frame(this);
 		input             = new InputManager(_window);

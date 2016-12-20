@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import ae.core.AbstractEngine;
-import ae.core.ShaderCompiler;
+import ae.core.GlslShader;
 
 final class ShaderProgram {
 	
@@ -338,7 +338,8 @@ final class ShaderProgram {
 			"\treturn normalize(mat3(uTangent, vTangent, normal) * tsNormal);",
 			"}");
 
-	final int programId;
+	final GlslShader glslShader;
+	//final int programId;
 	
 	private static final StringBuilder _appendEmptyLine(
 			final StringBuilder dst) {
@@ -498,7 +499,7 @@ final class ShaderProgram {
 		if(components.contains(VARY_TEXCOORD)) components.add(_ATTR_TEXCOORD);
 	}
 
-	private static final int _createShaderProgram(
+	private static final GlslShader _createShaderProgram(
 			final AbstractEngine             engine,
 			final String                     name,
     		final List<UniformVS>            uniformsVS,
@@ -516,13 +517,20 @@ final class ShaderProgram {
 		
 		for(Attribute i : attributes) attributeNames[i._index] = i._name;
 		
-		return ShaderCompiler.createShaderProgram(
+		return new GlslShader(
 			engine,
 			"[Material] " + name,
 			_assembleVertexShaderSource(uniformsVS, attributes, varyings),
 			_assembleFragmentShaderSource(
 				uniformsFS, uniformParams, uniformTextures,
 				varyings, lVariables, customLVariables, functions, color),
+			UNI_MAT_MODELVIEW    .glslName,
+			UNI_MAT_PROJECTION   .glslName,
+			UNI_MAT_NORMAL       .glslName,
+			UNI_DIR_LIGHTS       .glslName,
+			UNI_DIR_LIGHT_COUNT  .glslName,
+			UNI_POINT_LIGHTS     .glslName,
+			UNI_POINT_LIGHT_COUNT.glslName,
 			"out_color",
 			attributeNames);
 	}
@@ -563,14 +571,14 @@ final class ShaderProgram {
 				uniformTextures.add((CustomUniformTexture)i);
 		}
 		
-		programId = _createShaderProgram(
+		glslShader = _createShaderProgram(
 			engine, name,
 			uniformsVS, uniformsFS, uniformParams, uniformTextures,
 			attributes, varyings, lVariables, customLVariables, functions,
 			color);
 		
 		for(Uniform i : uniforms)
-			_uniLocations.put(i, glGetUniformLocation(programId, i.glslName));
+			_uniLocations.put(i, glslShader.getUniformLocation(i.glslName));
 	}
 	
 	final int getUniformLocation(final Uniform uniform) {

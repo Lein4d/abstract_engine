@@ -235,7 +235,7 @@ public class SceneGraph {
     		
     		for(UnrollError i : _unrollErrors) i._print();
 		}
-		System.out.println(_pointLightNodes.getSize() + "  " + pointLights.getSize());
+		
 		if(cbNewTopology != null) cbNewTopology.accept(this);
 	}
 	
@@ -314,7 +314,7 @@ public class SceneGraph {
 		for(Instance i : _instances)
 			i.transformToCameraSpace(tfCameraInverse);
 		
-		engine.frame.cameraChanged();
+		engine.frame.newCamera(projection);
 		
 		// Render all solid models
 		for(Model i : _models)

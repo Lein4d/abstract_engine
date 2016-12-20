@@ -5,6 +5,7 @@ import static org.lwjgl.opengl.GL20.*;
 import java.util.function.Consumer;
 
 import ae.collections.PooledLinkedList;
+import ae.math.Matrix4D;
 import ae.scenegraph.Instance;
 import ae.scenegraph.entities.DirectionalLight;
 import ae.scenegraph.entities.PointLight;
@@ -16,6 +17,9 @@ public final class Frame {
 	private final PooledLinkedList<Instance> _pointLights =
 		new PooledLinkedList<>();
 	
+	private final float[] _matModelViewData  = new float[16];
+	private final float[] _matProjectionData = new float[16];
+	private final float[] _matNormalData     = new float[9];
 	private final float[] _dirLightData;
 	private final float[] _pointLightData;
 	
@@ -103,23 +107,26 @@ public final class Frame {
 		_sceneGraph.prepareRendering(this, _dirLights, _pointLights);
 	}
 	
-	final void cameraChanged() {
+	final void newCamera(final Matrix4D projection) {
+		
+		projection.getData(_matProjectionData);
+		
 		_setDirLightData();
 		_setPointLightData();
 	}
-	
+
 	// TODO: shouldn't be public
-	public final void applyLightDataToShader(
-			final int uniDirLights,
-			final int uniDirLightCount,
-			final int uniPointLights,
-			final int uniPointLightCount) {
+	public final void applyUniformsToShader(final GlslShader shader) {
 		
-		glUniform4fv(uniDirLights,   _dirLightData);
-		glUniform4fv(uniPointLights, _pointLightData);
+		glUniformMatrix4fv(shader.uniMatModelView,  false, _matModelViewData);
+		glUniformMatrix4fv(shader.uniMatProjection, false, _matProjectionData);
+		glUniformMatrix3fv(shader.uniMatNormal,     false, _matNormalData);
 		
-		glUniform1i (uniDirLightCount,   _dirLights  .getSize());
-		glUniform1i (uniPointLightCount, _pointLights.getSize());
+		glUniform4fv(shader.uniDirLights,   _dirLightData);
+		glUniform4fv(shader.uniPointLights, _pointLightData);
+		
+		glUniform1i (shader.uniDirLightCount,   _dirLights  .getSize());
+		glUniform1i (shader.uniPointLightCount, _pointLights.getSize());
 	}
 	
 	public final int getIndex() {
@@ -144,5 +151,11 @@ public final class Frame {
 	
 	public final float getTimeF() {
 		return (float)_time;
+	}
+
+	// TODO: shouldn't be public
+	public final void newModelInstance(final Matrix4D modelView) {
+		modelView.getData  (_matModelViewData);
+		modelView.getNmData(_matNormalData);
 	}
 }

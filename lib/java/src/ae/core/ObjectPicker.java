@@ -98,10 +98,11 @@ public final class ObjectPicker {
 	
 	// The shader program is created outside the object picker, so it can be
 	// reused among multiple object pickers
-	static final int createShaderProgram(final AbstractEngine engine) {
-		return ShaderCompiler.createShaderProgram(
+	static final GlslShader createGlslShader(final AbstractEngine engine) {
+		return new GlslShader(
 			engine, "Object Picker",
 			_VS_SOURCE, _FS_SOURCE,
+			"u_matModelView", "u_matProjection", null, null, null, null, null,
 			"out_color", "in_position");
 	}
 	

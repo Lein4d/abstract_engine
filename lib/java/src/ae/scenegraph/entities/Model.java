@@ -60,10 +60,11 @@ public final class Model extends Entity<Model> {
 		}
 		
 		iterateInstances((instance) -> {
+
+			sceneGraph.engine.frame.newModelInstance(instance.tfToCameraSpace);
 			
 			// Pass the global scene data to the material shader
-			(extMaterial != null ? extMaterial : activeMaterial).use(
-				instance.tfToCameraSpace, projection);
+			(extMaterial != null ? extMaterial : activeMaterial).use();
 
 			activeMesh.draw();
 		});
