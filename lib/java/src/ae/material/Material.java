@@ -12,7 +12,7 @@ import java.util.function.BiConsumer;
 
 import ae.collections.PooledHashMap;
 import ae.core.AbstractEngine;
-import ae.core.Frame;
+import ae.core.RenderState;
 import ae.core.GlslShader;
 import ae.core.Texture;
 
@@ -124,7 +124,7 @@ public class Material {
 	
 	private final GlslShader _glslShader;
 	
-	private final BiConsumer<Material, Frame>          _cbUpdate;
+	private final BiConsumer<Material, RenderState>          _cbUpdate;
 	private final PooledHashMap<String, CustomTexture> _textures =
 		new PooledHashMap<>();
 	private final PooledHashMap<String, CustomParam>   _params   =
@@ -159,7 +159,7 @@ public class Material {
 			final Iterable<CustomTexture>     textures,
 			final List<Value>                 values,
 			final Node                        color,
-			final BiConsumer<Material, Frame> cbUpdate) {
+			final BiConsumer<Material, RenderState> cbUpdate) {
 	
 		final Set<ShaderProgram.ShaderComponent> components = new HashSet<>();
 		final List<ShaderProgram.LocalVariable>  valueVariables =
@@ -209,13 +209,15 @@ public class Material {
 	}
 
 	public final void update() {
-		if(_cbUpdate != null) _cbUpdate.accept(this, engine.frame);
+		if(_cbUpdate != null) _cbUpdate.accept(this, engine.state);
 	}
 	
 	public final void use() {
 		
 		_glslShader.bind();
-		engine.frame.applyUniformsToShader(_glslShader);
+		
+		engine.state.newGlslShader(_glslShader);
+		engine.state.applyUniformsToShader();
 		
 		int curSlot = 0;
 		for(CustomParam   i : _params  .values) i._useParam();

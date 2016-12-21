@@ -5,6 +5,7 @@ import static org.lwjgl.glfw.GLFW.*;
 import ae.collections.ObjectPool;
 import ae.collections.PooledLinkedList;
 import ae.core.AbstractEngine;
+import ae.core.ObjectPicker;
 import ae.core.SceneGraph;
 import ae.core.Texture;
 import ae.core.TextureBuilder;
@@ -162,6 +163,8 @@ public final class Testing {
 			"Abstract Engine " + AbstractEngine.VERSION_STRING, null, null);
 		
 		final SceneGraph sceneGraph = new SceneGraph(engine);
+		
+		final ObjectPicker picker = new ObjectPicker(engine.display, engine);
 		
 		final Texture diffuse = new TextureBuilder().
 			setData("data/floor_d.jpg").
@@ -343,6 +346,14 @@ public final class Testing {
 						"height", materialHeightState.v * 0.025f);
 					break;
 			}
+		};
+		
+		engine.input.onMouseMove = (x, y, dx, dy, left, middle, right) -> {
+			System.out.println(x + "|" + y + "  " + dx + "|" + dy);
+		};
+		
+		engine.state.onNewFrame = (frame) -> {
+			picker.pickInstance(100, 100, null);
 		};
 		
 		engine.start();

@@ -10,7 +10,7 @@ import ae.scenegraph.Instance;
 import ae.scenegraph.entities.DirectionalLight;
 import ae.scenegraph.entities.PointLight;
 
-public final class Frame {
+public final class RenderState {
 	
 	private final PooledLinkedList<Instance> _dirLights   =
 		new PooledLinkedList<>();
@@ -23,15 +23,17 @@ public final class Frame {
 	private final float[] _dirLightData;
 	private final float[] _pointLightData;
 	
-	private int        _index = -1;
+	private int        _frameIndex = -1;
 	private long       _absTime;
 	private double     _time;
 	private double     _delta;
 	private SceneGraph _sceneGraph;
+	private GlslShader _shader;
+	private float      _objectId;
 	
 	public final AbstractEngine engine;
 	
-	public Consumer<Frame> cbNewFrame = null;
+	public Consumer<RenderState> onNewFrame = null;
 
 	private final void _setDirLightData() {
 		
@@ -82,27 +84,27 @@ public final class Frame {
 		}
 	}
 	
-	Frame(AbstractEngine engine) {
+	RenderState(AbstractEngine engine) {
 		
 		this._dirLightData   = new float[engine.maxDirLightCount   * 8];
 		this._pointLightData = new float[engine.maxPointLightCount * 8];
 		this.engine          = engine;
 	}
 	
-	final void moveToNext(
+	final void beginNextFrame(
 			final double     speed,
 			final SceneGraph sceneGraph) {
-
+		
 		final long absTimeNew = System.currentTimeMillis();
 		
-		_index++;
+		_frameIndex++;
 		_delta      = speed * (absTimeNew - _absTime);
-		_time       = _index == 0 ? 0 : _time + _delta;
+		_time       = _frameIndex == 0 ? 0 : _time + _delta;
 		_absTime    = absTimeNew;
 		_sceneGraph = sceneGraph;
 		
 		// Invoke the callback function
-		if(cbNewFrame != null) cbNewFrame.accept(this);
+		if(onNewFrame != null) onNewFrame.accept(this);
 		
 		_sceneGraph.prepareRendering(this, _dirLights, _pointLights);
 	}
@@ -116,21 +118,23 @@ public final class Frame {
 	}
 
 	// TODO: shouldn't be public
-	public final void applyUniformsToShader(final GlslShader shader) {
+	public final void applyUniformsToShader() {
 		
-		glUniformMatrix4fv(shader.uniMatModelView,  false, _matModelViewData);
-		glUniformMatrix4fv(shader.uniMatProjection, false, _matProjectionData);
-		glUniformMatrix3fv(shader.uniMatNormal,     false, _matNormalData);
+		glUniformMatrix4fv(_shader.uniMatModelView,  false, _matModelViewData);
+		glUniformMatrix4fv(_shader.uniMatProjection, false, _matProjectionData);
+		glUniformMatrix3fv(_shader.uniMatNormal,     false, _matNormalData);
 		
-		glUniform4fv(shader.uniDirLights,   _dirLightData);
-		glUniform4fv(shader.uniPointLights, _pointLightData);
+		glUniform1f(_shader.uniObjectId, _objectId);
 		
-		glUniform1i (shader.uniDirLightCount,   _dirLights  .getSize());
-		glUniform1i (shader.uniPointLightCount, _pointLights.getSize());
+		glUniform4fv(_shader.uniDirLights,   _dirLightData);
+		glUniform4fv(_shader.uniPointLights, _pointLightData);
+		
+		glUniform1i (_shader.uniDirLightCount,   _dirLights  .getSize());
+		glUniform1i (_shader.uniPointLightCount, _pointLights.getSize());
 	}
 	
-	public final int getIndex() {
-		return _index;
+	public final int getFrameIndex() {
+		return _frameIndex;
 	}
 	
 	public final SceneGraph getSceneGraph() {
@@ -154,8 +158,16 @@ public final class Frame {
 	}
 
 	// TODO: shouldn't be public
-	public final void newModelInstance(final Matrix4D modelView) {
-		modelView.getData  (_matModelViewData);
-		modelView.getNmData(_matNormalData);
+	public final void newGlslShader(final GlslShader glslShader) {
+		_shader = glslShader;
+	}
+	
+	// TODO: shouldn't be public
+	public final void newModelInstance(final Instance instance) {
+		
+		_objectId = instance.getId() + 1;
+		
+		instance.tfToCameraSpace.getData  (_matModelViewData);
+		instance.tfToCameraSpace.getNmData(_matNormalData);
 	}
 }

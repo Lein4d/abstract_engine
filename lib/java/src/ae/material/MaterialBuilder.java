@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 
 import ae.core.AbstractEngine;
-import ae.core.Frame;
+import ae.core.RenderState;
 
 public final class MaterialBuilder {
 	
@@ -119,7 +119,7 @@ public final class MaterialBuilder {
 	private final Set<Material.BuiltInFunction> _functions = new HashSet<>();
 	
 	private Node                        _color    = null;
-	private BiConsumer<Material, Frame> _cbUpdate = null; 
+	private BiConsumer<Material, RenderState> _cbUpdate = null; 
 	
 	private static final NodeTemplate _createFuncTemplate(
 			final String        name,
@@ -591,7 +591,7 @@ public final class MaterialBuilder {
 	}
 	
 	public final MaterialBuilder setUpdateCallback(
-			final BiConsumer<Material, Frame> cbUpdate) {
+			final BiConsumer<Material, RenderState> cbUpdate) {
 		
 		_cbUpdate = cbUpdate;
 		return this;

@@ -11,6 +11,7 @@ public class GlslShader {
 	final int uniMatModelView;
 	final int uniMatProjection;
 	final int uniMatNormal;
+	final int uniObjectId;
 	final int uniDirLights;
 	final int uniDirLightCount;
 	final int uniPointLights;
@@ -64,6 +65,7 @@ public class GlslShader {
 			final String         uniNameMatModelView,
 			final String         uniNameMatProjection,
 			final String         uniNameMatNormal,
+			final String         uniNameObjectId,
 			final String         uniNameDirLights,
 			final String         uniNameDirLightCount,
 			final String         uniNamePointLights,
@@ -122,6 +124,7 @@ public class GlslShader {
 		uniMatModelView    = getUniformLocation(uniNameMatModelView);
 		uniMatProjection   = getUniformLocation(uniNameMatProjection);
 		uniMatNormal       = getUniformLocation(uniNameMatNormal);
+		uniObjectId        = getUniformLocation(uniNameObjectId);
 		uniDirLights       = getUniformLocation(uniNameDirLights);
 		uniDirLightCount   = getUniformLocation(uniNameDirLightCount);
 		uniPointLights     = getUniformLocation(uniNamePointLights);

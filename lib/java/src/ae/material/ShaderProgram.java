@@ -527,6 +527,7 @@ final class ShaderProgram {
 			UNI_MAT_MODELVIEW    .glslName,
 			UNI_MAT_PROJECTION   .glslName,
 			UNI_MAT_NORMAL       .glslName,
+			null,
 			UNI_DIR_LIGHTS       .glslName,
 			UNI_DIR_LIGHT_COUNT  .glslName,
 			UNI_POINT_LIGHTS     .glslName,

@@ -8,7 +8,6 @@ import ae.collections.LinkedListNode;
 import ae.collections.ObjectPool;
 import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;
-import ae.material.Material;
 import ae.math.Matrix4D;
 import ae.scenegraph.Entity;
 import ae.scenegraph.Instance;
@@ -75,7 +74,9 @@ public class SceneGraph {
 	private static final String _ERROR_MULTI_INSTANCE =
 		"Only one instance is allowed";
 	
-	private final Random                           _random    = new Random();
+	private final Random   _random          = new Random();
+	private final Matrix4D _tfCameraInverse = new Matrix4D();
+	
 	private final PooledHashMap<String, Entity<?>> _entities  =
 		new PooledHashMap<>();
 	private final ObjectPool<Instance>             _instances =
@@ -97,9 +98,6 @@ public class SceneGraph {
 		new PooledLinkedList<>();
 	private final PooledLinkedList<Instance> _pointLightNodes =
 		new PooledLinkedList<>();
-	
-	private final Consumer<Instance> _instanceDeactivator =
-		(instance) -> instance.deactivate();
 	
 	private final Consumer<Instance> _unrollPostProcessor =
 		(instance) -> {
@@ -154,8 +152,7 @@ public class SceneGraph {
 			if(instance.isStatic()) out.print(" [S]");
 			out.println();
 		};
-
-	private Instance _tempLatestNode; // Used during scene graph unrolling
+	
 	private Instance _rootInstance = null;
 	
 	// Node pool for the children linked list of an entity
@@ -181,7 +178,7 @@ public class SceneGraph {
 	}
 	
 	private final void _unrollGraph(
-			final Frame                      frame,
+			final RenderState                      frame,
 			final PooledLinkedList<Instance> dirLights,
 			final PooledLinkedList<Instance> pointLights) {
 		
@@ -209,7 +206,7 @@ public class SceneGraph {
 			// Check whether some errors occurred on this entity and deactivate
 			// its instances
 			if(_unrollErrors.getSize() > oldErrorCount)
-				i.iterateInstances(_instanceDeactivator);
+				for(Instance j : i.getInstances()) j.deactivate();
 		}
 
 		// Derive instance information in a post processing step
@@ -231,7 +228,7 @@ public class SceneGraph {
     		engine.err.println(
     			_unrollErrors.getSize() +
     			" errors occured during scene graph unrolling (frame " +
-    			frame.getIndex() + ")");
+    			frame.getFrameIndex() + ")");
     		
     		for(UnrollError i : _unrollErrors) i._print();
 		}
@@ -247,17 +244,15 @@ public class SceneGraph {
 		
 		final Instance node = _instances.provide();
 		
-		_tempLatestNode = null;
+		Instance latestNode = null;
 		
 		// Die Kinder iterieren, die Sibling-Verweise sind genau andersrum wie
 		// in der children-Liste gespeichert
-		entity.iterateChildren((child) -> {
-			_tempLatestNode =
-				_instantiateEntity(child, node, _tempLatestNode, level + 1);
-		});
+		for(Entity<?> i : entity.getChildren())
+			latestNode = _instantiateEntity(i, node, latestNode, level + 1);
 		
 		entity.addInstance(
-			node.assign(entity, parent, _tempLatestNode, nextSibling));
+			node.assign(entity, parent, latestNode, nextSibling));
 		
 		return node;
 	}
@@ -281,7 +276,7 @@ public class SceneGraph {
 	}
 	
 	final void prepareRendering(
-			final Frame                      frame,
+			final RenderState                      frame,
 			final PooledLinkedList<Instance> dirLights,
 			final PooledLinkedList<Instance> pointLights) {
 
@@ -305,20 +300,19 @@ public class SceneGraph {
 	final void render(
 			final Camera   camera,
 			final Matrix4D projection,
-			final Material extMaterial) {
+			final boolean  useMaterial) {
 		
-		final Matrix4D tfCameraInverse =
-			camera.getInstance().tfToEyeSpace.invert();
+		_tfCameraInverse.setData(camera.getInstance().tfToEyeSpace).invert();
 		
 		// Transform all entities into the current camera space
 		for(Instance i : _instances)
-			i.transformToCameraSpace(tfCameraInverse);
+			i.transformToCameraSpace(_tfCameraInverse);
 		
-		engine.frame.newCamera(projection);
+		engine.state.newCamera(projection);
 		
 		// Render all solid models
 		for(Model i : _models)
-			i.drawInstances(projection, extMaterial);
+			i.drawInstances(projection, useMaterial);
 	}
 
 	public SceneGraph(final AbstractEngine engine) {

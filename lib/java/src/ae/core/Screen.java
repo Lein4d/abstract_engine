@@ -3,7 +3,6 @@ package ae.core;
 import static org.lwjgl.opengl.GL11.*;
 
 import ae.collections.PooledOrderedSet;
-import ae.material.Material;
 import ae.math.Matrix4D;
 import ae.scenegraph.entities.Camera;
 import ae.util.CachedObject;
@@ -21,7 +20,7 @@ public abstract class Screen {
 			
 			for(Rect i : _rects.reverse) {
 				if(i._containsPoint(x, y)) {
-					i._render(null, false, 0, 0);
+					i._render(false, true, x, y);
 					break;
 				}
 			}
@@ -33,7 +32,7 @@ public abstract class Screen {
 		}
 		
 		protected final void _renderVisual() {
-			for(Rect i : _rects) i._render(null, false, 0, 0);
+			for(Rect i : _rects) i._render(true, false, 0, 0);
 		}
 		
 		public final Layer appendRects(final Rect ... rects) {
@@ -148,10 +147,10 @@ public abstract class Screen {
 		}
 		
 		private void _render(
-				final Material extMaterial,
-				final boolean  singlePixel,
-				final int      x,
-				final int      y) {
+				final boolean useMaterial,
+				final boolean singlePixel,
+				final int     x,
+				final int     y) {
 			
 			if(camera == null || camera.getInstance() == null) return;
 			
@@ -160,13 +159,15 @@ public abstract class Screen {
 			glViewport(absRect[0], absRect[1], absRect[2], absRect[3]);
 			glScissor (absRect[0], absRect[1], absRect[2], absRect[3]);
 			
+			if(singlePixel) glScissor(x, y, 1, 1);
+			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			
 			camera.sceneGraph.render(
 				camera,
 				camera.createProjectionMatrix(
 					absRect[2], absRect[3], _projection),
-				extMaterial);
+				useMaterial);
 		}
 		
 		protected Rect(final Camera camera) {

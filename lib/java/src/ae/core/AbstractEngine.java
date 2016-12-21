@@ -121,7 +121,7 @@ public final class AbstractEngine {
 	
 	public final StandardMaterials standardMaterials;
 	
-	public final Frame        frame;
+	public final RenderState  state;
 	public final Vector3D     background = Vector4D.BLACK.xyz.cloneStatic();
 	public final Screen.Layer display    = _display._layer;
 	public final InputManager input;
@@ -218,7 +218,7 @@ public final class AbstractEngine {
 
 		opGlslShader      = ObjectPicker.createGlslShader(this);
 		standardMaterials = new StandardMaterials(this);
-		frame             = new Frame(this);
+		state             = new RenderState(this);
 		input             = new InputManager(_window);
 	}
 
@@ -291,8 +291,8 @@ public final class AbstractEngine {
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		
 		while(!glfwWindowShouldClose(_window)) {
-
-			frame.moveToNext(_speed, sceneGraph);
+			
+			state.beginNextFrame(_speed, sceneGraph);
 			
 			for(Material i : _materials) i.update();
 			

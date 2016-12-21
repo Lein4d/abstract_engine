@@ -11,6 +11,7 @@ import ae.mesh.Mesh;
 import ae.scenegraph.Attribute;
 import ae.scenegraph.ConstAttribute;
 import ae.scenegraph.Entity;
+import ae.scenegraph.Instance;
 
 import static org.lwjgl.opengl.GL11.*;
 
@@ -39,7 +40,7 @@ public final class Model extends Entity<Model> {
 	
 	public final void drawInstances(
 			final Matrix4D projection,
-			final Material extMaterial) {
+			final boolean  useMaterial) {
 		
 		final Mesh     activeMesh     = mesh    .getActiveValue();
 		final Material activeMaterial = material.getActiveValue();
@@ -59,15 +60,15 @@ public final class Model extends Entity<Model> {
 			glDisable(GL_CULL_FACE);
 		}
 		
-		iterateInstances((instance) -> {
-
-			sceneGraph.engine.frame.newModelInstance(instance.tfToCameraSpace);
+		if(useMaterial) activeMaterial.use();
+		
+		for(Instance i : getInstances()) {
 			
-			// Pass the global scene data to the material shader
-			(extMaterial != null ? extMaterial : activeMaterial).use();
-
+			sceneGraph.engine.state.newModelInstance(i);
+			sceneGraph.engine.state.applyUniformsToShader();
+			
 			activeMesh.draw();
-		});
+		}
 	}
 	
 	public final boolean isComplete() {

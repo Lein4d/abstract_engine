@@ -3,16 +3,26 @@ package ae.core;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL14.*;
-import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL30.*;
 
 import java.util.function.Consumer;
 
+import ae.collections.PooledQueue;
+import ae.math.Vector3D;
 import ae.scenegraph.Instance;
+import ae.util.OrganizedObject;
 
 public final class ObjectPicker {
 	
-	private static final int _MAX_OBJECT_ID = 16777216;
+	private final class Job extends OrganizedObject<Job> {
+		
+	}
+	
+	public interface PickedCallback {
+		void onPicked(
+			Instance instance,
+			Vector3D modelCoords, Vector3D cameraCoords, Vector3D worldCoords);
+	}
 	
 	private static final String _VS_SOURCE =
     	"#version 330\n" +
@@ -38,9 +48,14 @@ public final class ObjectPicker {
     	"\n" +
     	"void main(void) {\n" +
     	"\tout_color = vec4(var_position, u_objectId);\n" +
+    	//"\tout_color = vec4(u_objectId / 20.0, 0, 0, 1);\n" +
     	"}\n";
 	
-	private final Screen.Layer _layer;
+	private final Screen.Layer     _layer;
+	private final Vector3D         _modelCoords  = Vector3D.createStatic();
+	private final Vector3D         _cameraCoords = Vector3D.createStatic();
+	private final Vector3D         _worldCoords  = Vector3D.createStatic();
+	private final PooledQueue<Job> _jobs         = new PooledQueue<>();
 	
 	private int      _fbo      = 0;
 	private int      _rbo      = 0;
@@ -58,9 +73,9 @@ public final class ObjectPicker {
 	private final void _createFBO() {
 		
 		// Delete previous buffers
-		glDeleteBuffers(_fbo);
-		glDeleteBuffers(_rbo);
-		glDeleteBuffers(_texture);
+        glDeleteFramebuffers (_fbo);
+        glDeleteRenderbuffers(_rbo);
+        glDeleteTextures     (_texture);
 		
 		// Generate new buffers
 		_fbo     = glGenFramebuffers();
@@ -102,11 +117,14 @@ public final class ObjectPicker {
 		return new GlslShader(
 			engine, "Object Picker",
 			_VS_SOURCE, _FS_SOURCE,
-			"u_matModelView", "u_matProjection", null, null, null, null, null,
+			"u_matModelView", "u_matProjection", null, "u_objectId",
+			null, null, null, null,
 			"out_color", "in_position");
 	}
 	
 	final void _render() {
+		
+		final float[] pixel = new float[4];
 		
 		final int oldWidth  = _width;
 		final int oldHeight = _height;
@@ -116,12 +134,26 @@ public final class ObjectPicker {
 		
 		if(_width != oldWidth || _height != oldHeight) _createFBO();
 		
-		//_layer._renderObjectPicking(_x, _y);
+		glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+		engine.opGlslShader.bind();
+		engine.state.newGlslShader(engine.opGlslShader);
+		
+		glClearColor(0, 0, 0, 0);
+		
+		_layer._renderObjectPicking(this, _x, _y);
+		
+		glReadBuffer(GL_COLOR_ATTACHMENT0);
+		glReadPixels(100, 100, 1, 1, GL_RGBA, GL_FLOAT, pixel);
+		System.out.println(pixel[0] + " " + pixel[1] + " " + pixel[2] + " " + pixel[3]);
+		// TODO: Check why the framebuffer needs to be unbound
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 	
 	public ObjectPicker(
 			final Screen.Layer   layer,
 			final AbstractEngine engine) {
+		
+		engine.opGlslShader.bind();
 		
 		this._layer = layer;
 		this.engine = engine;

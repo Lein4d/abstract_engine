@@ -5,7 +5,7 @@ import java.util.function.Consumer;
 
 import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;
-import ae.core.Frame;
+import ae.core.RenderState;
 import ae.core.SceneGraph;
 import ae.math.Matrix4D;
 
@@ -20,7 +20,7 @@ public class Entity<T> {
 	private final PooledHashMap<String, Entity<?>> _childrenByName;
 	private final PooledLinkedList<Instance>       _instances;
 	
-	private BiConsumer<T, Frame> _cbUpdate = null;
+	private BiConsumer<T, RenderState> _cbUpdate = null;
 	
 	public final String     name;
 	public final Type       type;
@@ -93,7 +93,11 @@ public class Entity<T> {
 	public final int getChildCount() {
 		return _childrenByOrder.getSize();
 	}
-	
+
+	public final Iterable<Entity<?>> getChildren() {
+		return _childrenByOrder;
+	}
+
 	public final Instance getInstance() {
 		
 		if(multiInstance || _instances.isEmpty()) return null;
@@ -104,6 +108,10 @@ public class Entity<T> {
 
 	public final int getInstanceCount() {
 		return _instances.getSize();
+	}
+
+	public final Iterable<Instance> getInstances() {
+		return _instances;
 	}
 	
 	public static final Entity<?> group(
@@ -125,14 +133,6 @@ public class Entity<T> {
 		return name.hashCode();
 	}
 	
-	public final void iterateChildren(final Consumer<Entity<?>> worker) {
-		for(Entity<?> i : _childrenByOrder) worker.accept(i);
-	}
-	
-	public final void iterateInstances(final Consumer<Instance> worker) {
-		for(Instance i : _instances) if(i.isActive()) worker.accept(i);
-	}
-
 	public static final Entity<?> makeRoot(final SceneGraph sceneGraph) {
 		return new Entity<Entity<?>>(
 			sceneGraph, Type.NONE, "root", true, true, false);
@@ -142,12 +142,12 @@ public class Entity<T> {
 		_instances.clear();
 	}
 	
-	public final T setUpdateCallback(final BiConsumer<T, Frame> cbUpdate) {
+	public final T setUpdateCallback(final BiConsumer<T, RenderState> cbUpdate) {
 		_cbUpdate = cbUpdate;
 		return downCasted;
 	}
 	
-	public final void update(final Frame frame) {
+	public final void update(final RenderState frame) {
 		
 		if(_cbUpdate == null) return;
 		
