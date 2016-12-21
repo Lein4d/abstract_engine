@@ -133,7 +133,7 @@ public abstract class Screen {
 			
 			return
 				x >= absRect[0] && x < absRect[0] + absRect[2] &&
-				y >= absRect[1] && x < absRect[1] + absRect[3];
+				y >= absRect[1] && y < absRect[1] + absRect[3];
 		}
 		
 		private final void _invalidate(

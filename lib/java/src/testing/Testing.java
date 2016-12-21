@@ -348,12 +348,11 @@ public final class Testing {
 			}
 		};
 		
-		engine.input.onMouseMove = (x, y, dx, dy, left, middle, right) -> {
-			System.out.println(x + "|" + y + "  " + dx + "|" + dy);
-		};
-		
 		engine.state.onNewFrame = (frame) -> {
-			picker.pickInstance(100, 100, null);
+			picker.pickInstance(
+				(instance, modelCoords, cameraCoords, worldCoords) -> {
+					if(instance != null) System.out.println(instance.getEntity().name);
+				});
 		};
 		
 		engine.start();

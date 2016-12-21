@@ -143,4 +143,12 @@ public final class InputManager {
 				_isMouseButtonDown(GLFW_MOUSE_BUTTON_MIDDLE),
 				_isMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT));
 	}
+	
+	public final int getMouseX() {
+		return _x;
+	}
+	
+	public final int getMouseY() {
+		return _y;
+	}
 }

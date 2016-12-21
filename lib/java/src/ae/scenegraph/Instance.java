@@ -115,8 +115,9 @@ public final class Instance extends OrganizedObject<Instance> {
 		return _static;
 	}
 	
-	public final void setId(final int id) {
+	public final Instance setId(final int id) {
     	_id = id;
+    	return this;
 	}
 	
 	public final Instance transformToCameraSpace(

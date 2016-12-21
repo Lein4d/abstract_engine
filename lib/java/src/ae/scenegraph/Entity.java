@@ -1,7 +1,6 @@
 package ae.scenegraph;
 
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;

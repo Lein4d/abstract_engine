@@ -106,7 +106,7 @@ public final class RenderState {
 		// Invoke the callback function
 		if(onNewFrame != null) onNewFrame.accept(this);
 		
-		_sceneGraph.prepareRendering(this, _dirLights, _pointLights);
+		_sceneGraph.prepareRendering(_dirLights, _pointLights);
 	}
 	
 	final void newCamera(final Matrix4D projection) {
@@ -165,7 +165,7 @@ public final class RenderState {
 	// TODO: shouldn't be public
 	public final void newModelInstance(final Instance instance) {
 		
-		_objectId = instance.getId() + 1;
+		_objectId = instance.getId();
 		
 		instance.tfToCameraSpace.getData  (_matModelViewData);
 		instance.tfToCameraSpace.getNmData(_matNormalData);

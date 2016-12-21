@@ -5,8 +5,7 @@ import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL14.*;
 import static org.lwjgl.opengl.GL30.*;
 
-import java.util.function.Consumer;
-
+import ae.collections.ObjectPool;
 import ae.collections.PooledQueue;
 import ae.math.Vector3D;
 import ae.scenegraph.Instance;
@@ -15,7 +14,9 @@ import ae.util.OrganizedObject;
 public final class ObjectPicker {
 	
 	private final class Job extends OrganizedObject<Job> {
-		
+		private int            _x;
+		private int            _y;
+		private PickedCallback _callback;
 	}
 	
 	public interface PickedCallback {
@@ -52,10 +53,13 @@ public final class ObjectPicker {
     	"}\n";
 	
 	private final Screen.Layer     _layer;
+	private final float[]          _pixel        = new float[4];
 	private final Vector3D         _modelCoords  = Vector3D.createStatic();
 	private final Vector3D         _cameraCoords = Vector3D.createStatic();
 	private final Vector3D         _worldCoords  = Vector3D.createStatic();
 	private final PooledQueue<Job> _jobs         = new PooledQueue<>();
+	private final ObjectPool<Job>  _jobPool      =
+		new ObjectPool<>(() -> new Job());
 	
 	private int      _fbo      = 0;
 	private int      _rbo      = 0;
@@ -63,10 +67,6 @@ public final class ObjectPicker {
 	private int      _width    = -1;
 	private int      _height   = -1;
 	private Instance _instance = null;
-	
-	private int                _x;
-	private int                _y;
-	private Consumer<Instance> _callback;
 	
 	public final AbstractEngine engine;
 	
@@ -122,9 +122,9 @@ public final class ObjectPicker {
 			"out_color", "in_position");
 	}
 	
-	final void _render() {
+	final void executeJobs() {
 		
-		final float[] pixel = new float[4];
+		if(!_jobs.hasNext()) return;
 		
 		final int oldWidth  = _width;
 		final int oldHeight = _height;
@@ -135,16 +135,48 @@ public final class ObjectPicker {
 		if(_width != oldWidth || _height != oldHeight) _createFBO();
 		
 		glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+		
 		engine.opGlslShader.bind();
 		engine.state.newGlslShader(engine.opGlslShader);
 		
 		glClearColor(0, 0, 0, 0);
 		
-		_layer._renderObjectPicking(this, _x, _y);
+		while(_jobs.hasNext()) {
+			
+			final Job job = _jobs.pop();
+			
+			// Invert the y-coordinate to adapt the window coordinate system to
+			// the OpenGL system
+			job._y = _layer.getHeight() - 1 - job._y;
+			
+			_layer._renderObjectPicking(this, job._x, job._y);
+
+			glReadBuffer(GL_COLOR_ATTACHMENT0);
+			glReadPixels(job._x, job._y, 1, 1, GL_RGBA, GL_FLOAT, _pixel);
+			
+			final Instance instance =
+				engine.getSceneGraph().getInstance((int)_pixel[3]);
+			
+			if(instance != null) {
+				
+				_modelCoords .setData(_pixel);
+				_cameraCoords.setData(_pixel);
+				_worldCoords .setData(_pixel);
+
+				instance.tfToCameraSpace.applyToPoint(_cameraCoords);
+				instance.tfToEyeSpace   .applyToPoint(_worldCoords);
+				
+				job._callback.onPicked(
+					instance, _modelCoords, _cameraCoords, _worldCoords);
+				
+			} else {
+				
+				job._callback.onPicked(null, null, null, null);
+			}
+		}
 		
-		glReadBuffer(GL_COLOR_ATTACHMENT0);
-		glReadPixels(100, 100, 1, 1, GL_RGBA, GL_FLOAT, pixel);
-		System.out.println(pixel[0] + " " + pixel[1] + " " + pixel[2] + " " + pixel[3]);
+		
+		//System.out.println(pixel[0] + " " + pixel[1] + " " + pixel[2] + " " + pixel[3]);
 		// TODO: Check why the framebuffer needs to be unbound
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
@@ -153,25 +185,32 @@ public final class ObjectPicker {
 			final Screen.Layer   layer,
 			final AbstractEngine engine) {
 		
-		engine.opGlslShader.bind();
-		
 		this._layer = layer;
 		this.engine = engine;
+		
+		engine.addObjectPicker(this);
 	}
 	
 	public final Instance getLastInstance() {
 		return _instance;
 	}
 	
+	public final void pickInstance(final PickedCallback callback) {
+		pickInstance(
+			engine.input.getMouseX(), engine.input.getMouseY(), callback);
+	}
+	
 	public final void pickInstance(
-			final int                x,
-			final int                y,
-			final Consumer<Instance> callback) {
+			final int            x,
+			final int            y,
+			final PickedCallback callback) {
 		
-		_x        = x;
-		_y        = y;
-		_callback = callback;
+		final Job job = _jobPool.provide();
 		
-		engine.registerObjectPicker(this);
+		job._x        = x;
+		job._y        = y;
+		job._callback = callback;
+		
+		_jobs.push(job);
 	}
 }

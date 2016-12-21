@@ -77,9 +77,11 @@ public class SceneGraph {
 	private final Random   _random          = new Random();
 	private final Matrix4D _tfCameraInverse = new Matrix4D();
 	
-	private final PooledHashMap<String, Entity<?>> _entities  =
+	private final PooledHashMap<String, Entity<?>> _entities     =
 		new PooledHashMap<>();
-	private final ObjectPool<Instance>             _instances =
+	private final PooledHashMap<Integer, Instance> _instances    =
+		new PooledHashMap<>();
+	private final ObjectPool<Instance>             _instancePool =
 		new ObjectPool<>(() -> new Instance());
 	
 	// The errors during graph unrolling are stored here
@@ -178,14 +180,14 @@ public class SceneGraph {
 	}
 	
 	private final void _unrollGraph(
-			final RenderState                      frame,
 			final PooledLinkedList<Instance> dirLights,
 			final PooledLinkedList<Instance> pointLights) {
 		
 		if(_rootInstance != null) return;
 		
 		// Discard all previous instances
-		_instances      .reset();
+		_instancePool   .reset();
+		_instances      .clear();
 		_dirLightNodes  .clear();
 		_pointLightNodes.clear();
 		for(Entity<?> i : _entities.values) i.resetInstances();
@@ -214,7 +216,10 @@ public class SceneGraph {
 		
 		// Assign a unique ID to each instance
 		int instanceId = 1;
-		for(Instance i : _instances) i.setId(instanceId++);
+		for(Instance i : _instancePool) {
+			_instances.setValue(instanceId, i.setId(instanceId));
+			instanceId++;
+		}
 		
 		// Copy the light instances to the current frame
 		dirLights  .clear();
@@ -228,7 +233,7 @@ public class SceneGraph {
     		engine.err.println(
     			_unrollErrors.getSize() +
     			" errors occured during scene graph unrolling (frame " +
-    			frame.getFrameIndex() + ")");
+    			engine.state.getFrameIndex() + ")");
     		
     		for(UnrollError i : _unrollErrors) i._print();
 		}
@@ -242,7 +247,7 @@ public class SceneGraph {
 			final Instance  nextSibling,
 			final int       level) {
 		
-		final Instance node = _instances.provide();
+		final Instance node = _instancePool.provide();
 		
 		Instance latestNode = null;
 		
@@ -276,15 +281,14 @@ public class SceneGraph {
 	}
 	
 	final void prepareRendering(
-			final RenderState                      frame,
 			final PooledLinkedList<Instance> dirLights,
 			final PooledLinkedList<Instance> pointLights) {
 
-		_unrollGraph(frame, dirLights, pointLights);
+		_unrollGraph(dirLights, pointLights);
 		
 		// Call the specific update callbacks for each entity instance
 		for(PooledHashMap.KeyValuePair<String, Entity<?>> i : _entities)
-			i.getValue().update(frame);
+			i.getValue().update(engine.state);
 		
 		// Reset the root transformation
 		root.transformation.resetExternal();
@@ -305,7 +309,7 @@ public class SceneGraph {
 		_tfCameraInverse.setData(camera.getInstance().tfToEyeSpace).invert();
 		
 		// Transform all entities into the current camera space
-		for(Instance i : _instances)
+		for(Instance i : _instancePool)
 			i.transformToCameraSpace(_tfCameraInverse);
 		
 		engine.state.newCamera(projection);
@@ -357,6 +361,10 @@ public class SceneGraph {
 		} while(_entities.hasKey(name));
 		
 		return name;
+	}
+	
+	public final Instance getInstance(final int id) {
+		return _instances.getValue(id);
 	}
 	
 	public final void invalidateGraphStructure() {

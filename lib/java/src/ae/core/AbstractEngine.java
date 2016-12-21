@@ -9,7 +9,6 @@ import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
 import ae.collections.PooledLinkedList;
-import ae.collections.PooledQueue;
 import ae.material.Material;
 import ae.material.StandardMaterials;
 import ae.math.Vector3D;
@@ -65,11 +64,10 @@ public final class AbstractEngine {
 	private final long    _window;
 	private final Display _display = new Display();
 	
-	private final PooledLinkedList<Material> _materials   =
+	private final PooledLinkedList<Material>     _materials     =
 		new PooledLinkedList<>();
-	
-	private final PooledQueue<ObjectPicker> _objectPickers =
-		new PooledQueue<>();
+	private final PooledLinkedList<ObjectPicker> _objectPickers =
+		new PooledLinkedList<>();
 	
 	private State   _state        = State.CREATED;
 	private boolean _isFullscreen = false;
@@ -161,8 +159,8 @@ public final class AbstractEngine {
 		_display.setSize(_fbWidth, _fbHeight);
 	}
 	
-	final void registerObjectPicker(final ObjectPicker objectPicker) {
-		_objectPickers.push(objectPicker);
+	final void addObjectPicker(final ObjectPicker objectPicker) {
+		_objectPickers.insertAtEnd(objectPicker);
 	}
 	
 	public AbstractEngine(
@@ -301,7 +299,7 @@ public final class AbstractEngine {
 
 			_display.render(this);
 			
-			while(_objectPickers.hasNext()) _objectPickers.pop()._render();
+			for(ObjectPicker i : _objectPickers) i.executeJobs();
 			
 			glfwSwapBuffers(_window);
 			
