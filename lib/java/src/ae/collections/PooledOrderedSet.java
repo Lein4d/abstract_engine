@@ -34,24 +34,6 @@ public final class PooledOrderedSet<T> extends PooledCollection<T> {
 		_list    = backendList;
 	}
 	
-	public PooledOrderedSet(final Iterable<T> elements) {
-		
-		this(elements, new PooledHashMap<>(), new PooledLinkedList<>());
-	}
-	
-	public PooledOrderedSet(
-			final Iterable<T>                         elements,
-			final PooledHashMap<T, LinkedListNode<T>> backendSet,
-			final PooledLinkedList<T>                 backendList) {
-		
-		super(null, false);
-		
-		_hashMap = backendSet;
-		_list    = backendList;
-		
-		for(T i : elements) tryInsertAtEnd(i);
-	}
-
 	@Override
 	public final boolean clear() {
 		_hashMap.clear();

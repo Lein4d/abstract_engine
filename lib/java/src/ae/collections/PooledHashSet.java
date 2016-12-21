@@ -27,20 +27,6 @@ public final class PooledHashSet<T> extends PooledCollection<T> {
 		_hashMap = backend;
 	}
 	
-	public PooledHashSet(final Iterable<T> elements){
-		this(elements, new PooledHashMap<>());
-	}
-	
-	public PooledHashSet(
-			final Iterable<T>              elements,
-			final PooledHashMap<T, Object> backend) {
-		
-		super(null, false);
-		
-		_hashMap = backend;
-		for(T i : elements) insert(i);
-	}
-
 	public final boolean clear() {
 		return _hashMap.clear();
 	}

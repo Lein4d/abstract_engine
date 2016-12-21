@@ -94,19 +94,6 @@ public final class PooledLinkedList<T> extends PooledCollection<T> {
 		super(nodePool, poolSharing);
 	}
 	
-	public PooledLinkedList(final Iterable<T> elements) {
-		this(elements, LinkedListNode.<T>createObjectPool(), false);
-	}
-	
-	public PooledLinkedList(
-			final Iterable<T>                   elements,
-			final ObjectPool<LinkedListNode<T>> nodePool,
-			final boolean                       poolSharing) {
-		
-		super(LinkedListNode.<T>createObjectPool(), false);
-		for(T i : elements) insertAtEnd(i);
-	}
-
 	public static final <T> ObjectPool<LinkedListNode<T>> createNodePool() {
 		return LinkedListNode.<T>createObjectPool();
 	}
