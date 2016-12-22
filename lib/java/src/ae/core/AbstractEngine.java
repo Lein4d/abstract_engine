@@ -154,7 +154,6 @@ public final class AbstractEngine {
 	}
 	
 	private final void _updateViewport() {
-		glViewport(0, 0, _fbWidth, _fbHeight);
 		if(_cbResize != null) _cbResize.onResize(this);
 		_display.setSize(_fbWidth, _fbHeight);
 	}
