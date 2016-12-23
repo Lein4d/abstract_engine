@@ -13,6 +13,8 @@ import ae.material.Material;
 import ae.material.StandardMaterials;
 import ae.math.Vector3D;
 import ae.math.Vector4D;
+import ae.util.Event;
+import ae.util.ToggleValue;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL30.*;
@@ -61,8 +63,7 @@ public final class AbstractEngine {
 	private final PooledLinkedList<ObjectPicker> _objectPickers =
 		new PooledLinkedList<>();
 	
-	private State   _state        = State.CREATED;
-	private boolean _isFullscreen = false;
+	private State _state = State.CREATED;
 	
 	// Größe der Renderfläche in Bildschirmkoordinaten
 	private int _windowPosX;
@@ -113,6 +114,8 @@ public final class AbstractEngine {
 	public final Vector3D     background = Vector4D.BLACK.xyz.cloneStatic();
 	public final Screen.Layer display    = _display._layer;
 	public final InputManager input;
+	public final ToggleValue  fullscreen = new ToggleValue(
+		(state) -> _switchToFullscreen(), (state) -> _switchToWindowed());
 	
 	public final Event.Notify<Screen.Layer> onResize =
 		new Event.Notify<>(display);
@@ -149,6 +152,38 @@ public final class AbstractEngine {
 	private final void _adaptDisplaySize() {
 		_display.setSize(_fbWidth, _fbHeight);
 		onResize.fire();
+	}
+	
+	private final void _switchToFullscreen() {
+		
+		final long        monitor = glfwGetPrimaryMonitor();
+		final GLFWVidMode vidMode = glfwGetVideoMode(monitor);
+		
+		// Die Fensterposition für die Wiederherstellung speichern
+		_lastWindowedPosX   = _windowPosX;
+		_lastWindowedPosY   = _windowPosY;
+		_lastWindowedWidth  = _windowWidth;
+		_lastWindowedHeight = _windowHeight;
+		
+		// Fenster- und Framebuffergröße manuell setzen
+		_fbWidth  = _windowWidth  = vidMode.width();
+		_fbHeight = _windowHeight = vidMode.height();
+		
+		_adaptDisplaySize();
+		
+		glfwSetWindowMonitor(
+			_window, monitor,
+			0, 0, vidMode.width(), vidMode.height(),
+			GLFW_DONT_CARE);
+	}
+	
+	private final void _switchToWindowed() {
+		
+		glfwSetWindowMonitor(
+			_window, 0,
+			_lastWindowedPosX,  _lastWindowedPosY,
+			_lastWindowedWidth, _lastWindowedHeight,
+			GLFW_DONT_CARE);
 	}
 	
 	final void addObjectPicker(final ObjectPicker objectPicker) {
@@ -301,43 +336,5 @@ public final class AbstractEngine {
 	
 	public final void stop() {
 		glfwSetWindowShouldClose(_window, true);
-	}
-	
-	public final boolean toggleFullscreen() {
-		
-		_isFullscreen = !_isFullscreen;
-		
-		if(_isFullscreen) {
-
-			final long        monitor = glfwGetPrimaryMonitor();
-			final GLFWVidMode vidMode = glfwGetVideoMode(monitor);
-			
-			// Die Fensterposition für die Wiederherstellung speichern
-			_lastWindowedPosX   = _windowPosX;
-			_lastWindowedPosY   = _windowPosY;
-			_lastWindowedWidth  = _windowWidth;
-			_lastWindowedHeight = _windowHeight;
-			
-			// Fenster- und Framebuffergröße manuell setzen
-			_fbWidth  = _windowWidth  = vidMode.width();
-			_fbHeight = _windowHeight = vidMode.height();
-			
-			_adaptDisplaySize();
-			
-			glfwSetWindowMonitor(
-				_window, monitor,
-				0, 0, vidMode.width(), vidMode.height(),
-				GLFW_DONT_CARE);
-			
-		} else {
-			
-			glfwSetWindowMonitor(
-				_window, 0,
-				_lastWindowedPosX,  _lastWindowedPosY,
-				_lastWindowedWidth, _lastWindowedHeight,
-				GLFW_DONT_CARE);
-		}
-		
-		return _isFullscreen;
 	}
 }

@@ -334,7 +334,7 @@ public final class Testing {
 			
 			switch(event.getKey()) {
 				case GLFW_KEY_ESCAPE: engine.stop(); break;
-				case GLFW_KEY_T: engine.toggleFullscreen(); break;
+				case GLFW_KEY_T: engine.fullscreen.toggle(); break;
 				case GLFW_KEY_0: engine.setSpeed(0); break;
 				case GLFW_KEY_1: engine.setSpeed(0.5); break;
 				case GLFW_KEY_2: engine.setSpeed(1); break;

@@ -2,6 +2,8 @@ package ae.core;
 
 import static org.lwjgl.glfw.GLFW.*;
 
+import ae.util.Event;
+
 public final class InputManager {
 
 	public final class KeyEvent extends Event<KeyEvent, InputManager> {

@@ -1,4 +1,4 @@
-package ae.core;
+package ae.util;
 
 import java.util.function.Consumer;
 

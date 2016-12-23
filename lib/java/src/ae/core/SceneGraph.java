@@ -15,6 +15,7 @@ import ae.scenegraph.entities.Camera;
 import ae.scenegraph.entities.DynamicSpace;
 import ae.scenegraph.entities.Marker;
 import ae.scenegraph.entities.Model;
+import ae.util.Event;
 import ae.util.OrganizedObject;
 
 public class SceneGraph {
