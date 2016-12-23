@@ -27,14 +27,6 @@ public final class AbstractEngine {
 		STOPPING,
 		STOPPED
 	}
-
-	public interface ResizeCallback {
-		void onResize(AbstractEngine engine);
-	}
-
-	public interface TimeChangeCallback {
-		void update(double time, double delta);
-	}
 	
 	public final class Display extends Screen {
 		
@@ -92,8 +84,6 @@ public final class AbstractEngine {
 	// Daten zur Steueurung des zeitlichen Ablaufs
 	private double _speed = 1;
 
-	private ResizeCallback _cbResize = null;
-	
 	final GlslShader opGlslShader;
 	
 	public static final int    VERSION_MAJOR    = 0;
@@ -123,6 +113,9 @@ public final class AbstractEngine {
 	public final Vector3D     background = Vector4D.BLACK.xyz.cloneStatic();
 	public final Screen.Layer display    = _display._layer;
 	public final InputManager input;
+	
+	public final Event.Notify<Screen.Layer> onResize =
+		new Event.Notify<>(display);
 
 	// For the actual scene graph, refer to 'frame.getSceneGraph()'
 	public SceneGraph sceneGraph = null;
@@ -152,10 +145,10 @@ public final class AbstractEngine {
 			SOURCE_PATH = Paths.get("");
 		}
 	}
-	
-	private final void _updateViewport() {
-		if(_cbResize != null) _cbResize.onResize(this);
+
+	private final void _adaptDisplaySize() {
 		_display.setSize(_fbWidth, _fbHeight);
+		onResize.fire();
 	}
 	
 	final void addObjectPicker(final ObjectPicker objectPicker) {
@@ -205,7 +198,7 @@ public final class AbstractEngine {
 			(window, width, height) -> {
 				_fbWidth  = width;
 				_fbHeight = height;
-				if(_state == State.RUNNING) _updateViewport();
+				if(_state == State.RUNNING) _adaptDisplaySize();
 			});
 		
 		glfwMakeContextCurrent(_window);
@@ -261,20 +254,12 @@ public final class AbstractEngine {
 		return this;
 	}
 	
-	public final AbstractEngine setResizeCallback(
-			final ResizeCallback cbResize) {
-		
-		_cbResize = cbResize;
-		return this;
-	}
-	
 	public final void start() {
 
 		_state = State.STARTING;
 
 		glfwShowWindow(_window);
-		if(_cbResize != null) _cbResize.onResize(this);
-		_display.setSize(_fbWidth, _fbHeight);
+		_adaptDisplaySize();
 		
 		glClearColor(1f, 0f, 0f, 1f);
 		glClearDepth(1);
@@ -337,7 +322,7 @@ public final class AbstractEngine {
 			_fbWidth  = _windowWidth  = vidMode.width();
 			_fbHeight = _windowHeight = vidMode.height();
 			
-			_updateViewport();
+			_adaptDisplaySize();
 			
 			glfwSetWindowMonitor(
 				_window, monitor,
@@ -355,28 +340,4 @@ public final class AbstractEngine {
 		
 		return _isFullscreen;
 	}
-	/*
-	public final double updateTime() {
-		
-		final long absTimeNew = System.currentTimeMillis();
-		
-		_time   += _speed * (absTimeNew - _absTime);
-		_absTime = absTimeNew;
-		
-		return _time;
-	}
-	
-	public final double updateTime(
-			final int     delta,
-			final boolean applySpeed) {
-		
-		if(delta <= 0)
-			throw new UnsupportedOperationException(
-				"Time delta must be greater than 0");
-		
-		_time += applySpeed ? _speed * delta : delta;
-		
-		return _time;
-	}
-	*/
 }

@@ -1,6 +1,6 @@
 package ae.scenegraph;
 
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;
@@ -19,8 +19,6 @@ public class Entity<T> {
 	private final PooledHashMap<String, Entity<?>> _childrenByName;
 	private final PooledLinkedList<Instance>       _instances;
 	
-	private BiConsumer<T, RenderState> _cbUpdate = null;
-	
 	public final String     name;
 	public final Type       type;
 	public final T          downCasted;
@@ -28,6 +26,8 @@ public class Entity<T> {
 	public final boolean    noTF;
 	public final boolean    noInheritedTF;
 	public final boolean    multiInstance;
+	
+	public final RenderState.UpdateEvent<T> onUpdate;
 	
 	public boolean rendered = true;
 	public boolean pickable = true;
@@ -53,6 +53,8 @@ public class Entity<T> {
 		this.noTF          = noTF;
 		this.noInheritedTF = noInheritedTF;
 		this.multiInstance = multiInstance;
+		this.onUpdate      =
+			sceneGraph.engine.state.createUpdateEvent(downCasted);
 		
 		sceneGraph.addEntity(this);
 		
@@ -141,16 +143,15 @@ public class Entity<T> {
 		_instances.clear();
 	}
 	
-	public final T setUpdateCallback(final BiConsumer<T, RenderState> cbUpdate) {
-		_cbUpdate = cbUpdate;
+	public final T setUpdateCallback(
+			final Consumer<RenderState.UpdateEvent<T>> callback) {
+		
+		onUpdate.addListener(callback);
 		return downCasted;
 	}
 	
 	public final void update(final RenderState frame) {
-		
-		if(_cbUpdate == null) return;
-		
-		_cbUpdate.accept(downCasted, frame);
+		onUpdate.fire();
 		if(noTF) transformation.resetExternal();
 	}
 }

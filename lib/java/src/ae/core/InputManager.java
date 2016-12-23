@@ -4,30 +4,92 @@ import static org.lwjgl.glfw.GLFW.*;
 
 public final class InputManager {
 
-	public interface KeyActionCallback {
-		void onKeyAction(int key, boolean down);
-	}
+	public final class KeyEvent extends Event<KeyEvent, InputManager> {
 
-	public interface KeyDownCallback {
-		void onKeyDown(int key);
-	}
-
-	public interface KeyUpCallback {
-		void onKeyUp(int key);
+		private int     _key;
+		private boolean _pressed;
+		
+		private KeyEvent() {
+			super(InputManager.this);
+		}
+		
+		private final void _fire(
+				final int     key,
+				final boolean pressed) {
+			
+			_key     = key;
+			_pressed = pressed;
+			
+			fire();
+		}
+		
+		public final int getKey() {
+			return _key;
+		}
+		
+		public final boolean isPressed() {
+			return _pressed;
+		}
 	}
 	
-	public interface MouseButtonActionCallback {
-		void onMouseButtonAction(int button, int x, int y, boolean down);
-	}
-	
-	public interface MouseButtonDownCallback {
-		void onMouseButtonDown(int button, int x, int y);
-	}
-	
-	public interface MouseButtonUpCallback {
-		void onMouseButtonUp(int button, int x, int y);
-	}
+	public final class MouseButtonEvent
+		extends Event<MouseButtonEvent, InputManager> {
 
+		private int     _button;
+		private boolean _pressed;
+		
+		private MouseButtonEvent() {
+			super(InputManager.this);
+		}
+
+		private final void _fire(
+				final int     button,
+				final boolean pressed) {
+			
+			_button  = button;
+			_pressed = pressed;
+			
+			fire();
+		}
+		
+		public final int getButton() {
+			return _button;
+		}
+		
+		public final boolean isPressed() {
+			return _pressed;
+		}
+	}
+	
+	public final class MouseMoveEvent
+		extends Event<MouseMoveEvent, InputManager> {
+
+		private int _dx;
+		private int _dy;
+		
+		private MouseMoveEvent() {
+			super(InputManager.this);
+		}
+
+		private final void _fire(
+				final int dx,
+				final int dy) {
+			
+			_dx = dx;
+			_dy = dy;
+			
+			fire();
+		}
+		
+		public final int getDX() {
+			return _dx;
+		}
+
+		public final int getDY() {
+			return _dy;
+		}
+	}
+	
 	public interface MouseEnterClientCallback {
 		void onMouseEnterWindow();
 	}
@@ -67,23 +129,22 @@ public final class InputManager {
 	private final int _frameSizeRight;
 	private final int _frameSizeBottom;
 	
-	private int _x;
-	private int _y;
+	private int     _x;
+	private int     _y;
 	private boolean _inWindow;
 	private boolean _inClient;
 	
-	public KeyActionCallback         onKeyAction         = null; // called first
-	public KeyDownCallback           onKeyDown           = null;
-	public KeyUpCallback             onKeyUp             = null;
-	public MouseButtonActionCallback onMouseButtonAction = null; // called first
-	public MouseButtonDownCallback   onMouseButtonDown   = null;
-	public MouseButtonUpCallback     onMouseButtonUp     = null;
-	public MouseEnterClientCallback  onMouseEnterClient  = null;
-	public MouseEnterWindowCallback  onMouseEnterWindow  = null;
-	public MouseLeaveClientCallback  onMouseLeaveClient  = null;
-	public MouseLeaveWindowCallback  onMouseLeaveWindow  = null;
-	public MouseMoveCallback         onMouseMove         = null;
-	public MouseWheelCallback        onMouseWheel        = null;
+	public KeyEvent         onKeyAction         = new KeyEvent(); // called first
+	public KeyEvent         onKeyDown           = new KeyEvent();
+	public KeyEvent         onKeyUp             = new KeyEvent();
+	public MouseButtonEvent onMouseButtonAction = new MouseButtonEvent(); // called first
+	public MouseButtonEvent onMouseButtonDown   = new MouseButtonEvent();
+	public MouseButtonEvent onMouseButtonUp     = new MouseButtonEvent();
+	public MouseMoveEvent   onMouseEnterClient  = new MouseMoveEvent();
+	public MouseMoveEvent   onMouseEnterWindow  = new MouseMoveEvent();
+	public MouseMoveEvent   onMouseLeaveClient  = new MouseMoveEvent();
+	public MouseMoveEvent   onMouseLeaveWindow  = new MouseMoveEvent();
+	public MouseMoveEvent   onMouseMove         = new MouseMoveEvent();
 	
 	private final void _getCursorPos() {
 		
@@ -105,12 +166,12 @@ public final class InputManager {
 		
 		switch(action) {
 			case GLFW_PRESS:
-				if(onKeyAction != null) onKeyAction.onKeyAction(key, true);
-				if(onKeyDown   != null) onKeyDown  .onKeyDown  (key);
+				onKeyAction._fire(key, true);
+				onKeyDown  ._fire(key, true);
 				break;
 			case GLFW_RELEASE:
-				if(onKeyAction != null) onKeyAction.onKeyAction(key, false);
-				if(onKeyUp     != null) onKeyUp    .onKeyUp    (key);
+				onKeyAction._fire(key, false);
+				onKeyUp    ._fire(key, false);
 				break;
 			case GLFW_REPEAT:
 				break;
@@ -124,25 +185,15 @@ public final class InputManager {
 		switch(action) {
 			
 			case GLFW_PRESS:
-				if(onMouseButtonAction != null)
-					onMouseButtonAction.onMouseButtonAction(
-						button, _x, _y, true);
-				if(onMouseButtonDown != null)
-					onMouseButtonDown.onMouseButtonDown(button, _x, _y);
+				onMouseButtonAction._fire(button, true);
+				onMouseButtonDown  ._fire(button, true);
 				break;
 			
 			case GLFW_RELEASE:
-				if(onMouseButtonAction != null)
-					onMouseButtonAction.onMouseButtonAction(
-						button, _x, _y, false);
-				if(onMouseButtonUp != null)
-					onMouseButtonUp.onMouseButtonUp(button, _x, _y);
+				onMouseButtonAction._fire(button, false);
+				onMouseButtonUp    ._fire(button, false);
 				break;
 		}
-	}
-	
-	private final boolean _isMouseButtonDown(final int button) {
-		return glfwGetMouseButton(_windowId, button) == GLFW_PRESS;
 	}
 	
 	InputManager(final long windowId) {
@@ -180,34 +231,43 @@ public final class InputManager {
 		
 		_getCursorPos();
 		
+		final int dx = _x - xOld;
+		final int dy = _y - yOld;
+		
 		glfwPollEvents();
 		
 		// Check for the mouse entering the window
-		if(!inWindowOld && _inWindow && onMouseEnterWindow != null)
-			onMouseEnterWindow.onMouseEnterWindow();
-		if(!inClientOld && _inClient && onMouseEnterClient != null)
-			onMouseEnterClient.onMouseEnterWindow();
+		if(!inWindowOld && _inWindow) onMouseEnterWindow._fire(dx, dy);
+		if(!inClientOld && _inClient) onMouseEnterClient._fire(dx, dy);
 		
 		// Check for the mouse leaving the window
-		if(inClientOld && !_inClient && onMouseLeaveClient != null)
-			onMouseLeaveClient.onMouseLeaveWindow();
-		if(inWindowOld && !_inWindow && onMouseLeaveWindow != null)
-			onMouseLeaveWindow.onMouseLeaveWindow();
+		if(inClientOld && !_inClient) onMouseLeaveClient._fire(dx, dy);
+		if(inWindowOld && !_inWindow) onMouseLeaveWindow._fire(dx, dy);
 		
 		// Check for mouse movement
-		if((_x != xOld || _y != yOld) && onMouseMove != null)
-			onMouseMove.onMouseMove(
-				_x, _y, _x - xOld, _y - yOld,
-				_isMouseButtonDown(GLFW_MOUSE_BUTTON_LEFT),
-				_isMouseButtonDown(GLFW_MOUSE_BUTTON_MIDDLE),
-				_isMouseButtonDown(GLFW_MOUSE_BUTTON_RIGHT));
+		if(dx != 0 || dy != 0) onMouseMove._fire(dx, dy);
 	}
 	
-	public final int getMouseX() {
+	public final int getX() {
 		return _x;
 	}
 	
-	public final int getMouseY() {
+	public final int getY() {
 		return _y;
+	}
+	
+	public final boolean isLBtnPressed() {
+		return glfwGetMouseButton(
+			_windowId, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+	}
+	
+	public final boolean isMBtnPressed() {
+		return glfwGetMouseButton(
+			_windowId, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
+	}
+	
+	public final boolean isRBtnPressed() {
+		return glfwGetMouseButton(
+			_windowId, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
 	}
 }

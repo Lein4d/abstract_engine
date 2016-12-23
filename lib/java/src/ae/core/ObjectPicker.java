@@ -197,7 +197,7 @@ public final class ObjectPicker {
 	
 	public final void pickInstance(final PickedCallback callback) {
 		pickInstance(
-			engine.input.getMouseX(), engine.input.getMouseY(), callback);
+			engine.input.getX(), engine.input.getY(), callback);
 	}
 	
 	public final void pickInstance(

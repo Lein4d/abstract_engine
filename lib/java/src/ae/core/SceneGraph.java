@@ -173,7 +173,8 @@ public class SceneGraph {
 	public final AbstractEngine engine;
 	public final Entity<?>      root;
 	
-	public Consumer<SceneGraph> cbNewTopology = null;
+	public final Event.Notify<SceneGraph> onNewTopology =
+		new Event.Notify<>(this);
 	
 	private final AbstractEngine _getEngine() {
 		return engine;
@@ -238,7 +239,7 @@ public class SceneGraph {
     		for(UnrollError i : _unrollErrors) i._print();
 		}
 		
-		if(cbNewTopology != null) cbNewTopology.accept(this);
+		onNewTopology.fire();
 	}
 	
 	private final Instance _instantiateEntity(

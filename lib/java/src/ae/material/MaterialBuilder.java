@@ -6,10 +6,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 import ae.core.AbstractEngine;
-import ae.core.RenderState;
 
 public final class MaterialBuilder {
 	
@@ -118,8 +116,7 @@ public final class MaterialBuilder {
 	private final Set<Material.BuiltInVariable> _variables = new HashSet<>();
 	private final Set<Material.BuiltInFunction> _functions = new HashSet<>();
 	
-	private Node                        _color    = null;
-	private BiConsumer<Material, RenderState> _cbUpdate = null; 
+	private Node _color = null;
 	
 	private static final NodeTemplate _createFuncTemplate(
 			final String        name,
@@ -266,7 +263,7 @@ public final class MaterialBuilder {
 			engine, name,
 			_variables, _functions,
 			_parameters.values(), _textures.values(), _valuesOrdered,
-			_color, _cbUpdate);
+			_color);
 	}
 
 	public final Node cross(
@@ -590,13 +587,6 @@ public final class MaterialBuilder {
 		return this;
 	}
 	
-	public final MaterialBuilder setUpdateCallback(
-			final BiConsumer<Material, RenderState> cbUpdate) {
-		
-		_cbUpdate = cbUpdate;
-		return this;
-	}
-
 	public final Node sign(final Node x) {
 		return _FUNC_SIGN.createNode(x);
 	}

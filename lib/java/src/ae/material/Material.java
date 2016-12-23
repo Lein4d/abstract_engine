@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 import ae.collections.PooledHashMap;
 import ae.core.AbstractEngine;
@@ -124,7 +123,6 @@ public class Material {
 	
 	private final GlslShader _glslShader;
 	
-	private final BiConsumer<Material, RenderState>          _cbUpdate;
 	private final PooledHashMap<String, CustomTexture> _textures =
 		new PooledHashMap<>();
 	private final PooledHashMap<String, CustomParam>   _params   =
@@ -148,18 +146,18 @@ public class Material {
 	static final BuiltInFunction BUILTIN_FUNC_PHONG =
 		new BuiltInFunction(ShaderProgram.FUNC_PHONG);
 	
-	public final AbstractEngine engine;
+	public final AbstractEngine                    engine;
+	public final RenderState.UpdateEvent<Material> onUpdate;
 
 	Material(
-			final AbstractEngine              engine,
-			final String                      name,
-			final Set<BuiltInVariable>        variables,
-			final Set<BuiltInFunction>        functions,
-			final Iterable<CustomParam>       params,
-			final Iterable<CustomTexture>     textures,
-			final List<Value>                 values,
-			final Node                        color,
-			final BiConsumer<Material, RenderState> cbUpdate) {
+			final AbstractEngine          engine,
+			final String                  name,
+			final Set<BuiltInVariable>    variables,
+			final Set<BuiltInFunction>    functions,
+			final Iterable<CustomParam>   params,
+			final Iterable<CustomTexture> textures,
+			final List<Value>             values,
+			final Node                    color) {
 	
 		final Set<ShaderProgram.ShaderComponent> components = new HashSet<>();
 		final List<ShaderProgram.LocalVariable>  valueVariables =
@@ -167,8 +165,8 @@ public class Material {
 
 		engine.addMaterial(this);
 		
-		this.engine    = engine;
-		this._cbUpdate = cbUpdate;
+		this.engine   = engine;
+		this.onUpdate = engine.state.createUpdateEvent(this);
 		
 		for(BuiltInVariable i : variables) components    .add(i._component);
 		for(BuiltInFunction i : functions) components    .add(i._function);
@@ -209,7 +207,7 @@ public class Material {
 	}
 
 	public final void update() {
-		if(_cbUpdate != null) _cbUpdate.accept(this, engine.state);
+		onUpdate.fire();
 	}
 	
 	public final void use() {

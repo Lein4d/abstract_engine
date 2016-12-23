@@ -219,65 +219,65 @@ public final class Testing {
 		
 		final Model quad = new Model(sceneGraph, "quad").
 			setMesh(Meshes.createQuad(8, true).createMesh()).
-			setUpdateCallback((model, frame) -> {
-				model.transformation.getValue().
+			setUpdateCallback((event) -> {
+				event.host.transformation.getValue().
 					toIdentity().
-					rotateY(frame.getTimeF() / 200f);
+					rotateY(event.getTimeF() / 200f);
 			});
 		
 		final Model cube = new Model(sceneGraph, "cube").
 			setMesh(Meshes.createCube(2, true).createMesh()).
-			setUpdateCallback((model, frame) -> {
-				model.transformation.getValue().
+			setUpdateCallback((event) -> {
+				event.host.transformation.getValue().
 					toIdentity().
 					translate(-2, 2, -2).
-					rotateX(frame.getTimeF() / 200f);
+					rotateX(event.getTimeF() / 200f);
 			});
 		
 		final Model torus = new Model(sceneGraph, "torus").
 			setMesh(
 				Meshes.createTorus(64, 32, 1, 0.5f, 0.5f, false).
 					transformTexCoords(new Matrix4D().scale(2, 1, 1)).createMesh()).
-			setUpdateCallback((model, frame) -> {
-				model.transformation.getValue().
+			setUpdateCallback((event) -> {
+				event.host.transformation.getValue().
 					toIdentity().
 					translate(2, 2, 2).
-					rotateY(frame.getTimeF() / 70f).
-					rotateZ(frame.getTimeF() / 100f).
-					rotateX(frame.getTimeF() / 200f);
+					rotateY(event.getTimeF() / 70f).
+					rotateZ(event.getTimeF() / 100f).
+					rotateX(event.getTimeF() / 200f);
 			});
 		
 		final DirectionalLight ambLight = new DirectionalLight(sceneGraph, "amb").
 			makeAmbient();
 		
 		final PointLight pointLightRed = new PointLight(sceneGraph, "red").
-			setUpdateCallback((light, frame) -> {
-				light.transformation.getValue().
+			setUpdateCallback((event) -> {
+				event.host.transformation.getValue().
 					toIdentity().
-					rotateY(frame.getTimeF() / 50f).
+					rotateY(event.getTimeF() / 50f).
 					translate(2, 1, 0);
 			}).
 			setRange(4).makeLinear();
 		
 		final PointLight pointLightGreen = new PointLight(sceneGraph, "green").
-			setUpdateCallback((light, frame) -> {
-				light.transformation.getValue().
+			setUpdateCallback((event) -> {
+				event.host.transformation.getValue().
 					toIdentity().
-					rotateY(frame.getTimeF() / 50f + 120).
+					rotateY(event.getTimeF() / 50f + 120).
 					translate(2, 1, 0);
 			}).
 			setRange(4).makeLinear();
 
 		final PointLight pointLightBlue = new PointLight(sceneGraph, "blue").
-			setUpdateCallback((light, frame) -> {
-				light.transformation.getValue().
+			setUpdateCallback((event) -> {
+				event.host.transformation.getValue().
 					toIdentity().
-					rotateY(frame.getTimeF() / 50f + 240).
+					rotateY(event.getTimeF() / 50f + 240).
 					translate(2, 1, 0);
 			}).
 			setRange(4).makeLinear();
 		
-		sceneGraph.cbNewTopology = (sg) -> sg.print();
+		sceneGraph.onNewTopology.addListener((event) -> event.host.print());
 		
 		cameraLocal.transformation.getValue().
 			translate(-5, 3, 5).
@@ -330,9 +330,9 @@ public final class Testing {
 		
 		final Wrapper<Integer> materialHeightState = new Wrapper<Integer>(2);
 		
-		engine.input.onKeyDown = (key) -> {
+		engine.input.onKeyDown.addListener((event) -> {
 			
-			switch(key) {
+			switch(event.getKey()) {
 				case GLFW_KEY_ESCAPE: engine.stop(); break;
 				case GLFW_KEY_T: engine.toggleFullscreen(); break;
 				case GLFW_KEY_0: engine.setSpeed(0); break;
@@ -346,7 +346,7 @@ public final class Testing {
 						"height", materialHeightState.v * 0.025f);
 					break;
 			}
-		};
+		});
 		
 		//engine.input.onMouseMove = (x, y, dx, dy, left, middle, right) ->
 		//	System.out.println(x + "|" + y);
@@ -354,7 +354,7 @@ public final class Testing {
 		engine.state.onNewFrame = (frame) -> {
 			picker.pickInstance(
 				(instance, modelCoords, cameraCoords, worldCoords) -> {
-					//if(instance != null) System.out.println(instance.getEntity().name);
+					if(instance != null) System.out.println(instance.getEntity().name);
 				});
 		};
 		

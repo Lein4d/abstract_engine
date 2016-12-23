@@ -12,6 +12,29 @@ import ae.scenegraph.entities.PointLight;
 
 public final class RenderState {
 	
+	public final class UpdateEvent<H> extends Event<UpdateEvent<H>, H> {
+		
+		private UpdateEvent(final H host) {
+			super(host);
+		}
+		
+		public final double getTime() {
+			return RenderState.this._time;
+		}
+		
+		public final float getTimeF() {
+			return (float)RenderState.this._time;
+		}
+		
+		public final double getTimeDelta() {
+			return RenderState.this._delta;
+		}
+		
+		public final float getTimeDeltaF() {
+			return (float)RenderState.this._delta;
+		}
+	}
+	
 	private final PooledLinkedList<Instance> _dirLights   =
 		new PooledLinkedList<>();
 	private final PooledLinkedList<Instance> _pointLights =
@@ -131,6 +154,10 @@ public final class RenderState {
 		
 		glUniform1i (_shader.uniDirLightCount,   _dirLights  .getSize());
 		glUniform1i (_shader.uniPointLightCount, _pointLights.getSize());
+	}
+	
+	public final <H> UpdateEvent<H> createUpdateEvent(final H host) {
+		return new UpdateEvent<H>(host);
 	}
 	
 	public final int getFrameIndex() {
