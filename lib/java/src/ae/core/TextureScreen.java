@@ -84,11 +84,17 @@ public final class TextureScreen extends Screen {
 			if(i._isActive()) i._addToFBO(width, height);
 	}
 	
-	public TextureScreen(final AbstractEngine engine) {
+	public TextureScreen(
+			final AbstractEngine engine,
+			final boolean        entityPicking) {
 		
-		super(engine, true, -1);
+		super(
+			engine,
+			true,
+			entityPicking ? glGetInteger(GL_MAX_COLOR_ATTACHMENTS) - 1 : -1);
 		
-		_layers = new TextureLayer[glGetInteger(GL_MAX_COLOR_ATTACHMENTS)];
+		_layers = new TextureLayer[
+			glGetInteger(GL_MAX_COLOR_ATTACHMENTS) - (entityPicking ? 1 : 0)];
 		
 		for(int i = 0; i < _layers.length; i++)
 			_layers[i] = new TextureLayer(i);
