@@ -3,12 +3,11 @@ package ae.demo;
 import static org.lwjgl.glfw.GLFW.*;
 
 import ae.core.AbstractEngine;
-import ae.core.InputListener;
+import ae.core.SceneGraph;
 import ae.core.Texture;
 import ae.core.TextureBuilder;
 import ae.math.Vector4D;
 import ae.mesh.Meshes;
-import ae.scenegraph.SceneGraph;
 import ae.scenegraph.entities.Camera;
 import ae.scenegraph.entities.DirectionalLight;
 import ae.scenegraph.entities.Model;
@@ -19,8 +18,10 @@ public final class TexturedCube {
 		
 		// The engine and a scenegraph are the basic components
 		final AbstractEngine engine     =
-			new AbstractEngine("Textured Cube", null, null);
-		final SceneGraph     sceneGraph = new SceneGraph();
+			new AbstractEngine(
+				"Textured Cube (AE " + AbstractEngine.VERSION_STRING + ")",
+				null, null, false);
+		final SceneGraph     sceneGraph = new SceneGraph(engine);
 		
 		// The camera is adaptive and doesn't need to be updated
 		final Camera camera = new Camera(
@@ -42,13 +43,13 @@ public final class TexturedCube {
 			setMaterial(
 				engine.standardMaterials.get(true, false, true, false, false)).
 			setDiffuseTexture(crateTexture).
-			setUpdater((model, time, delta) -> {
-				model.transformation.getValue().
+			setUpdateCallback((event) -> {
+				event.host.transformation.getValue().
 					toIdentity().
 					translate(0, 0, -2).
-					rotateZ((float)time / 200f).
-					rotateY((float)time / 140f).
-					rotateX((float)time / 90f);
+					rotateZ(event.getTimeF() / 200f).
+					rotateY(event.getTimeF() / 140f).
+					rotateX(event.getTimeF() / 90f);
 			});
 		
 		// We place an ambient light source to also light the back sides of the
@@ -72,24 +73,15 @@ public final class TexturedCube {
 		// Apply the camera to the whole screen
 		engine.display.setCamera(camera);
 		
-		// Attach the scenegraph to the engine
-		engine.setSceneGraph(sceneGraph);
-	
 		// React to keyboard input
-		engine.setInputListener(new InputListener() {
-			
-			@Override
-			public final void onKeyDown(
-					final int key) {
-				
-				switch(key) {
-					case GLFW_KEY_ESCAPE: engine.stop();             break;
-					case GLFW_KEY_T:      engine.toggleFullscreen(); break;
-					case GLFW_KEY_0:      engine.setSpeed(0);        break;
-					case GLFW_KEY_1:      engine.setSpeed(0.5);      break;
-					case GLFW_KEY_2:      engine.setSpeed(1);        break;
-					case GLFW_KEY_3:      engine.setSpeed(2);        break;
-				}
+		engine.input.onKeyDown.addListener((event) -> {
+			switch(event.getKey()) {
+				case GLFW_KEY_ESCAPE: engine.stop();              break;
+				case GLFW_KEY_T:      engine.fullscreen.toggle(); break;
+				case GLFW_KEY_0:      engine.setSpeed(0);         break;
+				case GLFW_KEY_1:      engine.setSpeed(0.5);       break;
+				case GLFW_KEY_2:      engine.setSpeed(1);         break;
+				case GLFW_KEY_3:      engine.setSpeed(2);         break;
 			}
 		});
 		
