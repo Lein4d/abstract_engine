@@ -193,7 +193,8 @@ public final class AbstractEngine {
 	public AbstractEngine(
 			final String      title,
 			final PrintStream out,
-			final PrintStream err) {
+			final PrintStream err,
+			final boolean     entityPicking) {
 		
 		this.maxDirLightCount   = 8;
 		this.maxPointLightCount = 8;
@@ -244,7 +245,7 @@ public final class AbstractEngine {
 		opGlslShader      = ObjectPicker.createGlslShader(this);
 		standardMaterials = new StandardMaterials(this);
 		state             = new RenderState(this);
-		input             = new InputManager(_window);
+		input             = new InputManager(this, _window, entityPicking);
 	}
 
 	public final void addMaterial(final Material material) {
@@ -318,11 +319,11 @@ public final class AbstractEngine {
 
 			_display.render(this);
 			
+			input.processInput();
+			
 			for(ObjectPicker i : _objectPickers) i.executeJobs();
 			
 			glfwSwapBuffers(_window);
-			
-			input.processInput();
 		}
 		
 		_state = State.STOPPING;

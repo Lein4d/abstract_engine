@@ -143,26 +143,29 @@ public final class ObjectPicker {
 		
 		while(_jobs.hasNext()) {
 			
-			final Job job = _jobs.pop();
+			final Job job      = _jobs.pop();
+			Instance  instance = null;
 			
-			// Invert the y-coordinate to adapt the window coordinate system to
-			// the OpenGL system
-			job._y = _layer.getHeight() - 1 - job._y;
+			if(_layer.containsPoint(job._x, job._y)) {
 			
-			_layer._renderObjectPicking(this, job._x, job._y);
-
-			glReadBuffer(GL_COLOR_ATTACHMENT0);
-			glReadPixels(job._x, job._y, 1, 1, GL_RGBA, GL_FLOAT, _pixel);
-			
-			final Instance instance =
-				engine.getSceneGraph().getInstance((int)_pixel[3]);
+				// Invert the y-coordinate to adapt the window coordinate system
+				// to the OpenGL system
+				job._y = _layer.getHeight() - 1 - job._y;
+				
+				_layer._renderObjectPicking(this, job._x, job._y);
+				
+				glReadBuffer(GL_COLOR_ATTACHMENT0);
+				glReadPixels(job._x, job._y, 1, 1, GL_RGBA, GL_FLOAT, _pixel);
+				
+				instance = engine.getSceneGraph().getInstance((int)_pixel[3]);
+			}
 			
 			if(instance != null) {
 				
 				_modelCoords .setData(_pixel);
 				_cameraCoords.setData(_pixel);
 				_worldCoords .setData(_pixel);
-
+	
 				instance.tfToCameraSpace.applyToPoint(_cameraCoords);
 				instance.tfToEyeSpace   .applyToPoint(_worldCoords);
 				

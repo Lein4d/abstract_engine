@@ -2,6 +2,8 @@ package ae.core;
 
 import static org.lwjgl.glfw.GLFW.*;
 
+import ae.scenegraph.Instance;
+import ae.scenegraph.entities.Model;
 import ae.util.Event;
 
 public final class InputManager {
@@ -120,33 +122,54 @@ public final class InputManager {
 			boolean left, boolean middle, boolean right);
 	}
 	
-	private final long     _windowId;
-	private final double[] _tempX      = new double[1];
-	private final double[] _tempY      = new double[1];
-	private final int[]    _tempWidth  = new int[1];
-	private final int[]    _tempHeight = new int[1];
+	private final long         _windowId;
+	private final ObjectPicker _picker;
+	private final double[]     _tempX      = new double[1];
+	private final double[]     _tempY      = new double[1];
+	private final int[]        _tempWidth  = new int[1];
+	private final int[]        _tempHeight = new int[1];
 	
 	private final int _frameSizeLeft;
 	private final int _frameSizeTop;
 	private final int _frameSizeRight;
 	private final int _frameSizeBottom;
+
+	private final ObjectPicker.PickedCallback _cbPicked =
+		(instance, modelCoords, cameraCoords, worldCoords) ->
+		_changePickedInstance(instance);
 	
-	private int     _x;
-	private int     _y;
-	private boolean _inWindow;
-	private boolean _inClient;
+	private int      _x;
+	private int      _y;
+	private boolean  _inWindow;
+	private boolean  _inClient;
+	private Instance _instance = null;
+
+	public KeyEvent         onKeyAction          = new KeyEvent(); // called first
+	public KeyEvent         onKeyDown            = new KeyEvent();
+	public KeyEvent         onKeyUp              = new KeyEvent();
+	public MouseButtonEvent onMouseButtonAction  = new MouseButtonEvent(); // called first
+	public MouseButtonEvent onMouseButtonDown    = new MouseButtonEvent();
+	public MouseButtonEvent onMouseButtonUp      = new MouseButtonEvent();
+	public MouseMoveEvent   onMouseEnterInstance = new MouseMoveEvent();
+	public MouseMoveEvent   onMouseEnterClient   = new MouseMoveEvent();
+	public MouseMoveEvent   onMouseEnterWindow   = new MouseMoveEvent();
+	public MouseMoveEvent   onMouseLeaveInstance = new MouseMoveEvent();
+	public MouseMoveEvent   onMouseLeaveClient   = new MouseMoveEvent();
+	public MouseMoveEvent   onMouseLeaveWindow   = new MouseMoveEvent();
+	public MouseMoveEvent   onMouseMove          = new MouseMoveEvent();
 	
-	public KeyEvent         onKeyAction         = new KeyEvent(); // called first
-	public KeyEvent         onKeyDown           = new KeyEvent();
-	public KeyEvent         onKeyUp             = new KeyEvent();
-	public MouseButtonEvent onMouseButtonAction = new MouseButtonEvent(); // called first
-	public MouseButtonEvent onMouseButtonDown   = new MouseButtonEvent();
-	public MouseButtonEvent onMouseButtonUp     = new MouseButtonEvent();
-	public MouseMoveEvent   onMouseEnterClient  = new MouseMoveEvent();
-	public MouseMoveEvent   onMouseEnterWindow  = new MouseMoveEvent();
-	public MouseMoveEvent   onMouseLeaveClient  = new MouseMoveEvent();
-	public MouseMoveEvent   onMouseLeaveWindow  = new MouseMoveEvent();
-	public MouseMoveEvent   onMouseMove         = new MouseMoveEvent();
+	private final void _changePickedInstance(final Instance instance) {
+
+		// Abort if the instance hasn't changed
+		if(instance == _instance) return;
+		
+		final Instance oldInstance = _instance;
+		
+		// TODO: Richtige Koordinaten
+		if(oldInstance != null) onMouseLeaveInstance._fire(0, 0);
+		_instance = instance;
+		if(instance    != null) onMouseEnterInstance._fire(0, 0);
+	}
 	
 	private final void _getCursorPos() {
 		
@@ -198,7 +221,10 @@ public final class InputManager {
 		}
 	}
 	
-	InputManager(final long windowId) {
+	InputManager(
+			final AbstractEngine engine,
+			final long           windowId,
+			final boolean        entityPicking) {
 		
 		final int[][] sizes = {{0}, {0}, {0}, {0}};
 		
@@ -210,6 +236,8 @@ public final class InputManager {
 		_frameSizeTop    = sizes[1][0];
 		_frameSizeRight  = sizes[2][0];
 		_frameSizeBottom = sizes[3][0];
+		_picker          =
+			entityPicking ? new ObjectPicker(engine.display, engine) : null;
 		
 		glfwSetKeyCallback(
 			windowId,
@@ -226,10 +254,10 @@ public final class InputManager {
 	
 	final void processInput() {
 		
-		final int     xOld        = _x;
-		final int     yOld        = _y;
-		final boolean inWindowOld = _inWindow;
-		final boolean inClientOld = _inClient;
+		final int      xOld        = _x;
+		final int      yOld        = _y;
+		final boolean  inWindowOld = _inWindow;
+		final boolean  inClientOld = _inClient;
 		
 		_getCursorPos();
 		
@@ -248,6 +276,16 @@ public final class InputManager {
 		
 		// Check for mouse movement
 		if(dx != 0 || dy != 0) onMouseMove._fire(dx, dy);
+		
+		if(supportsEntityPicking()) _picker.pickInstance(_cbPicked);
+	}
+	
+	public final Instance getInstance() {
+		return _instance;
+	}
+	
+	public final Model getModel() {
+		return _instance != null ? (Model)_instance.getEntity() : null;
 	}
 	
 	public final int getX() {
@@ -271,5 +309,9 @@ public final class InputManager {
 	public final boolean isRBtnPressed() {
 		return glfwGetMouseButton(
 			_windowId, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+	}
+	
+	public final boolean supportsEntityPicking() {
+		return _picker != null;
 	}
 }

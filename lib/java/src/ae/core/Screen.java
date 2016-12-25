@@ -40,6 +40,13 @@ public abstract class Screen {
 			return this;
 		}
 
+		public final boolean containsPoint(
+				final int x,
+				final int y) {
+			
+			return Screen.this.containsPoint(x, y);
+		}
+		
 		public final int getHeight() {
 			return Screen.this._height;
 		}
@@ -305,6 +312,13 @@ public abstract class Screen {
 	
 	// Must invalidate all rects in all layers
 	protected abstract void _setSize(int width, int height);
+	
+	public final boolean containsPoint(
+			final int x,
+			final int y) {
+		
+		return x >= 0 && x < _width && y >= 0 && y < _height;
+	}
 	
 	public final int getWidth() {
 		return _width;

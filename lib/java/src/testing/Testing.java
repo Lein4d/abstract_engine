@@ -5,7 +5,6 @@ import static org.lwjgl.glfw.GLFW.*;
 import ae.collections.ObjectPool;
 import ae.collections.PooledLinkedList;
 import ae.core.AbstractEngine;
-import ae.core.ObjectPicker;
 import ae.core.SceneGraph;
 import ae.core.Texture;
 import ae.core.TextureBuilder;
@@ -160,11 +159,9 @@ public final class Testing {
 			" tests successful!");
 		
 		final AbstractEngine engine = new AbstractEngine(
-			"Abstract Engine " + AbstractEngine.VERSION_STRING, null, null);
+			"Abstract Engine " + AbstractEngine.VERSION_STRING, null, null, true);
 		
 		final SceneGraph sceneGraph = new SceneGraph(engine);
-		
-		final ObjectPicker picker = new ObjectPicker(engine.display, engine);
 		
 		final Texture diffuse = new TextureBuilder().
 			setData("data/floor_d.jpg").
@@ -348,15 +345,11 @@ public final class Testing {
 			}
 		});
 		
-		//engine.input.onMouseMove = (x, y, dx, dy, left, middle, right) ->
-		//	System.out.println(x + "|" + y);
-		
-		engine.state.onNewFrame = (frame) -> {
-			picker.pickInstance(
-				(instance, modelCoords, cameraCoords, worldCoords) -> {
-					if(instance != null) System.out.println(instance.getEntity().name);
-				});
-		};
+		engine.input.onMouseLeaveInstance.addListener((event) ->
+			System.out.println("Leave: " + event.host.getModel().name));
+
+		engine.input.onMouseEnterInstance.addListener((event) ->
+			System.out.println("Enter: " + event.host.getModel().name));
 		
 		engine.start();
 	}
