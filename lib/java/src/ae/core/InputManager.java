@@ -123,7 +123,7 @@ public final class InputManager {
 	}
 	
 	private final long         _windowId;
-	private final ObjectPicker _picker;
+	private final Screen.Layer _pickingLayer;
 	private final double[]     _tempX      = new double[1];
 	private final double[]     _tempY      = new double[1];
 	private final int[]        _tempWidth  = new int[1];
@@ -232,12 +232,11 @@ public final class InputManager {
 			windowId, sizes[0], sizes[1], sizes[2], sizes[3]);
 		
 		_windowId        = windowId;
+		_pickingLayer    = entityPicking ? engine.display : null;
 		_frameSizeLeft   = sizes[0][0];
 		_frameSizeTop    = sizes[1][0];
 		_frameSizeRight  = sizes[2][0];
 		_frameSizeBottom = sizes[3][0];
-		_picker          =
-			entityPicking ? new ObjectPicker(engine.display, engine) : null;
 		
 		glfwSetKeyCallback(
 			windowId,
@@ -277,7 +276,7 @@ public final class InputManager {
 		// Check for mouse movement
 		if(dx != 0 || dy != 0) onMouseMove._fire(dx, dy);
 		
-		if(supportsEntityPicking()) _picker.pickInstance(_cbPicked);
+		if(_pickingLayer != null) _pickingLayer.pickInstance(_cbPicked);
 	}
 	
 	public final Instance getInstance() {
@@ -309,9 +308,5 @@ public final class InputManager {
 	public final boolean isRBtnPressed() {
 		return glfwGetMouseButton(
 			_windowId, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
-	}
-	
-	public final boolean supportsEntityPicking() {
-		return _picker != null;
 	}
 }

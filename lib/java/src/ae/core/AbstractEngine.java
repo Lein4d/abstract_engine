@@ -34,7 +34,9 @@ public final class AbstractEngine {
 		
 		private final Layer _layer = new Layer();
 		
-		private Display() {}
+		private Display(final boolean entityPicking) {
+			super(AbstractEngine.this, false, entityPicking ? 0 : -1);
+		}
 		
 		@Override
 		protected final void _setSize(
@@ -56,11 +58,11 @@ public final class AbstractEngine {
 	}
 	
 	private final long    _window;
-	private final Display _display = new Display();
+	private final Display _display;
 	
-	private final PooledLinkedList<Material>     _materials     =
+	private final PooledLinkedList<Material> _materials      =
 		new PooledLinkedList<>();
-	private final PooledLinkedList<ObjectPicker> _objectPickers =
+	private final PooledLinkedList<Screen>   _pickingScreens =
 		new PooledLinkedList<>();
 	
 	private State _state = State.CREATED;
@@ -112,13 +114,12 @@ public final class AbstractEngine {
 	
 	public final RenderState  state;
 	public final Vector3D     background = Vector4D.BLACK.xyz.cloneStatic();
-	public final Screen.Layer display    = _display._layer;
+	public final Screen.Layer display;
 	public final InputManager input;
 	public final ToggleValue  fullscreen = new ToggleValue(
 		(state) -> _switchToFullscreen(), (state) -> _switchToWindowed());
 	
-	public final Event.Notify<Screen.Layer> onResize =
-		new Event.Notify<>(display);
+	public final Event.Notify<Screen.Layer> onResize;
 
 	// For the actual scene graph, refer to 'frame.getSceneGraph()'
 	public SceneGraph sceneGraph = null;
@@ -186,8 +187,8 @@ public final class AbstractEngine {
 			GLFW_DONT_CARE);
 	}
 	
-	final void addObjectPicker(final ObjectPicker objectPicker) {
-		_objectPickers.insertAtEnd(objectPicker);
+	final void addPickingScreen(final Screen screen) {
+		_pickingScreens.insertAtEnd(screen);
 	}
 	
 	public AbstractEngine(
@@ -243,9 +244,12 @@ public final class AbstractEngine {
 		GL.createCapabilities();
 
 		opGlslShader      = ObjectPicker.createGlslShader(this);
+		_display          = new Display(entityPicking);
+		display           = _display._layer;
 		standardMaterials = new StandardMaterials(this);
 		state             = new RenderState(this);
 		input             = new InputManager(this, _window, entityPicking);
+		onResize          = new Event.Notify<>(display);
 	}
 
 	public final void addMaterial(final Material material) {
@@ -321,7 +325,7 @@ public final class AbstractEngine {
 			
 			input.processInput();
 			
-			for(ObjectPicker i : _objectPickers) i.executeJobs();
+			for(Screen i : _pickingScreens) i.executePicking();
 			
 			glfwSwapBuffers(_window);
 		}

@@ -1,6 +1,8 @@
 package ae.core;
 
 import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL14.*;
+import static org.lwjgl.opengl.GL30.*;
 
 import ae.collections.PooledOrderedSet;
 import ae.math.Matrix4D;
@@ -13,6 +15,8 @@ public abstract class Screen {
 		
 		private final PooledOrderedSet<Rect> _rects = new PooledOrderedSet<>();
 		
+		public final Screen screen = Screen.this;
+		
 		final void _renderObjectPicking(
 				final ObjectPicker objectPicker,
     			final int          x,
@@ -20,7 +24,8 @@ public abstract class Screen {
 			
 			for(Rect i : _rects.reverse) {
 				if(i._containsPoint(x, y)) {
-					i._render(false, true, x, y);
+					glScissor(x, y, 1, 1);
+					i._render(false);
 					break;
 				}
 			}
@@ -32,7 +37,7 @@ public abstract class Screen {
 		}
 		
 		protected final void _renderVisual() {
-			for(Rect i : _rects) i._render(true, false, 0, 0);
+			for(Rect i : _rects) i._render(true);
 		}
 		
 		public final Layer appendRects(final Rect ... rects) {
@@ -40,21 +45,6 @@ public abstract class Screen {
 			return this;
 		}
 
-		public final boolean containsPoint(
-				final int x,
-				final int y) {
-			
-			return Screen.this.containsPoint(x, y);
-		}
-		
-		public final int getHeight() {
-			return Screen.this._height;
-		}
-		
-		public final int getWidth() {
-			return Screen.this._width;
-		}
-		
 		public final Layer moveAfter(
 				final Rect rect,
 				final Rect refRect) {
@@ -79,6 +69,27 @@ public abstract class Screen {
 		public final Layer moveToFront(final Rect rect) {
 			_rects.insertAtEnd(rect);
 			return this;
+		}
+
+		public final void pickInstance(
+	    		final ObjectPicker.PickedCallback callback) {
+			
+			pickInstance(
+				Screen.this.engine.input.getX(),
+				Screen.this.engine.input.getY(),
+				callback);
+		}
+		
+		public final void pickInstance(
+	    		final int                         x,
+	    		final int                         y,
+	    		final ObjectPicker.PickedCallback callback) {
+			
+			if(!Screen.this.supportsEntityPicking)
+				throw new UnsupportedOperationException(
+					"The layer doesn't support entity picking");
+			
+			Screen.this._picker.pickInstance(this, x, y, callback);
 		}
 		
 		public final Layer setCamera(final Camera camera) {
@@ -153,20 +164,17 @@ public abstract class Screen {
 			_absRect.invalidate();
 		}
 		
-		private void _render(
-				final boolean useMaterial,
-				final boolean singlePixel,
-				final int     x,
-				final int     y) {
+		private void _render(final boolean visual) {
 			
 			if(camera == null || camera.getInstance() == null) return;
 			
 			final int[] absRect = _absRect.getObject();
 			
+			// The viewport must always be set to the full rect
 			glViewport(absRect[0], absRect[1], absRect[2], absRect[3]);
-			glScissor (absRect[0], absRect[1], absRect[2], absRect[3]);
 			
-			if(singlePixel) glScissor(x, y, 1, 1);
+			if(visual)
+				glScissor(absRect[0], absRect[1], absRect[2], absRect[3]);
 			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			
@@ -174,7 +182,7 @@ public abstract class Screen {
 				camera,
 				camera.createProjectionMatrix(
 					absRect[2], absRect[3], _projection),
-				useMaterial);
+				visual);
 		}
 		
 		protected Rect(final Camera camera) {
@@ -307,8 +315,42 @@ public abstract class Screen {
 		}
 	}
 	
+	private final ObjectPicker _picker;
+	
 	private int _width;
 	private int _height;
+	
+	protected int _fbo = 0;
+	protected int _rbo = 0;
+	
+	public final AbstractEngine engine;
+	public final boolean        hasOffscreenBuffer;
+	public final boolean        supportsEntityPicking;
+	
+	final void executePicking() {
+		
+		glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+		
+		_picker.executeJobs();
+		
+		// TODO: necessary?
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+	
+	protected Screen(
+			final AbstractEngine engine,
+			final boolean        fbo,
+			final int            pickingLayer) {
+
+		this.engine = engine;
+		
+		supportsEntityPicking = pickingLayer >= 0;
+		hasOffscreenBuffer    = fbo || supportsEntityPicking;
+		_picker               =
+			supportsEntityPicking ? new ObjectPicker(this, pickingLayer) : null;
+		
+		engine.addPickingScreen(this);
+	}
 	
 	// Must invalidate all rects in all layers
 	protected abstract void _setSize(int width, int height);
@@ -339,7 +381,33 @@ public abstract class Screen {
 		_width  = width;
 		_height = height;
 		
+		// Delete previous buffers
+        glDeleteFramebuffers (_fbo);
+        glDeleteRenderbuffers(_rbo);
+        
+        // Generate new buffers
+ 		_fbo = glGenFramebuffers();
+ 		_rbo = glGenRenderbuffers();
+		
+ 		// Bind all buffers
+		glBindFramebuffer (GL_FRAMEBUFFER,  _fbo);
+		glBindRenderbuffer(GL_RENDERBUFFER, _rbo);
+ 		
+		// Create and attach renderbuffer to the framebuffer
+		glRenderbufferStorage(
+			GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, _width, _height);
+		glFramebufferRenderbuffer(
+			GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _rbo);
+		
+		// Adapt the picking layer texture
+		if(supportsEntityPicking) _picker.adaptTextureSize();
+		
+		// Other layers may be filled here
 		_setSize(_width, _height);
+		
+		// Unbind all buffers
+		glBindFramebuffer (GL_FRAMEBUFFER,  0);
+		glBindRenderbuffer(GL_RENDERBUFFER, 0);
 		
 		return this;
 	}
