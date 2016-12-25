@@ -346,10 +346,13 @@ public abstract class Screen {
 		
 		supportsEntityPicking = pickingLayer >= 0;
 		hasOffscreenBuffer    = fbo || supportsEntityPicking;
-		_picker               =
-			supportsEntityPicking ? new ObjectPicker(this, pickingLayer) : null;
 		
-		engine.addPickingScreen(this);
+		if(supportsEntityPicking) {
+			_picker = new ObjectPicker(this, pickingLayer);
+			engine.addPickingScreen(this);
+		} else {
+			_picker = null;
+		}
 	}
 	
 	// Must invalidate all rects in all layers
