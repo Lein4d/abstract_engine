@@ -95,7 +95,11 @@ public final class MaterialBuilder {
 		"texture",
 		new CustomSignature(GlslType.FLOAT4, GlslType.TEX2, GlslType.FLOAT2));
 	
-	// Node template forthe division
+	// Node template for the negation
+	private static final NodeTemplate _UNARY_OP_NEGATE =
+		new NodeTemplate(1, SignatureGroup.SIG_GROUP_FLOAT_N_IN_N_OUT, "-", "");
+	
+	// Node template for the division
 	private static final NodeTemplate _BIN_OP_DIV = new NodeTemplate(
 		2,
 		new Signature[]{
@@ -306,6 +310,11 @@ public final class MaterialBuilder {
 		return _FUNC_EXP2.createNode(x);
 	}
 
+	public final Node eye() {
+		_variables.add(Material.BUILTIN_VAR_EYE);
+		return Material.BUILTIN_VAR_EYE.node;
+	}
+
 	public final Node faceforward(
 			final Node n,
 			final Node i,
@@ -412,6 +421,10 @@ public final class MaterialBuilder {
 		return createMultiOpOperatorNode('*', ops);
 	}
 
+	public final Node negate(final Node x) {
+		return _UNARY_OP_NEGATE.createNode(x);
+	}
+	
 	public final Node normal() {
 		_variables.add(Material.BUILTIN_VAR_NORMAL);
 		return Material.BUILTIN_VAR_NORMAL.node;
@@ -576,6 +589,19 @@ public final class MaterialBuilder {
 			final Node eta) {
 		
 		return _FUNC_REFRACT.createNode(i, n, eta);
+	}
+	
+	public final Node rim() {
+		return sub(constF(1), dot(normal(), eye()));
+	}
+
+	// 'angle' is the width of the rim, 0° <= angle <= 90°
+	public final Node rim(final float angle) {
+		return sub(
+			constF(1),
+			div(
+				dot(normal(), eye()),
+				constF((float)Math.cos(Math.toRadians(90 - angle)))));
 	}
 	
 	public final MaterialBuilder setColor(final Node color) {

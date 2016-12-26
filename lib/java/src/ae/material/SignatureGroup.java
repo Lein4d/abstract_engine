@@ -81,7 +81,7 @@ final class SignatureGroup implements Signature {
 			}
 		}
 		
-		return
-			GlslType.get(_returnBaseType, _isReturnScalar ? 1 : dimension);
+		return GlslType.get(
+			_returnBaseType, _isReturnScalar || dimension == 0 ? 1 : dimension);
 	}
 }

@@ -232,8 +232,11 @@ final class ShaderProgram {
 		"var_texCoord = in_texCoord;");
 	
 	// Local variables in the FS main-function
+	static final LocalVariable LVAR_EYE      = new LocalVariable(
+		"eye",      GlslType.FLOAT3,
+		"mediump vec3 eye      = normalize(-var_pos);");
 	static final LocalVariable LVAR_NORMAL   = new LocalVariable(
-		"normal", GlslType.FLOAT3,
+		"normal",   GlslType.FLOAT3,
 		"mediump vec3 normal   = normalize(var_normal);");
 	static final LocalVariable LVAR_UTANGENT = new LocalVariable(
 		"uTangent", GlslType.FLOAT3,
@@ -475,6 +478,7 @@ final class ShaderProgram {
 			components.add(UNI_POINT_LIGHT_COUNT);
 		}
 		
+		if(components.contains(LVAR_EYE     )) components.add(VARY_POSITION);
 		if(components.contains(LVAR_NORMAL  )) components.add(VARY_NORMAL);
 		if(components.contains(LVAR_UTANGENT)) components.add(VARY_UTANGENT);
 		if(components.contains(LVAR_VTANGENT)) components.add(VARY_VTANGENT);

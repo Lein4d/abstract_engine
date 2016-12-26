@@ -130,6 +130,8 @@ public class Material {
 	
 	static final BuiltInVariable BUILTIN_VAR_POSITION =
 		new BuiltInVariable(ShaderProgram.VARY_POSITION);
+	static final BuiltInVariable BUILTIN_VAR_EYE      =
+		new BuiltInVariable(ShaderProgram.LVAR_EYE);
 	static final BuiltInVariable BUILTIN_VAR_NORMAL   =
 		new BuiltInVariable(ShaderProgram.LVAR_NORMAL);
 	static final BuiltInVariable BUILTIN_VAR_UTANGENT =
