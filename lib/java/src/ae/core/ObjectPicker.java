@@ -129,6 +129,7 @@ public final class ObjectPicker {
 				
 				job._layer._renderObjectPicking(this, job._x, job._y);
 				
+				// TODO: 'glReadPixels()' is too slow!
 				glReadBuffer(GL_COLOR_ATTACHMENT0);
 				glReadPixels(job._x, job._y, 1, 1, GL_RGBA, GL_FLOAT, _pixel);
 				

@@ -2,8 +2,6 @@ package ae.core;
 
 import static org.lwjgl.opengl.GL20.*;
 
-import java.util.function.Consumer;
-
 import ae.collections.PooledLinkedList;
 import ae.math.Matrix4D;
 import ae.scenegraph.Instance;
@@ -12,6 +10,27 @@ import ae.scenegraph.entities.PointLight;
 import ae.util.Event;
 
 public final class RenderState {
+	
+	private final class FpsCounter {
+		
+		private int  _counter = 0;
+		private long _nextThreshold;
+
+		private FpsCounter(final int threshold) {
+			_nextThreshold = (_absTime / 1000) * 1000 + threshold;
+		}
+		
+		private final void _count() {
+			
+			if(_absTime >= _nextThreshold) {
+				_nextThreshold += 1000;
+				_fpsCounter     = _counter;
+				_counter        = 0;
+			}
+			
+			_counter++;
+		}
+	}
 	
 	public final class UpdateEvent<H> extends Event<UpdateEvent<H>, H> {
 		
@@ -41,23 +60,25 @@ public final class RenderState {
 	private final PooledLinkedList<Instance> _pointLights =
 		new PooledLinkedList<>();
 	
-	private final float[] _matModelViewData  = new float[16];
-	private final float[] _matProjectionData = new float[16];
-	private final float[] _matNormalData     = new float[9];
-	private final float[] _dirLightData;
-	private final float[] _pointLightData;
+	private final FpsCounter[] _fpsCounters;
+	private final float[]      _matModelViewData  = new float[16];
+	private final float[]      _matProjectionData = new float[16];
+	private final float[]      _matNormalData     = new float[9];
+	private final float[]      _dirLightData;
+	private final float[]      _pointLightData;
 	
 	private int        _frameIndex = -1;
 	private long       _absTime;
 	private double     _time;
 	private double     _delta;
+	private int        _fpsCounter = 0;
 	private SceneGraph _sceneGraph;
 	private GlslShader _shader;
 	private float      _objectId;
 	
-	public final AbstractEngine engine;
-	
-	public Consumer<RenderState> onNewFrame = null;
+	public final AbstractEngine            engine;
+	public final Event.Notify<RenderState> onNewFrame =
+		new Event.Notify<>(this);
 
 	private final void _setDirLightData() {
 		
@@ -108,8 +129,11 @@ public final class RenderState {
 		}
 	}
 	
-	RenderState(AbstractEngine engine) {
+	RenderState(
+			final AbstractEngine engine,
+			final int            fpsSlotCount) {
 		
+		this._fpsCounters    = new FpsCounter[fpsSlotCount];
 		this._dirLightData   = new float[engine.maxDirLightCount   * 8];
 		this._pointLightData = new float[engine.maxPointLightCount * 8];
 		this.engine          = engine;
@@ -121,14 +145,26 @@ public final class RenderState {
 		
 		final long absTimeNew = System.currentTimeMillis();
 		
+		
+		if(_frameIndex == -1) {
+			
+			// Prevent a huge delta in the first frame
+			_absTime = absTimeNew;
+			
+			for(int i = 0; i < _fpsCounters.length; i++)
+				_fpsCounters[i] =
+					new FpsCounter((i * 1000) / _fpsCounters.length);
+		}
+		
 		_frameIndex++;
 		_delta      = speed * (absTimeNew - _absTime);
 		_time       = _frameIndex == 0 ? 0 : _time + _delta;
 		_absTime    = absTimeNew;
 		_sceneGraph = sceneGraph;
 		
-		// Invoke the callback function
-		if(onNewFrame != null) onNewFrame.accept(this);
+		for(FpsCounter i : _fpsCounters) i._count();
+		
+		onNewFrame.fire();
 		
 		_sceneGraph.prepareRendering(_dirLights, _pointLights);
 	}
@@ -159,6 +195,10 @@ public final class RenderState {
 	
 	public final <H> UpdateEvent<H> createUpdateEvent(final H host) {
 		return new UpdateEvent<H>(host);
+	}
+	
+	public final int getFPS() {
+		return _fpsCounter;
 	}
 	
 	public final int getFrameIndex() {

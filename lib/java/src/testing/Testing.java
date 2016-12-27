@@ -159,7 +159,8 @@ public final class Testing {
 			" tests successful!");
 		
 		final AbstractEngine engine = new AbstractEngine(
-			"Abstract Engine " + AbstractEngine.VERSION_STRING, null, null, true);
+			"Abstract Engine " + AbstractEngine.VERSION_STRING,
+			null, null, true, 10);
 		
 		final SceneGraph sceneGraph = new SceneGraph(engine);
 		
@@ -326,6 +327,11 @@ public final class Testing {
 		sceneGraph.print();
 		
 		final Wrapper<Integer> materialHeightState = new Wrapper<Integer>(2);
+		
+		engine.state.onNewFrame.addListener((event) ->
+			engine.setTitle(
+				"Abstract Engine " + AbstractEngine.VERSION_STRING +
+				" (" + event.host.getFPS() + " FPS)"));
 		
 		engine.input.onKeyDown.addListener((event) -> {
 			

@@ -195,7 +195,8 @@ public final class AbstractEngine {
 			final String      title,
 			final PrintStream out,
 			final PrintStream err,
-			final boolean     entityPicking) {
+			final boolean     entityPicking,
+			final int         fpsMeasureFrequency) {
 		
 		this.maxDirLightCount   = 8;
 		this.maxPointLightCount = 8;
@@ -247,7 +248,7 @@ public final class AbstractEngine {
 		_display          = new Display(entityPicking);
 		display           = _display._layer;
 		standardMaterials = new StandardMaterials(this);
-		state             = new RenderState(this);
+		state             = new RenderState(this, fpsMeasureFrequency);
 		input             = new InputManager(this, _window, entityPicking);
 		onResize          = new Event.Notify<>(display);
 	}
@@ -291,6 +292,11 @@ public final class AbstractEngine {
 	
 	public final AbstractEngine setSpeed(final double speed) {
 		_speed = speed;
+		return this;
+	}
+	
+	public final AbstractEngine setTitle(final CharSequence title) {
+		glfwSetWindowTitle(_window, title);
 		return this;
 	}
 	
