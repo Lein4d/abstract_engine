@@ -209,8 +209,15 @@ public final class PooledHashMap<K, V>
 	}
 
 	public final V getValue(final K key) {
+		return getValue(key, null);
+	}
+	
+	public final V getValue(
+			final K key,
+			final V defaultValue) {
+		
 		final KeyValuePair<K, V> kvp = _getKeyValuePair(key);
-		return kvp != null ? kvp._value : null;
+		return kvp != null ? kvp._value : defaultValue;
 	}
 	
 	public final boolean hasKey(final K key) {

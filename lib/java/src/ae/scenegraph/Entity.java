@@ -45,9 +45,8 @@ public class Entity<T> {
 			final boolean    noInheritedTF,
 			final boolean    multiInstance) {
 		
-		this.name          =
-			name != null ? name : sceneGraph.generateRandomEntityName();
 		this.type          = type;
+		this.name          = sceneGraph.addEntity(this, name);
 		this.downCasted    = (T)this;
 		this.sceneGraph    = sceneGraph;
 		this.noTF          = noTF;
@@ -55,8 +54,6 @@ public class Entity<T> {
 		this.multiInstance = multiInstance;
 		this.onUpdate      =
 			sceneGraph.engine.state.createUpdateEvent(downCasted);
-		
-		sceneGraph.addEntity(this);
 		
 		_childrenByOrder =
 			new PooledLinkedList<>(sceneGraph.nodePoolChildrenLL, false);
@@ -150,7 +147,7 @@ public class Entity<T> {
 		return downCasted;
 	}
 	
-	public final void update(final RenderState frame) {
+	public final void update() {
 		onUpdate.fire();
 		if(noTF) transformation.resetExternal();
 	}

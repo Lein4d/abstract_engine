@@ -1,7 +1,6 @@
 package ae.core;
 
 import java.io.PrintStream;
-import java.util.Random;
 import java.util.function.Consumer;
 
 import ae.collections.LinkedListNode;
@@ -16,6 +15,7 @@ import ae.scenegraph.entities.DynamicSpace;
 import ae.scenegraph.entities.Marker;
 import ae.scenegraph.entities.Model;
 import ae.util.Event;
+import ae.util.NameDomain;
 import ae.util.OrganizedObject;
 
 public class SceneGraph {
@@ -75,11 +75,10 @@ public class SceneGraph {
 	private static final String _ERROR_MULTI_INSTANCE =
 		"Only one instance is allowed";
 	
-	private final Random   _random          = new Random();
 	private final Matrix4D _tfCameraInverse = new Matrix4D();
-	
-	private final PooledHashMap<String, Entity<?>> _entities     =
-		new PooledHashMap<>();
+
+	private final NameDomain<Entity<?>>            _entities     =
+		new NameDomain<>("entity_");
 	private final PooledHashMap<Integer, Instance> _instances    =
 		new PooledHashMap<>();
 	private final ObjectPool<Instance>             _instancePool =
@@ -192,7 +191,7 @@ public class SceneGraph {
 		_instances      .clear();
 		_dirLightNodes  .clear();
 		_pointLightNodes.clear();
-		for(Entity<?> i : _entities.values) i.resetInstances();
+		for(Entity<?> i : _entities.objects) i.resetInstances();
 		
 		_unrollErrors.reset();
 		
@@ -200,7 +199,7 @@ public class SceneGraph {
 		_rootInstance = _instantiateEntity(root, null, null, 0);
 		
 		// Check for graph related errors
-		for(Entity<?> i : _entities.values) {
+		for(Entity<?> i : _entities.objects) {
 			
 			final int oldErrorCount = _unrollErrors.getSize();
 			
@@ -289,8 +288,7 @@ public class SceneGraph {
 		_unrollGraph(dirLights, pointLights);
 		
 		// Call the specific update callbacks for each entity instance
-		for(PooledHashMap.KeyValuePair<String, Entity<?>> i : _entities)
-			i.getValue().update(engine.state);
+		for(Entity<?> i : _entities.objects) i.update();
 		
 		// Reset the root transformation
 		root.transformation.resetExternal();
@@ -335,14 +333,12 @@ public class SceneGraph {
 		if(addToEngine) engine.sceneGraph = this;
 	}
 
-	public final void addEntity(final Entity<?> entity) {
+	public final String addEntity(
+			final Entity<?> entity,
+			final String    tempName) {
 		
-		if(_entities.hasKey(entity.name))
-			throw new UnsupportedOperationException(
-				"Entity with name '" + entity.name + "' already exists");
+		final String realName = _entities.addObject(entity, tempName);
 		
-		_entities.setValue(entity.name, entity);
-
 		switch(entity.type) {
 			case CAMERA: _cameras.insertAtEnd((Camera)entity); break;
 			case MODEL:  _models .insertAtEnd((Model) entity); break;
@@ -352,17 +348,8 @@ public class SceneGraph {
 				break;
 			default: break;
 		}
-	}
-	
-	public final String generateRandomEntityName() {
 		
-		String name;
-		
-		do {
-			name = "entity_" + (_random.nextInt() & 0x7FFFFFFF);
-		} while(_entities.hasKey(name));
-		
-		return name;
+		return realName;
 	}
 	
 	public final Instance getInstance(final int id) {
@@ -377,12 +364,12 @@ public class SceneGraph {
 		if(_rootInstance != null) _traversePrefix(_rootInstance, _treePrinter);
 	}
 	
-	public final boolean removeEntity(final Entity<?> entity) {
+	public final void removeEntity(final Entity<?> entity) {
 		
 		if(entity.sceneGraph != this)
 			throw new UnsupportedOperationException(
 				"Entity belongs to different scene graph");
 		
-		return _entities.deleteKey(entity.name);
+		_entities.removeObject(entity.name);
 	}
 }
