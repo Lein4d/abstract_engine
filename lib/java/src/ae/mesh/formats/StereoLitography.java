@@ -3,6 +3,7 @@ package ae.mesh.formats;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
@@ -12,6 +13,7 @@ import ae.collections.PooledLinkedList;
 import ae.mesh.FileFormat;
 import ae.mesh.Mesh;
 import ae.mesh.ModelNode;
+import ae.util.ByteOrderInputStream;
 import ae.util.Functions;
 
 public final class StereoLitography extends FileFormat {
@@ -65,7 +67,25 @@ public final class StereoLitography extends FileFormat {
 	private final ModelNode _importBinary(
 			final InputStream in) throws IOException {
 		
-		return null;
+		final ModelNode            mn        = new ModelNode("STL Mesh");
+		final ByteOrderInputStream boin      =
+			new ByteOrderInputStream(in, ByteOrder.LITTLE_ENDIAN);
+		
+		final int       triangleCount = boin.readInt();
+		final float[][] positions     =
+			mn.mesh.createPositionArray(triangleCount * 3);
+		
+		for(int i = 0; i < triangleCount; i++) {
+			in.skip(12); // Skip normal vector
+			_readPosition(boin, positions[i * 3 + 0]);
+			_readPosition(boin, positions[i * 3 + 1]);
+			_readPosition(boin, positions[i * 3 + 2]);
+			in.skip(2);  // Skip attribute
+		}
+		
+		in.close();
+		
+		return mn;
 	}
 	
 	private static final void _parsePosition(
@@ -75,6 +95,13 @@ public final class StereoLitography extends FileFormat {
 		
 		for(int i = 0; i < 3; i++)
 			dst[i] = Float.parseFloat(src.group(groupOffset + i));
+	}
+	
+	private static final void _readPosition(
+			final ByteOrderInputStream src,
+			final float[]              dst) throws IOException {
+		
+		for(int i = 0; i < 3; i++) dst[i] = src.readFloat();
 	}
 	
 	@Override

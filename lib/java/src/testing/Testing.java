@@ -3,7 +3,6 @@ package testing;
 import static org.lwjgl.glfw.GLFW.*;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import ae.collections.ObjectPool;
@@ -21,7 +20,6 @@ import ae.math.Vector4D;
 import ae.mesh.FileFormat;
 import ae.mesh.Meshes;
 import ae.mesh.ModelNode;
-import ae.mesh.formats.StereoLitography;
 import ae.scenegraph.entities.Camera;
 import ae.scenegraph.entities.DirectionalLight;
 import ae.scenegraph.entities.DynamicSpace;
@@ -255,13 +253,13 @@ public final class Testing {
 		ModelNode mn = null;
 		
 		try {
-			mn = FileFormat.getByExtension("stl").importMesh(new FileInputStream("data/bottle.stl"));
+			mn = FileFormat.getByExtension("stl").importMesh(new FileInputStream("data/ship.stl"));
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
 		
 		final Model bottle = new Model(sceneGraph, "bottle").
-			setMesh(mn.mesh.transformPositions(new Matrix4D().scale(0.02f)).createMesh()).
+			setMesh(mn.mesh.transformPositions(new Matrix4D()).createMesh()).
 			setMaterial(engine.standardMaterials.get(false, false, true, false, false));
 		
 		final DirectionalLight ambLight = new DirectionalLight(sceneGraph, "amb").
