@@ -2,6 +2,10 @@ package testing;
 
 import static org.lwjgl.glfw.GLFW.*;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
 import ae.collections.ObjectPool;
 import ae.collections.PooledLinkedList;
 import ae.core.AbstractEngine;
@@ -14,7 +18,10 @@ import ae.material.MaterialBuilder;
 import ae.math.Matrix4D;
 import ae.math.SignedAxis;
 import ae.math.Vector4D;
+import ae.mesh.FileFormat;
 import ae.mesh.Meshes;
+import ae.mesh.ModelNode;
+import ae.mesh.formats.StereoLitography;
 import ae.scenegraph.entities.Camera;
 import ae.scenegraph.entities.DirectionalLight;
 import ae.scenegraph.entities.DynamicSpace;
@@ -245,6 +252,18 @@ public final class Testing {
 					rotateX(event.getTimeF() / 200f);
 			});
 		
+		ModelNode mn = null;
+		
+		try {
+			mn = FileFormat.getByExtension("stl").importMesh(new FileInputStream("data/bottle.stl"));
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
+		
+		final Model bottle = new Model(sceneGraph, "bottle").
+			setMesh(mn.mesh.transformPositions(new Matrix4D().scale(0.02f)).createMesh()).
+			setMaterial(engine.standardMaterials.get(false, false, true, false, false));
+		
 		final DirectionalLight ambLight = new DirectionalLight(sceneGraph, "amb").
 			makeAmbient();
 		
@@ -308,6 +327,7 @@ public final class Testing {
 		
 		refCube.addChild(quad);
 		
+		quad.addChild(bottle);
 		quad.addChild(cameraLocal);
 		quad.addChild(cube);
 		quad.addChild(torus);

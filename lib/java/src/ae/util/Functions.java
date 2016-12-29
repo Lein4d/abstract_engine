@@ -1,5 +1,12 @@
 package ae.util;
 
+import java.io.InputStream;
+import java.util.Scanner;
+import java.util.regex.MatchResult;
+import java.util.regex.Matcher;
+
+import ae.collections.PooledLinkedList;
+
 public final class Functions {
 	
 	private Functions() {}
@@ -61,6 +68,26 @@ public final class Functions {
 			System.arraycopy(src[srcPos + i], 0, dst[dstPos + i], 0, subLength);
 		
 		return dst;
+	}
+	
+	public static final PooledLinkedList<MatchResult> getMatches(
+			final Matcher matcher) {
+		
+		final PooledLinkedList<MatchResult> results = new PooledLinkedList<>();
+		
+		while(matcher.find()) results.insertAtEnd(matcher.toMatchResult());
+		
+		return results;
+	}
+	
+	public static final String getStreamAsString(final InputStream in) {
+		
+		final Scanner scanner = new Scanner(in);
+		final String  result  = scanner.useDelimiter("\\A").next();
+		
+		scanner.close();
+		
+		return result;
 	}
 	
 	public static final int packNormalizedFloatInInt(
