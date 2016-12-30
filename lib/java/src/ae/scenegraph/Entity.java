@@ -63,6 +63,14 @@ public class Entity<T> {
 			new PooledLinkedList<>(sceneGraph.nodePoolInstances,  false);
 	}
 	
+	public Entity(
+			final SceneGraph sceneGraph,
+			final String     name,
+			final boolean    hasTransformation) {
+		
+		this(sceneGraph, Type.NONE, name, !hasTransformation, false, true);
+	}
+	
 	public final void addChild(final Entity<?> entity) {
 		
 		if(entity.sceneGraph != sceneGraph)
@@ -117,9 +125,8 @@ public class Entity<T> {
 			final boolean       hasTransformation,
 			final Entity<?> ... children) {
 		
-		final Entity<?> entity = new Entity<Entity<?>>(
-			children[0].sceneGraph, Type.NONE, name,
-			!hasTransformation, false, true);
+		final Entity<?> entity =
+			new Entity<>(children[0].sceneGraph, name, hasTransformation);
 		
 		for(Entity<?> i : children) entity.addChild(i);
 		

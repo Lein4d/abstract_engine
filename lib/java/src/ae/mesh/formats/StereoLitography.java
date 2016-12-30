@@ -37,14 +37,18 @@ public final class StereoLitography extends FileFormat {
 	
 	private final byte[] _headerBytes = new byte[80];
 	
-	public static final String[] EXTENSIONS = {"stl"};
+	public static final StereoLitography INSTANCE = new StereoLitography();
+	
+	private StereoLitography() {
+		super("stl");
+	}
 	
 	private final ModelNode _importASCII(
 			final InputStream in,
 			final String      headerString,
 			final String      name) throws IOException {
 		
-		final ModelNode mn           = new ModelNode(name);
+		final ModelNode mn           = new ModelNode(name, null);
 		final String    content      =
 			headerString + Functions.getStreamAsString(in);
 		final Matcher   facetMatcher = _REGEX_FACET .matcher(content);
@@ -67,7 +71,7 @@ public final class StereoLitography extends FileFormat {
 	private final ModelNode _importBinary(
 			final InputStream in) throws IOException {
 		
-		final ModelNode            mn        = new ModelNode("STL Mesh");
+		final ModelNode            mn        = new ModelNode("STL Mesh", null);
 		final ByteOrderInputStream boin      =
 			new ByteOrderInputStream(in, ByteOrder.LITTLE_ENDIAN);
 		
