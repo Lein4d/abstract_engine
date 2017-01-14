@@ -252,6 +252,7 @@ public final class Testing {
 			setMaterial(
 				engine.standardMaterials.get(false, false, true, false, false));
 		*/
+		/*
 		final Entity<?> imported =
 			FileFormat.load("data/airboat.obj").toNestedEntity(
 			//FileFormat.load("data/fighter.3ds").toNestedEntity(
@@ -261,7 +262,7 @@ public final class Testing {
 						engine.standardMaterials.get(false, false, true, false, false));
 					model.transformation.getValue().scale(0.5f).translate(0, 4, 0);
 				});
-		
+		*/
 		final DirectionalLight ambLight = new DirectionalLight(sceneGraph, "amb").
 			makeAmbient();
 		
@@ -325,7 +326,7 @@ public final class Testing {
 		
 		refCube.addChild(quad);
 		
-		quad.addChild(imported);
+		//quad.addChild(imported);
 		quad.addChild(cameraLocal);
 		quad.addChild(cube);
 		quad.addChild(torus);

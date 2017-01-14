@@ -1,9 +1,8 @@
 package ae.mesh;
 
+import java.util.function.Consumer;
+
 import ae.math.Matrix4D;
-import ae.math.SignedAxis;
-import ae.mesh.Mesh.PrimitiveType;
-import ae.util.Functions;
 
 public final class Meshes {
 	
@@ -70,186 +69,135 @@ public final class Meshes {
 	private Meshes() {}
 	
 	private static final void _computeCylinderShellData(
-			final int       subdivisions,
-			final int       iOffset,
-			final int       vOffset,
-			final int[][]   indices,
-			final float[][] positions,
-			final float[][] uTangents,
-			final float[][] vTangents,
-			final float[][] normals,
-			final float[][] texCoords) {
+			final int         subdivisions,
+			final int         vOffset,
+			final MeshBuilder mb) {
 		
 		final int ringSize = subdivisions + 1;
-		
-		int iPos, vPos;
+		int       vPos;
 		
 		for(int i = 0; i < subdivisions; i++) {
-			
-			iPos = iOffset + i;
 			vPos = vOffset + i;
-			
-			indices[iPos][0] = vPos;
-			indices[iPos][1] = vPos            + 1;
-			indices[iPos][2] = vPos + ringSize + 1;
-			indices[iPos][3] = vPos + ringSize;
+			mb.addPolygon(
+				0,
+    			vPos,
+    			vPos            + 1,
+    			vPos + ringSize + 1,
+    			vPos + ringSize);
 		}
 		
-		_computeDiscVertices(
-			subdivisions, 0, vOffset,
-			false, positions, uTangents, vTangents, normals, null);
-		_computeDiscVertices(
-			subdivisions, 1, vOffset + ringSize,
-			false, positions, uTangents, vTangents, normals, null);
+		_computeDiscVertices(subdivisions, 0, vOffset,            false, mb);
+		_computeDiscVertices(subdivisions, 1, vOffset + ringSize, false, mb);
 		
 		for(int i = 0; i < ringSize; i++) {
-			
-			vPos = vOffset + i;
-			
-			texCoords[vPos           ][0] = i / (float)subdivisions;
-			texCoords[vPos           ][1] = 0;
-			texCoords[vPos + ringSize][0] = i / (float)subdivisions;
-			texCoords[vPos + ringSize][1] = 1;
+			mb.getVertex(vOffset            + i).
+				setTexCoord(i / (float)subdivisions, 0);
+			mb.getVertex(vOffset + ringSize + i).
+				setTexCoord(i / (float)subdivisions, 1);
 		}
 	}
 	
 	private static final void _computeDiscData(
-    		final int       subdivisions,
-    		final float     posY1,
-    		final float     posY2,
-    		final int       iOffset,
-    		final int       vOffset,
-    		final int[][]   indices,
-    		final float[][] positions,
-    		final float[][] uTangents,
-    		final float[][] vTangents,
-    		final float[][] normals,
-    		final float[][] texCoords) {
-		
-		final int quadCount = _computeDiscQuadCount(subdivisions);
+    		final int         subdivisions,
+    		final float       posY1,
+    		final float       posY2,
+    		final int         vOffset,
+    		final MeshBuilder mb) {
 		
 		// Indices of down-facing cap
 		_computeDiscIndices(
-			subdivisions, iOffset,             vOffset,
-			true, false, indices);
+			subdivisions, vOffset,                true, false, mb);
 		// Indices of up-facing cap
 		_computeDiscIndices(
-			subdivisions, iOffset + quadCount, vOffset + subdivisions,
-			true, true,  indices);
+			subdivisions, vOffset + subdivisions, true, true,  mb);
 		
 		// Vertices of down-facing cap
 		_computeDiscVertices(
-			subdivisions, posY1, vOffset,
-			true, positions, null, null, null, texCoords);
+			subdivisions, posY1, vOffset,                true, mb);
 		// Vertices of up-facing cap
 		_computeDiscVertices(
-			subdivisions, posY2, vOffset + subdivisions,
-			true, positions, null, null, null, texCoords);
+			subdivisions, posY2, vOffset + subdivisions, true, mb);
 		
 		// Fill TBN data
 		for(int i = 0; i < subdivisions; i++) {
-			SignedAxis.X_POS.v.getData(uTangents[vOffset                + i]);
-			SignedAxis.X_POS.v.getData(uTangents[vOffset + subdivisions + i]);
-			SignedAxis.Z_POS.v.getData(vTangents[vOffset                + i]);
-			SignedAxis.Z_POS.v.getData(vTangents[vOffset + subdivisions + i]);
-			SignedAxis.Y_NEG.v.getData(normals  [vOffset                + i]);
-			SignedAxis.Y_POS.v.getData(normals  [vOffset + subdivisions + i]);
+			mb.getVertex(vOffset                + i).
+				setNormal(0, -1, 0).setUTangent(1, 0, 0).setVTangent(0, 0, 1);
+			mb.getVertex(vOffset + subdivisions + i).
+				setNormal(0,  1, 0).setUTangent(1, 0, 0).setVTangent(0, 0, 1);
 		}
 	}
 	
 	private static final void _computeDiscIndices(
-			final int     subdivisions,
-			final int     iOffset,
-			final int     vOffset,
-			final boolean wrapIndices,
-			final boolean invert,
-			final int[][] indices) {
+			final int         subdivisions,
+			final int         vOffset,
+			final boolean     wrapIndices,
+			final boolean     invert,
+			final MeshBuilder mb) {
 
-		final int ringSize  = subdivisions + (wrapIndices ? 0 : 1);
-		final int quadCount = _computeDiscQuadCount(subdivisions);
-		final int offset1   = invert ? 1 : 3;
-		final int offset3   = invert ? 3 : 1;
+		final int   ringSize = subdivisions + (wrapIndices ? 0 : 1);
+		final int[] indices  = new int[subdivisions + 1];
 		
-		int iPos;
+		for(int i = 0; i < indices.length; i++)
+			indices[i] = vOffset + (invert ? subdivisions - i : i) % ringSize;
 		
-		for(int i = 0; i < quadCount; i++) {
-			
-			iPos = iOffset + i;
-			
-			indices[iPos][0] = vOffset;
-			indices[iPos][1] = vOffset + (2 * i + offset1) % ringSize;
-			indices[iPos][2] = vOffset +  2 * i + 2;
-			indices[iPos][3] = vOffset + (2 * i + offset3) % ringSize;
-		}
+		mb.addPolygon(0, indices);
 	}
 	
 	private static final void _computeDiscVertices(
-			final int       subdivisions,
-			final float     posY,
-			final int       vOffset,
-			final boolean   wrapIndices,
-			final float[][] positions,
-    		final float[][] uTangents,
-    		final float[][] vTangents,
-			final float[][] normals,
-			final float[][] texCoords) {
+			final int         subdivisions,
+			final float       posY,
+			final int         vOffset,
+			final boolean     wrapIndices,
+			final MeshBuilder mb) {
 		
 		final int ringSize = subdivisions + (wrapIndices ? 0 : 1);
 		
-		double angle;
-		float  x, z;
-		
 		for(int i = 0; i < ringSize; i++) {
 			
-			angle = 2.0 * Math.PI * (double)i / subdivisions;
-			x     = (float)Math.sin(angle);
-			z     = (float)Math.cos(angle);
+			final double angle = 2.0 * Math.PI * (double)i / subdivisions;
+			final float  x     = (float)Math.sin(angle);
+			final float  z     = (float)Math.cos(angle);
 			
-			positions[vOffset + i][0] = x;
-			positions[vOffset + i][1] = posY;
-			positions[vOffset + i][2] = z;
-			
-			if(uTangents != null) {
-				uTangents[vOffset + i][0] =  (float)Math.cos(angle);
-				uTangents[vOffset + i][1] = 0;
-				uTangents[vOffset + i][2] = -(float)Math.sin(angle);
-			}
-
-			if(vTangents != null) {
-				vTangents[vOffset + i][0] = 0;
-				vTangents[vOffset + i][1] = 1;
-				vTangents[vOffset + i][2] = 0;
-			}
-
-			if(normals != null) {
-				normals[vOffset + i][0] = x;
-				normals[vOffset + i][1] = 0;
-				normals[vOffset + i][2] = z;
-			}
-			
-			if(texCoords != null) {
-				texCoords[vOffset + i][0] = (x + 1) / 2;
-				texCoords[vOffset + i][1] = (z + 1) / 2;
-			}
+			mb.getVertex(vOffset + i).
+    			setPosition(x, posY, z).
+    			setNormal  (x, 0,    z).
+    			setUTangent((float)Math.cos(angle), 0, -(float)Math.sin(angle)).
+    			setVTangent(0, 1, 0).
+    			setTexCoord((x + 1) / 2, (z + 1) / 2);
 		}
 	}
 
-	private static final int _computeDiscQuadCount(final int subdivisions) {
-		return (int)Math.ceil((subdivisions - 2.0) / 2.0);
+	private static final MeshBuilder _createRoundMesh(
+			final int                   vertexCount,
+			final boolean               flat,
+			final Consumer<MeshBuilder> initializer) {
+		
+		final MeshBuilder mb = new MeshBuilder().
+			allocateVertices(vertexCount);
+		
+		initializer.accept(mb);
+		
+		if(flat) mb.makeFlat().computeNormals();
+		mb.cullFacing = true;
+    	
+    	return mb.ensureSealed();
 	}
 	
 	public static final MeshBuilder createCube() {
 		
-		final MeshBuilder mb = new MeshBuilder();
+		final MeshBuilder mb = new MeshBuilder().
+			allocateVertices     (_CUBE_POSITIONS.length).
+			allocateTriangles    (12).
+			activeCullFaceSupport().
+			fillVertexData       ((vertex, index) -> vertex.
+    			setPosition(_CUBE_POSITIONS[index]).
+    			setNormal  (_CUBE_NORMALS  [index]).
+    			setUTangent(_CUBE_UTANGENTS[index]).
+    			setVTangent(_CUBE_VTANGENTS[index]).
+    			setTexCoord(_CUBE_TEXCOORDS[index]));
 		
-		mb.setPositions(Functions.cloneArray2D(_CUBE_POSITIONS));
-		mb.setNormals  (Functions.cloneArray2D(_CUBE_NORMALS));
-		mb.setUTangents(Functions.cloneArray2D(_CUBE_UTANGENTS));
-		mb.setVTangents(Functions.cloneArray2D(_CUBE_VTANGENTS));
-		mb.setTexCoords(Functions.cloneArray2D(_CUBE_TEXCOORDS));
-		
-		mb.setPrimitiveType(PrimitiveType.QUAD);
-		mb.cullFacing = true;
+		for(int i = 0; i < 6; i++)
+			mb.setPolygon(i * 2, 0, i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3);
 		
 		return mb;
 	}
@@ -279,31 +227,11 @@ public final class Meshes {
     		final int     subdivisions,
     		final boolean flat) {
 		
-		final MeshBuilder mb = new MeshBuilder();
-		
-		final int ringSize  = subdivisions + 1;
-		final int quadCount = _computeDiscQuadCount(subdivisions);
-		
-		final int[][]   indices   = mb.createIndexArray(
-			2 * quadCount + subdivisions, PrimitiveType.QUAD);
-		final float[][] positions = mb.createPositionArray(
-			2 * subdivisions + 2 * ringSize);
-		final float[][] uTangents = mb.createUTangentArray();
-		final float[][] vTangents = mb.createVTangentArray();
-		final float[][] normals   = mb.createNormalArray();
-		final float[][] texCoords = mb.createTexCoordArray();
-		
-		_computeDiscData(
-			subdivisions, 0, 1, 0, 0,
-			indices, positions, uTangents, vTangents, normals, texCoords);
-		
-		_computeCylinderShellData(
-			subdivisions, 2 * quadCount, 2 * subdivisions,
-			indices, positions, uTangents, vTangents, normals, texCoords);
-
-		mb.cullFacing = true;
-		
-		return mb;
+		return _createRoundMesh(
+			2 * subdivisions + 2 * (subdivisions + 1), flat, (mb) -> {
+				_computeDiscData         (subdivisions, 0, 1, 0,          mb);
+				_computeCylinderShellData(subdivisions, 2 * subdivisions, mb);
+			});
 	}
 
 	public static final MeshBuilder createCylinder(
@@ -331,25 +259,9 @@ public final class Meshes {
     		final int     subdivisions,
     		final boolean flat) {
 		
-		final MeshBuilder mb = new MeshBuilder();
-		
-		final int ringSize = subdivisions + 1;
-		
-		final int[][]   indices   = mb.createIndexArray(
-			subdivisions, PrimitiveType.QUAD);
-		final float[][] positions = mb.createPositionArray(2 * ringSize);
-		final float[][] uTangents = mb.createUTangentArray();
-		final float[][] vTangents = mb.createVTangentArray();
-		final float[][] normals   = mb.createNormalArray();
-		final float[][] texCoords = mb.createTexCoordArray();
-		
-		_computeCylinderShellData(
-			subdivisions, 0, 0,
-			indices, positions, uTangents, vTangents, normals, texCoords);
-
-		mb.cullFacing = true;
-		
-		return mb;
+		return _createRoundMesh(
+			2 * (subdivisions + 1), flat,
+			(mb) -> _computeCylinderShellData(subdivisions, 0, mb));
 	}
 
 	public static final MeshBuilder createCylinderShell(
@@ -374,26 +286,9 @@ public final class Meshes {
 	}
 	
 	public static final MeshBuilder createDisc(final int subdivisions) {
-		
-		final MeshBuilder mb = new MeshBuilder();
-		
-		final int quadCount = _computeDiscQuadCount(subdivisions);
-		
-		final int[][]   indices   = mb.createIndexArray(
-			2 * quadCount, PrimitiveType.QUAD);
-		final float[][] positions = mb.createPositionArray(2 * subdivisions);
-		final float[][] uTangents = mb.createUTangentArray();
-		final float[][] vTangents = mb.createVTangentArray();
-		final float[][] normals   = mb.createNormalArray();
-		final float[][] texCoords = mb.createTexCoordArray();
-		
-		_computeDiscData(
-			subdivisions, 0, 0, 0, 0,
-			indices, positions, uTangents, vTangents, normals, texCoords);
-
-		mb.cullFacing = true;
-		
-		return mb;
+		return _createRoundMesh(
+			2 * subdivisions, false,
+			(mb) -> _computeDiscData(subdivisions, 0, 0, 0, mb));
 	}
 
 	public static final MeshBuilder createDisc(
@@ -415,16 +310,19 @@ public final class Meshes {
 	
 	public static final MeshBuilder createQuad() {
 		
-		final MeshBuilder mb = new MeshBuilder();
+		final MeshBuilder mb = new MeshBuilder().
+			allocateVertices     (_QUAD_POSITIONS.length).
+			allocateTriangles    (4).
+			activeCullFaceSupport().
+			fillVertexData       ((vertex, index) -> vertex.
+    			setPosition(_QUAD_POSITIONS[index]).
+    			setNormal  (_QUAD_NORMALS  [index]).
+    			setUTangent(_QUAD_UTANGENTS[index]).
+    			setVTangent(_QUAD_VTANGENTS[index]).
+    			setTexCoord(_QUAD_TEXCOORDS[index]));
 		
-		mb.setPositions(Functions.cloneArray2D(_QUAD_POSITIONS));
-		mb.setNormals  (Functions.cloneArray2D(_QUAD_NORMALS));
-		mb.setUTangents(Functions.cloneArray2D(_QUAD_UTANGENTS));
-		mb.setVTangents(Functions.cloneArray2D(_QUAD_VTANGENTS));
-		mb.setTexCoords(Functions.cloneArray2D(_QUAD_TEXCOORDS));
-		
-		mb.setPrimitiveType(PrimitiveType.QUAD);
-		mb.cullFacing = true;
+		for(int i = 0; i < 2; i++)
+			mb.setPolygon(i * 2, 0, i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3);
 		
 		return mb;
 	}
@@ -463,84 +361,53 @@ public final class Meshes {
 			final float   radius,
 			final boolean flat) {
 		
-		final MeshBuilder mb = new MeshBuilder();
-		
 		final int ringSizeHor = subdivisionsHor + 1;
 		final int ringSizeVer = subdivisionsVer + 1;
 		
-		final int[][]   indices   = mb.createIndexArray(
-			subdivisionsHor * subdivisionsVer, PrimitiveType.QUAD);
-		final float[][] positions = mb.createPositionArray(
-			ringSizeHor * ringSizeVer);
-		final float[][] uTangents = flat ? null : mb.createUTangentArray();
-		final float[][] vTangents = flat ? null : mb.createVTangentArray();
-		final float[][] normals   = flat ? null : mb.createNormalArray();
-		final float[][] texCoords = mb.createTexCoordArray();
-		
-		double angleHor, angleVer;
-		int    iPos, vPos;
-		
-		for(int i = 0; i < subdivisionsVer; i++) {
-			for(int j = 0; j < subdivisionsHor; j++) {
-				
-				iPos = i * subdivisionsHor + j;
-				
-				indices[iPos][0] =  i      * ringSizeHor +  j;
-				indices[iPos][1] = (i + 1) * ringSizeHor +  j;
-				indices[iPos][2] = (i + 1) * ringSizeHor + (j + 1);
-				indices[iPos][3] =  i      * ringSizeHor + (j + 1);
-			}
-		}
-		
-		for(int i = 0; i < ringSizeVer; i++) {
-			for(int j = 0; j < ringSizeHor; j++) {
-				
-				angleHor = 2.0 * Math.PI * j / subdivisionsHor;
-				angleVer = 2.0 * Math.PI * i / subdivisionsVer;
-				
-				vPos = i * ringSizeHor + j;
-				
-				positions[vPos][0] =
-					(float)(Math.sin(angleHor) * (radius - Math.cos(angleVer)));
-				positions[vPos][1] =
-					(float) Math.sin(angleVer);
-				positions[vPos][2] =
-					(float)(Math.cos(angleHor) * (radius - Math.cos(angleVer)));
-				
-				// The normals are computed similar to the positions, except
-				// that the radius is assumed as 0 and thus removed from the
-				// formula
-				if(!flat) {
+		return _createRoundMesh(ringSizeHor * ringSizeVer, flat, (mb) -> {
+    		
+    		for(int i = 0; i < subdivisionsVer; i++)
+    			for(int j = 0; j < subdivisionsHor; j++)
+    				mb.addPolygon(
+    					0,
+        				 i      * ringSizeHor +  j,
+        				(i + 1) * ringSizeHor +  j,
+        				(i + 1) * ringSizeHor + (j + 1),
+        				 i      * ringSizeHor + (j + 1));
+    		
+    		for(int i = 0; i < ringSizeVer; i++) {
+    			for(int j = 0; j < ringSizeHor; j++) {
     				
-    				uTangents[vPos][0] = (float) Math.cos(angleHor);
-    				uTangents[vPos][1] = 0;
-    				uTangents[vPos][2] = (float)-Math.sin(angleHor);
+    				final double angleHor = 2.0 * Math.PI * j / subdivisionsHor;
+    				final double angleVer = 2.0 * Math.PI * i / subdivisionsVer;
     				
-    				vTangents[vPos][0] =
-    					(float)(Math.sin(angleHor) * Math.sin(angleVer));
-        			vTangents[vPos][1] =
-        				(float) Math.cos(angleVer);
-            		vTangents[vPos][2] =
-            			(float)(Math.cos(angleHor) * Math.sin(angleVer));
+    				// The normals are computed similar to the positions, except
+    				// that the radius is assumed as 0 and thus removed from the
+    				// formula
     				
-					normals[vPos][0] =
-    					(float)(Math.sin(angleHor) * -Math.cos(angleVer));
-    				normals[vPos][1] =
-    					(float) Math.sin(angleVer);
-    				normals[vPos][2] =
-    					(float)(Math.cos(angleHor) * -Math.cos(angleVer));
-				}
-				
-				texCoords[vPos][0] = (float)j / subdivisionsHor;
-				texCoords[vPos][1] = (float)i / subdivisionsVer;
-			}
-		}
-		
-		if(flat) mb.computeNormals(true, true);
-
-		mb.cullFacing = true;
-		
-		return mb;
+    				mb.getVertex(i * ringSizeHor + j).
+        				setPosition(
+        					(float)(Math.sin(angleHor) * (radius - Math.cos(angleVer))),
+        					(float) Math.sin(angleVer),
+        					(float)(Math.cos(angleHor) * (radius - Math.cos(angleVer)))).
+        				setNormal(
+        					(float)(Math.sin(angleHor) * -Math.cos(angleVer)),
+        					(float) Math.sin(angleVer),
+        					(float)(Math.cos(angleHor) * -Math.cos(angleVer))).
+        				setUTangent(
+            				(float) Math.cos(angleHor),
+            				0,
+            				(float)-Math.sin(angleHor)).
+        				setVTangent(
+        					(float)(Math.sin(angleHor) * Math.sin(angleVer)),
+            				(float) Math.cos(angleVer),
+                			(float)(Math.cos(angleHor) * Math.sin(angleVer))).
+            			setTexCoord(
+            				(float)j / subdivisionsHor,
+            				(float)i / subdivisionsVer);
+    			}
+    		}
+		});
 	}
 	
 	public static final MeshBuilder createTorus(
@@ -572,79 +439,45 @@ public final class Meshes {
     		final int     subdivisionsVer,
     		final boolean flat) {
     	
-		final MeshBuilder mb = new MeshBuilder();
-		
-    	final int vertexCount = (subdivisionsHor + 1) * (subdivisionsVer + 1);
-
-    	final int[][]   indices   = mb.createIndexArray(
-    		subdivisionsHor * subdivisionsVer, PrimitiveType.QUAD);
-    	final float[][] positions = mb.createPositionArray(vertexCount);
-    	final float[][] uTangents = flat ? null : mb.createUTangentArray();
-		final float[][] vTangents = flat ? null : mb.createVTangentArray();
-    	final float[][] normals   = flat ? null : mb.createNormalArray();
-    	final float[][] texCoords = mb.createTexCoordArray();
-    
-    	double angleHor;
-    	double angleVer;
-    	float  x, y, z;
-    	int    iPos;
-    	int    vPos;
-    
-    	for(int i = 0; i < subdivisionsVer; i++) {
-    		for(int j = 0; j < subdivisionsHor; j++) {
-    			
-    			iPos = i * subdivisionsHor + j;
-    
-    			indices[iPos][0] =  i      * (subdivisionsHor + 1) +  j;
-    			indices[iPos][1] =  i      * (subdivisionsHor + 1) + (j + 1);
-    			indices[iPos][2] = (i + 1) * (subdivisionsHor + 1) + (j + 1);
-    			indices[iPos][3] = (i + 1) * (subdivisionsHor + 1) +  j;
-    		}
-    	}
-    
-    	for(int i = 0; i <= subdivisionsVer; i++) {
-    		for(int j = 0; j <= subdivisionsHor; j++) {
-    			
-    			angleHor = 2.0 * Math.PI * (double)j / subdivisionsHor;
-    			angleVer = Math.PI * ((double)i / subdivisionsVer - 0.5);
-    			vPos     = i * (subdivisionsHor + 1) + j;
-    
-    			x = (float)(Math.cos(angleVer) * Math.sin(angleHor));
-    			y = (float) Math.sin(angleVer);
-    			z = (float)(Math.cos(angleVer) * Math.cos(angleHor));
-    
-    			positions[vPos][0] = x;
-    			positions[vPos][1] = y;
-    			positions[vPos][2] = z;
-    
-    			if(!flat) {
-    				
-    				uTangents[vPos][0] =  (float)Math.cos(angleHor);
-        			uTangents[vPos][1] = 0;
-            		uTangents[vPos][2] = -(float)Math.sin(angleHor);
-            		
-            		vTangents[vPos][0] =
-            			(float)(Math.sin(angleVer) * -Math.sin(angleHor));
-        			vTangents[vPos][1] =
-        				(float) Math.cos(angleVer);
-            		vTangents[vPos][2] =
-            			(float)(Math.sin(angleVer) * -Math.cos(angleHor));
-    				
-    				normals[vPos][0] = x;
-        			normals[vPos][1] = y;
-        			normals[vPos][2] = z;
-    			}
-    
-    			texCoords[vPos][0] = 2 * (float)j / subdivisionsHor;
-    			texCoords[vPos][1] =     (float)i / subdivisionsVer;
-    		}
-    	}
-    	
-    	if(flat) mb.computeNormals(true, true);
-
-		mb.cullFacing = true;
-    	
-    	return mb;
+		return _createRoundMesh(
+			(subdivisionsHor + 1) * (subdivisionsVer + 1), flat, (mb) -> {
+			
+        	for(int i = 0; i < subdivisionsVer; i++)
+        		for(int j = 0; j < subdivisionsHor; j++)
+        			mb.addPolygon(
+        				0,
+            			 i      * (subdivisionsHor + 1) +  j,
+            			 i      * (subdivisionsHor + 1) + (j + 1),
+            			(i + 1) * (subdivisionsHor + 1) + (j + 1),
+            			(i + 1) * (subdivisionsHor + 1) +  j);
+        	
+        	for(int i = 0; i <= subdivisionsVer; i++) {
+        		for(int j = 0; j <= subdivisionsHor; j++) {
+        			
+        			final double angleHor = 2.0 * Math.PI * (double)j / subdivisionsHor;
+        			final double angleVer = Math.PI * ((double)i / subdivisionsVer - 0.5);
+        
+        			final float x = (float)(Math.cos(angleVer) * Math.sin(angleHor));
+        			final float y = (float) Math.sin(angleVer);
+        			final float z = (float)(Math.cos(angleVer) * Math.cos(angleHor));
+        
+        			mb.getVertex(i * (subdivisionsHor + 1) + j).
+            			setPosition(x, y, z).
+        				setNormal  (x, y, z).
+        				setUTangent(
+        					 (float)Math.cos(angleHor),
+        					0,
+        					-(float)Math.sin(angleHor)).
+        				setVTangent(
+        					(float)(Math.sin(angleVer) * -Math.sin(angleHor)),
+        					(float) Math.cos(angleVer),
+        					(float)(Math.sin(angleVer) * -Math.cos(angleHor))).
+            			setTexCoord(
+            				2 * (float)j / subdivisionsHor,
+            				    (float)i / subdivisionsVer);
+        		}
+        	}
+		});
     }
 
 	public static final MeshBuilder createUVSphere(

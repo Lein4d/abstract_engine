@@ -56,6 +56,21 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 		return this;
 	}
 
+	public static final float angleDeg(
+			final Vector3D v1,
+			final Vector3D v2) {
+		
+		return (float)Math.toDegrees(angleRad(v1, v2));
+	}
+	
+	public static final float angleRad(
+			final Vector3D v1,
+			final Vector3D v2) {
+		
+		return (float)
+			Math.acos(dot(v1, v2) / (v1.computeLength() * v2.computeLength()));
+	}
+	
 	public final Vector3D cloneConst() {
 		return new Vector3D(new ReadOnlyBackend(new StaticBackend(backend)));
 	}
@@ -151,12 +166,14 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 		return this;
 	}
 	
-	public final float dot(final Vector3D v) {
+	public static final float dot(
+			final Vector3D v1,
+			final Vector3D v2) {
 		
 		return
-			backend.getX() * v.backend.getX() +
-			backend.getY() * v.backend.getY() +
-			backend.getZ() * v.backend.getZ();
+			v1.backend.getX() * v2.backend.getX() +
+			v1.backend.getY() * v2.backend.getY() +
+			v1.backend.getZ() * v2.backend.getZ();
 	}
 	
 	public final VectorBackend getData(final VectorBackend dst) {

@@ -140,11 +140,11 @@ public final class WavefrontObject extends FileFormat {
 			
 			final ModelNode node = new ModelNode(rootNode, null);
 			
-			node.mesh.setPrimitiveType(Mesh.PrimitiveType.TRIANGLE);
-			node.mesh.setPositions    (positionArray);
-			node.mesh.setIndices      (i.toArray(new int[i.size()][]));
-			
-			node.mesh.computeNormals(true, true);
+			//node.mesh.setPrimitiveType(Mesh.PrimitiveType.TRIANGLE);
+			//node.mesh.setPositions    (positionArray);
+			//node.mesh.setIndices      (i.toArray(new int[i.size()][]));
+			//
+			//node.mesh.computeNormals(true, true);
 		}
 		
 		return rootNode;

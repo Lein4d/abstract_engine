@@ -36,7 +36,8 @@ public final class ModelNode {
 	}
 	
 	public final boolean hasValidMesh() {
-		return mesh.getPositions() != null;
+		return true;
+		//return mesh.getPositions() != null;
 	}
 	
 	public final boolean isNested() {

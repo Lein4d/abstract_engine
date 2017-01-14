@@ -11,13 +11,20 @@ public final class Functions {
 	
 	private Functions() {}
 
+	public static final void assertCond(
+			final boolean cond,
+			final String  msg) {
+		
+		if(!cond)
+			throw new AssertException(msg != null ? msg : "Assertion failed");
+	}
+	
 	public static final <T> T assertNotNull(
 			final T      obj,
 			final String msg) {
 		
 		if(obj == null)
-			throw new NullPointerException(
-				msg != null ? msg : "Object is null");
+			throw new AssertException(msg != null ? msg : "Object is null");
 		
 		return obj;
 	}

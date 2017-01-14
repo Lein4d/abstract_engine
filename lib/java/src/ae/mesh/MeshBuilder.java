@@ -1,182 +1,229 @@
 package ae.mesh;
 
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+
 import ae.math.Matrix4D;
-import ae.mesh.Mesh.PrimitiveType;
+import ae.math.Vector3D;
+import ae.util.ArrayIterator;
 import ae.util.CachedObject;
 import ae.util.Functions;
 
 public class MeshBuilder {
 	
-	private static final int[][] _QUAD_TO_TRI_MAP = {{0,1,2},{2,3,0}};
+	public interface Filler<T> {
+		void fill(T obj, int index);
+	}
+	
+	public final class Triangle {
+		
+		private int   _smoothingGroup = 0;
+		final   int[] _vIndices       = new int[3];
+		
+		private final void _assign(final Triangle t) {
+			setIndices       (t._vIndices);
+			setSmoothingGroup(t._smoothingGroup);
+		}
+		
+		private final void _assignAuxVectors(
+    			final int p0,
+    			final int p1,
+    			final int p2) {
+			
+			_auxP .setData(_vertices[_vIndices[p0]]._position);
+			_auxV1.setData(_vertices[_vIndices[p1]]._position).sub(_auxP);
+			_auxV2.setData(_vertices[_vIndices[p2]]._position).sub(_auxP);
+		}
+		
+		// Computes the angle of the vectors p0p1 and p0p2 in radians
+		private final float _computeAngle(
+				final int p0,
+				final int p1,
+				final int p2) {
+			
+			_assignAuxVectors(p0, p1, p2);
+			return Vector3D.angleRad(_auxV1, _auxV2);
+		}
+		
+		private final void _computeAngles(final float[] dst) {
+			dst[0] = _computeAngle(0, 1, 2);
+			dst[1] = _computeAngle(1, 2, 0);
+			dst[2] = _computeAngle(2, 0, 1);
+		}
+		
+		private final void _computeNormal(final float[] dst) {
+			_assignAuxVectors(0, 1, 2);
+			Vector3D.cross(_auxV1, _auxV2, _auxP).normalize().getData(dst);
+		}
+		
+		private final int _getVIndexPos(final int vIndex) {
+			for(int i = 0; i < 3; i++) if(_vIndices[i] == vIndex) return i;
+			return -1;
+		}
+		
+		public final Triangle setIndices(final int[] indices) {
+			return setIndices(indices[0], indices[1], indices[2]);
+		}
+		
+		public final Triangle setIndices(
+				final int v1,
+				final int v2,
+				final int v3) {
+			
+			_vIndices[0] = v1; _vIndices[1] = v2; _vIndices[2] = v3;
+			return this;
+		}
+		
+		public final Triangle setSmoothingGroup(final int smoothingGroup) {
+			_smoothingGroup = smoothingGroup;
+			return this;
+		}
+	}
+	
+	public final class Vertex {
+
+		private Triangle[] _adjacency = null;
+		
+		final float[] _position = new float[3];
+		final float[] _normal   = new float[3];
+		final float[] _uTangent = new float[3];
+		final float[] _vTangent = new float[3];
+		final float[] _texCoord = new float[2];
+		
+		private final int _addSmoothingGroup(
+				final int[] auxArray,
+				final int   sgCount,
+				final int   smoothingGroup) {
+			
+			for(int i = 0; i < sgCount; i++)
+				if(auxArray[i] == smoothingGroup) return sgCount;
+			
+			auxArray[sgCount] = smoothingGroup;
+			
+			return sgCount + 1;
+		}
+		
+		private final void _assign(final Vertex v) {
+			setPosition(v._position);
+			setNormal  (v._normal);
+			setUTangent(v._uTangent);
+			setVTangent(v._vTangent);
+			setTexCoord(v._texCoord);
+		}
+		
+		private final int[] _collectSmoothingGroups(final int[] auxArray) {
+			
+			int sgCount = 0;
+			
+			for(Triangle i : _adjacency)
+				sgCount =
+					_addSmoothingGroup(auxArray, sgCount, i._smoothingGroup);
+			
+			return Arrays.copyOfRange(auxArray, 0, sgCount);
+		}
+		
+		private final void _computeSmoothNormal(final int ownIndex) {
+			
+			// TODO
+		}
+		
+		public final Vertex setNormal(final float[] normal) {
+			return setNormal(normal[0], normal[1], normal[2]);
+		}
+		
+		public final Vertex setNormal(
+				final float nx,
+				final float ny,
+				final float nz) {
+			
+			_normal[0] = nx; _normal[1] = ny; _normal[2] = nz;
+			return this;
+		}
+
+		public final Vertex setPosition(final float[] position) {
+			return setPosition(position[0], position[1], position[2]);
+		}
+		
+		public final Vertex setPosition(
+				final float x,
+				final float y,
+				final float z) {
+			
+			_position[0] = x; _position[1] = y; _position[2] = z;
+			return this;
+		}
+
+		public final Vertex setTexCoord(final float[] texCoordd) {
+			return setTexCoord(texCoordd[0], texCoordd[1]);
+		}
+		
+		public final Vertex setTexCoord(
+				final float s,
+				final float t) {
+			
+			_texCoord[0] = s; _texCoord[1] = t;
+			return this;
+		}
+
+		public final Vertex setUTangent(final float[] uTangent) {
+			return setUTangent(uTangent[0], uTangent[1], uTangent[2]);
+		}
+		
+		public final Vertex setUTangent(
+				final float ux,
+				final float uy,
+				final float uz) {
+			
+			_uTangent[0] = ux; _uTangent[1] = uy; _uTangent[2] = uz;
+			return this;
+		}
+
+		public final Vertex setVTangent(final float[] vTangent) {
+			return setVTangent(vTangent[0], vTangent[1], vTangent[2]);
+		}
+		
+		public final Vertex setVTangent(
+				final float vx,
+				final float vy,
+				final float vz) {
+			
+			_vTangent[0] = vx; _vTangent[1] = vy; _vTangent[2] = vz;
+			return this;
+		}
+	}
 	
 	private final CachedObject<Mesh> _lastValidMesh =
 		new CachedObject<Mesh>(null, (object) -> _createCachedMesh());
+	private final List<Vertex>       _dynVertices   = new LinkedList<>();
+	private final List<Triangle>     _dynTriangles  = new LinkedList<>();
+	
+	private final Vector3D _auxP  = Vector3D.createStatic();
+	private final Vector3D _auxV1 = Vector3D.createStatic();
+	private final Vector3D _auxV2 = Vector3D.createStatic();
 	
 	// Meta information
-	private PrimitiveType _primitiveType    = PrimitiveType.TRIANGLE;
-	private boolean       _primitiveTypeSet = false;
-	private boolean       _autoNormals      = false;
-	private float         _precision        = 0.00001f;
+	private boolean _vertexAdjacency = false;
 	
 	// Geometry data
-	private int[][]   _indices   = null;
-	private float[][] _positions = null;
-	private float[][] _normals   = null;
-	private float[][] _uTangents = null;
-	private float[][] _vTangents = null;
-	private float[][] _texCoords = null;
+	private Vertex  [] _vertices  = null;
+	private Triangle[] _triangles = null;
 	
+	public final Iterable<Triangle> triangles = () -> _triangles != null ?
+		new ArrayIterator<>(_triangles) : _dynTriangles.iterator();
+	public final Iterable<Vertex>   vertices  = () -> _vertices  != null ?
+		new ArrayIterator<>(_vertices)  : _dynVertices .iterator();
+
 	public boolean cullFacing = false;
-	
-	private final void _assertIndicesNotNull() {
-		Functions.assertNotNull(_indices, "No indices specified");
-	}
-	
-	private final float[][] _assertNewTangentArrayIsValid(
-			final float[][] oldTangents,
-			final float[][] newTangents) {
-		
-		if(newTangents != null && newTangents[0].length != 3)
-			throw new UnsupportedOperationException(
-				"A tangent must consist of 3 components");
-		
-		_assertPositionsNotNull();
-		
-		if(newTangents != null && newTangents.length != _positions.length)
-			throw new UnsupportedOperationException(
-				"Tangent and position array must have the same length");
-		
-		_resetCompiled(oldTangents, newTangents);
-		
-		return newTangents;
-	}
-	
-	private final void _assertPositionsNotNull() {
-		Functions.assertNotNull(_positions, "No positions specified");
-	}
-	
-	private final void _assertPrimitiveTypeSet() {
-		if(!_primitiveTypeSet)
-			throw new UnsupportedOperationException("Primitive type not set");
-	}
-	
-	private final void _assertTexCoordsNotNull() {
-		Functions.assertNotNull(_positions, "No tex-coords specified");
-	}
-	
-	private final void _checkNewPositionArrayPossible(final int vertexCount) {
-		
-		if(_normals != null && _normals.length != vertexCount)
-			throw new UnsupportedOperationException(
-				"Normal array with different size already specified");
-		
-		if(_texCoords != null && _texCoords.length != vertexCount)
-			throw new UnsupportedOperationException(
-				"Tex-coord array with different size already specified");
-	}
-	
-	private final boolean _compareFloats(
-			final float f1,
-			final float f2) {
-		
-		return Math.abs(f1 - f2) < _precision;
-	}
-	
-	private final void _computeFlatNormals(final boolean normalize) {
 
-		// Der Normalenvektor für alle Punkte des Dreiecks wird hier gespeichert
-		final float[] normal = new float[3];
+	private final void _assertTrianglesSealed() {
+		Functions.assertNotNull(_triangles, "Triangles are not sealed yet");
+	}
 
-		// Create a new array for the normals if there isn't any yet
-		createNormalArray();
-		
-		for(int i = 0; i < _positions.length; i += _primitiveType.size) {
-			
-			switch(_primitiveType) {
-				case TRIANGLE:
-					_computeTriangleNormal(i, i + 1, i + 2, normal, normalize);
-					break;
-				case QUAD:
-					_computeQuadNormal(
-						i, i + 1, i + 2, i + 3, normal, normalize);
-					break;
-			}
-			
-			for(int j = 0; j < _primitiveType.size; j++)
-				System.arraycopy(normal, 0, _normals[i + j], 0, 3);
-		}
+	private final void _assertVerticesSealed() {
+		Functions.assertNotNull(_vertices, "Vertices are not sealed yet");
 	}
-	
-	private static final boolean[] computeMergedAttributesExistence(
-			final MeshBuilder[] meshes,
-			final boolean       conservative) {
-		
-		boolean hasIndices   = false;
-		boolean hasNormals   = conservative;
-		boolean hasTexCoords = conservative;
-		
-		// Check, which attributes are specified
-		// In conservative mode, an attribute has to be specified in all meshes
-		// to be part of the merged mesh.
-		// In progessive mode, missing attributes are initialized with default
-		// values.
-		for(MeshBuilder i : meshes) {
-			
-			i._assertPositionsNotNull();
-			
-			// Indices are always treated in progressive manner
-			if(i._indices != null) hasIndices = true;
-			
-			if(conservative) {
-				if(i._normals   == null) hasNormals   = false;
-    			if(i._texCoords == null) hasTexCoords = false;
-			} else {
-    			if(i._normals   != null) hasNormals   = true;
-    			if(i._texCoords != null) hasTexCoords = true;
-			}
-		}
-		
-		return new boolean[]{hasIndices, hasNormals, hasTexCoords};
-	}
-	
-	private static final int[] _computeMergedMeshArraySizes(
-			final MeshBuilder[] meshes,
-			final boolean       hasIndices) {
-		
-		int indexCount  = 0;
-		int vertexCount = 0;
-		
-		for(int i = 0; i < meshes.length; i++) {
-			indexCount  += hasIndices ?
-				meshes[i]._indices.length : meshes[i]._positions.length;
-			vertexCount += meshes[i]._positions.length;
-		}
-		
-		return new int[]{indexCount, vertexCount};
-	}
-	
-	private static PrimitiveType _computeMergedPrimitiveType(
-			final MeshBuilder[] meshes) {
-		
-		for(MeshBuilder i : meshes)
-			if(i._primitiveType == PrimitiveType.TRIANGLE)
-				return PrimitiveType.TRIANGLE;
-		
-		return PrimitiveType.QUAD;
-	}
-	
-	private static final void _computeNormal(
-    		final float[] p0,
-    		final float[] p1,
-    		final float[] p2,
-    		final float[] n,
-    		final boolean normalize) {
-		
-		_computeNormal(
-			p0[0], p0[1], p0[2], p1[0], p1[1], p1[2], p2[0], p2[1], p2[2],
-			n, normalize);
-	}
-	
+	/*
 	private static final void _computeNormal(
 			final float   p0x,
 			final float   p0y,
@@ -216,497 +263,333 @@ public class MeshBuilder {
 		n[1] /= length;
 		n[2] /= length;
 	}
-	
-	private final void _computeQuadNormal(
-    		final int     iP0,
-    		final int     iP1,
-    		final int     iP2,
-    		final int     iP3,
-    		final float[] n,
-    		final boolean normalize) {
-		
-		final float[] p0 = _positions[iP0];
-		final float[] p1 = _positions[iP1];
-		final float[] p2 = _positions[iP2];
-		final float[] p3 = _positions[iP3];
-		
-		boolean equP0P1      = true;
-		boolean equP1P2      = true;
-		boolean equP2P3      = true;
-		boolean equP3P0      = true;
-		boolean allDifferent = false;
-		
-		for(int i = 0; i < 3 && !allDifferent; i++) {
-			
-			if(equP0P1) equP0P1 = _compareFloats(p0[i], p1[i]);
-			if(equP1P2) equP1P2 = _compareFloats(p1[i], p2[i]);
-			if(equP2P3) equP2P3 = _compareFloats(p2[i], p3[i]);
-			if(equP3P0) equP3P0 = _compareFloats(p3[i], p0[i]);
-			
-			if(!equP0P1 && !equP1P2 && !equP2P3 && !equP3P0)
-				allDifferent = true;
-		}
-		
-		if(allDifferent || equP0P1) {
-			_computeNormal(p1, p2, p3, n, normalize);
-		} else if(equP1P2) {
-			_computeNormal(p0, p2, p3, n, normalize);
-		} else if(equP2P3) {
-			_computeNormal(p0, p1, p3, n, normalize);
-		} else {
-			_computeNormal(p0, p1, p2, n, normalize);
-		}
-	}
-	/*
-	private final void _computeSmoothNormals(final boolean normalize) {
-		
-		// Perform screening, to determine the edges for each vertex
-		
-	}
 	*/
-	private final void _computeTriangleNormal(
-			final int     iP0,
-			final int     iP1,
-			final int     iP2,
-			final float[] n,
-			final boolean normalize) {
-		
-		_computeNormal(
-			_positions[iP0][0], _positions[iP0][1], _positions[iP0][2],
-			_positions[iP1][0], _positions[iP1][1], _positions[iP1][2],
-			_positions[iP2][0], _positions[iP2][1], _positions[iP2][2],
-			n, normalize);
-	}
-	
-	private final void _copyVertex(
-			final float[][] srcPositions,
-			final float[][] srcNormals,
-			final float[][] srcTexCoords,
-			final int       srcPos,
-			final int       dstPos) {
-		
-		System.arraycopy(srcPositions[srcPos], 0, _positions[dstPos], 0, 3);
-		
-		if(srcNormals != null)
-			System.arraycopy(srcNormals[srcPos], 0, _normals[dstPos], 0, 3);
-		
-		if(srcTexCoords != null)
-			System.arraycopy(srcTexCoords[srcPos], 0, _texCoords[dstPos], 0, 2);
-	}
-	
 	private final Mesh _createCachedMesh() {
-		
-		_assertPositionsNotNull();
-		
-		return new Mesh(
-			_indices != null ? _indices : _createDefaultIndices(),
-			_positions, _normals, _uTangents, _vTangents, _texCoords,
-			_autoNormals, cullFacing);
+		return new Mesh(this, cullFacing);
 	}
 	
-	private final int[][] _createDefaultIndices() {
-
-		_assertPositionsNotNull();
+	private final void _ensureVertexAdjacency() {
 		
-		if(!_primitiveTypeSet)
-			throw new UnsupportedOperationException(
-				"Primitive type not specified");
+		if(_vertexAdjacency) return;
 		
-		final int[][] newIndices = new int
-			[_positions.length / _primitiveType.size][_primitiveType.size];
-
-		for(int i = 0; i < newIndices.length; i++)
-			for(int j = 0; j < _primitiveType.size; j++)
-				newIndices[i][j] = i * _primitiveType.size + j;
-
-		return newIndices;
-	}
-	
-	private final void _invertPrimitive(
-			final float[][] data,
-			final float[][] tempPrimitive,
-			final int       offset) {
-
-		System.arraycopy(
-			data, offset, tempPrimitive, 0, _primitiveType.size);
+		ensureSealed();
 		
-		for(int i = 0; i < _primitiveType.size; i++)
-			data[offset + i] = tempPrimitive[_primitiveType.size - 1 - i];
-	}
-	
-	private static final void _mergeUnifiedMeshData(
-			final MeshBuilder[] src,
-			final MeshBuilder   dst,
-			final boolean       hasIndices,
-			final boolean       hasNormals,
-			final boolean       hasTexCoords) {
+		final int[] adjacencyCount = new int[_vertices.length];
 		
-		int indexPos  = 0;
-		int vertexPos = 0;
+		// Pass 1: Count the adjacency polygons for each vertex
+		for(Triangle i : _triangles) for(int j : i._vIndices) adjacencyCount[j]++;
 		
-		// Copy every mesh's data to the result mesh
-		for(MeshBuilder i : src) {
-
-			// Justify the indices while copying
-			if(hasIndices) {
-				
-				for(int j = 0; j < i._indices.length; j++)
-					for(int k = 0; k < i._primitiveType.size; k++)
-						dst._indices[indexPos + j][k] =
-							i._indices[j][k] + vertexPos;
-				
-				indexPos += i._indices.length;
+		// Pass 2: Create the adjacency arrays
+		for(int i = 0; i < _vertices.length; i++)
+			_vertices[i]._adjacency = new Triangle[adjacencyCount[i]];
+		
+		// Pass 3: Initialize the adjacency arrays
+		// Use the previous computed adjacency count to determine the slot that
+		// is written next by decrementing the counter each time
+		for(Triangle i : _triangles) {
+			for(int j : i._vIndices) {
+				adjacencyCount[j]--;
+				_vertices[j]._adjacency[adjacencyCount[j]] = i;
 			}
-			
-			// vertex data can be copyied without modification
-			Functions.copyArray2D(
-				i  ._positions, 0,
-				dst._positions, vertexPos,
-				3, i._positions.length);
-			
-			if(hasNormals)
-				Functions.copyArray2D(
-					i  ._normals, 0,
-					dst._normals, vertexPos,
-					3, i._normals.length);
-			
-			if(hasTexCoords)
-				Functions.copyArray2D(
-					i  ._texCoords, 0,
-					dst._texCoords, vertexPos,
-					2, i._texCoords.length);
-			
-			vertexPos += i._positions.length;
-		}
-	}
-	
-	private final void _renewVertexArrays(final int vertexCount) {
-		
-		final boolean hasNormals   = _normals   != null;
-		final boolean hasTexCoords = _texCoords != null;
-		
-		_positions = _normals = _texCoords = null;
-		
-		createPositionArray(_indices.length * _primitiveType.size);
-		
-		if(hasNormals)   createNormalArray();
-		if(hasTexCoords) createTexCoordArray();
-	}
-	
-	private final <T> void _resetCompiled(
-			final T oldValue,
-			final T newValue) {
-
-		if(oldValue != null || newValue != null) _lastValidMesh.invalidate();
-	}
-	
-	private static final MeshBuilder[] _unifyMeshes(
-			final MeshBuilder[] src,
-			final MeshBuilder   dst,
-			final boolean       hasIndices,
-			final boolean       hasNormals,
-			final boolean       hasTexCoords) {
-		
-		final MeshBuilder[] srcCopies = new MeshBuilder[src.length];
-		
-		for(int i = 0; i < src.length; i++) {
-
-			srcCopies[i] = src[i].createFlatCopy();
-			
-			if(dst._primitiveType == PrimitiveType.TRIANGLE)
-				srcCopies[i].splitQuads();
-			
-			if(hasIndices && srcCopies[i]._indices == null)
-				srcCopies[i]._createDefaultIndices();
-			
-			if(hasNormals && srcCopies[i]._normals == null)
-				srcCopies[i].createNormalArray();
-			
-			if(hasTexCoords && srcCopies[i]._texCoords == null)
-				srcCopies[i].createTexCoordArray();
 		}
 		
-		return srcCopies;
+		_vertexAdjacency = true;
 	}
-	
-	public final MeshBuilder computeNormals(
-			final boolean flat,
-			final boolean normalize) {
 
-		_assertPositionsNotNull();
-		
-		if(_indices != null) unwrap();
-		
-		_computeFlatNormals(normalize);
-		
-		_autoNormals = true;
-
+	private final MeshBuilder _invalidateMesh() {
+		_lastValidMesh.invalidate();
 		return this;
 	}
 	
-	public final MeshBuilder createFlatCopy() {
-
-		MeshBuilder mesh = new MeshBuilder();
-
-		mesh._primitiveType    = _primitiveType;
-		mesh._primitiveTypeSet = _primitiveTypeSet;
-		mesh._autoNormals      = _autoNormals;
-		mesh._precision        = _precision;
-		mesh._indices          = _indices;
-		mesh._positions        = _positions;
-		mesh._normals          = _normals;
-		mesh._texCoords        = _texCoords;
-		mesh.cullFacing        = cullFacing;
-
-		return mesh;
+	public final MeshBuilder activeCullFaceSupport() {
+		cullFacing = true;
+		return this;
+	}
+	
+	public final MeshBuilder addPolygon(
+			final int     smoothingGroup,
+			final int ... vIndices) {
+		
+		Functions.assertCond(
+			_triangles == null, "Triangles are already sealed");
+		
+		for(int i = 2; i < vIndices.length; i++)
+			_dynTriangles.add(new Triangle().
+				setIndices       (vIndices[0], vIndices[i - 1], vIndices[i]).
+				setSmoothingGroup(smoothingGroup));
+		
+		return this;
+	}
+	
+	public final MeshBuilder addVertex(final Vertex vertex) {
+		
+		Functions.assertCond(
+			_vertices == null, "Vertices are already sealed");
+		
+		_dynVertices.add(vertex);
+		return this;
 	}
 
+	public final MeshBuilder allocateTriangles(final int triangleCount) {
+		
+		_triangles = new Triangle[triangleCount];
+		
+		for(int i = 0; i < _triangles.length; i++)
+			_triangles[i] = new Triangle();
+		
+		return this;
+	}
+	
+	public final MeshBuilder allocateVertices(final int vertexCount) {
+		
+		_vertices = new Vertex[vertexCount];
+		
+		for(int i = 0; i < _vertices.length; i++)
+			_vertices[i] = new Vertex();
+		
+		return this;
+	}
+
+	public final MeshBuilder computeNormals() {
+		
+		ensureConsistentSmoothingGroups();
+		_ensureVertexAdjacency();
+		
+		final float[][] flatNormals  = new float[_triangles.length][3];
+		final float[][] vertexAngles = new float[_triangles.length][3];
+		
+		for(int i = 0; i < _triangles.length; i++) {
+			_triangles[i]._computeNormal(flatNormals [i]);
+			_triangles[i]._computeAngles(vertexAngles[i]);
+		}
+		
+		for(int i = 0; i < _vertices.length; i++)
+			_vertices[i]._computeSmoothNormal(i);
+		
+		return this;
+	}
+
+	public final MeshBuilder createDefaultTriangles() {
+		
+		allocateTriangles(_vertices.length / 3);
+		
+		for(int i = 0; i < _triangles.length; i++)
+			for(int j = 0; j < 3; j++) _triangles[i]._vIndices[j] = i * 3 + j;
+		
+		return this;
+	}
+	
 	public final Mesh createMesh() {
 		return _lastValidMesh.getObject();
 	}
-	
-	public final int[][] createIndexArray(
-			final int                polygonCount,
-			final Mesh.PrimitiveType type) {
+	/*
+	public final MeshBuilder ensureCollapsedSmoothingGroups() {
 		
-		_indices = new int[polygonCount][type.size];
+		if(_collapsedSGs) return this;
 		
-		setPrimitiveType(type);
+		// TODO
 		
-		return _indices;
+		_collapsedSGs = true;
+		return this;
+	}
+	*/
+	public final MeshBuilder ensureConsistentSmoothingGroups() {
+		
+		_ensureVertexAdjacency();
+		
+		int maxAdjacencyCount = 0;
+		int newVertexCount    = 0;
+		
+		// Find the vertex with the maximum number of adjacent polygons
+		for(Vertex i : _vertices)
+			maxAdjacencyCount =
+				Math.max(maxAdjacencyCount, i._adjacency.length);
+		
+		final int[][] smoothingGroups = new int[_vertices.length][];
+		final int[]   auxArray        = new int[maxAdjacencyCount];
+		
+		for(int i = 0; i < _vertices.length; i++) {
+			smoothingGroups[i] = _vertices[i]._collectSmoothingGroups(auxArray);
+			newVertexCount    += smoothingGroups[i].length;
+		}
+		
+		// Abort if each vertex belongs to exactly one smoothing group
+		if(newVertexCount == _vertices.length) return this;
+		
+		final Vertex[] oldVertices = _vertices;
+		
+		allocateVertices(newVertexCount);
+		
+		// TODO
+		
+		_vertexAdjacency = false;
+		
+		return this;
 	}
 	
-	public final float[][] createNormalArray() {
-		_assertPositionsNotNull();
-		return _normals = new float[_positions.length][3];
+	public final MeshBuilder ensureSealed() {
+		return ensureVerticesSealed().ensureTrianglesSealed();
 	}
 	
-	public final float[][] createPositionArray(final int vertexCount) {
-		_checkNewPositionArrayPossible(vertexCount);
-		return _positions = new float[vertexCount][3];
+	public final MeshBuilder ensureTrianglesSealed() {
+		
+		if(_triangles != null) return this;
+    	
+		if(_dynTriangles.isEmpty()) {
+			createDefaultTriangles();
+		} else {
+			_triangles =
+				_dynTriangles.toArray(new Triangle[_dynTriangles.size()]);
+			_dynTriangles.clear();
+		}
+		
+		return this;
 	}
 	
-	public final float[][] createTexCoordArray() {
-		_assertPositionsNotNull();
-		return _texCoords = new float[_positions.length][2];
+	public final MeshBuilder ensureVerticesSealed() {
+		
+		if(_vertices != null) return this;
+		
+    	_vertices = _dynVertices.toArray(new Vertex[_dynVertices.size()]);
+    	_dynVertices.clear();
+    	
+    	return this;
 	}
 
-	public final float[][] createUTangentArray() {
-		_assertPositionsNotNull();
-		return _uTangents = new float[_positions.length][3];
-	}
-
-	public final float[][] createVTangentArray() {
-		_assertPositionsNotNull();
-		return _vTangents = new float[_positions.length][3];
-	}
-	
-	public final int[][] getIndices() {
-		return _indices;
+	public final MeshBuilder fillTrianglexData(final Filler<Triangle> filler) {
+		
+		_assertTrianglesSealed();
+		for(int i = 0; i < _triangles.length; i++)
+			filler.fill(_triangles[i], i);
+		
+		return this;
 	}
 	
-	public final float[][] getNormals() {
-		return _normals;
-	}
-
-	public final float[][] getPositions() {
-		return _positions;
+	public final MeshBuilder fillVertexData(final Filler<Vertex> filler) {
+		
+		_assertVerticesSealed();
+		for(int i = 0; i < _vertices.length; i++) filler.fill(_vertices[i], i);
+		
+		return this;
 	}
 	
-	public final float[][] getTexCoords() {
-		return _texCoords;
+	public final Triangle getTriangle(final int tIndex) {
+		_assertTrianglesSealed();
+		return _triangles[tIndex];
+	}
+	
+	public final Vertex getVertex(final int vIndex) {
+		_assertVerticesSealed();
+		return _vertices[vIndex];
 	}
 
-	public final float[][] getUTangents() {
-		return _uTangents;
+	public final int getTriangleCount() {
+		return _triangles != null ? _triangles.length : _dynTriangles.size();
 	}
-
-	public final float[][] getVTangents() {
-		return _vTangents;
+	
+	public final int getVertexCount() {
+		return _vertices != null ? _vertices.length : _dynVertices.size();
 	}
 	
 	public final MeshBuilder invertFaceOrientation() {
 		
-		_assertPrimitiveTypeSet();
+		ensureTrianglesSealed();
 		
-		if(_indices != null) {
-			
-			final int[] primitive = new int[_primitiveType.size];
-			
-			for(int[] i : _indices) {
-				System.arraycopy(i, 0, primitive, 0, _primitiveType.size);
-				for(int j = 0; j < _primitiveType.size; j++)
-					i[j] = primitive[_primitiveType.size - 1 - j];
-			}
-			
-		} else {
-			
-			_assertPositionsNotNull();
-			final float[][] primitive = new float[_primitiveType.size][];
-			
-			for(int i = 0; i < _positions.length; i += _primitiveType.size) {
-				
-				_invertPrimitive(_positions, primitive, i);
-				
-				if(_normals   != null)
-					_invertPrimitive(_normals,   primitive, i);
-				if(_uTangents != null)
-					_invertPrimitive(_uTangents, primitive, i);
-				if(_vTangents != null)
-					_invertPrimitive(_vTangents, primitive, i);
-				if(_texCoords != null)
-					_invertPrimitive(_texCoords, primitive, i);
-			}
+		int temp;
+		
+		// Swap index order of each polygon
+		for(Triangle i : _triangles) {
+			temp           = i._vIndices[1];
+			i._vIndices[1] = i._vIndices[2];
+			i._vIndices[2] = temp;
 		}
 		
-		// Invert all normal vectors, tangents are not affected as the
-		// tex-coords stay the same
-		if(_normals != null)
-			for(float[] i : _normals)
-				for(int j = 0; j < 3; j++) i[j] = -i[j];
+		return _invalidateMesh();
+	}
+	
+	public final MeshBuilder invertNormals() {
+		
+		ensureVerticesSealed();
+		
+		for(Vertex i : _vertices)
+			for(int j = 0; j < 3; j++) i._normal[j] *= -1;
+		
+		return _invalidateMesh();
+	}
+
+	public final MeshBuilder makeFlat() {
+		
+		ensureTrianglesSealed();
+		for(Triangle i : _triangles) i._smoothingGroup = 0;
+		
+		return this;
+	}
+
+	public final MeshBuilder makeSmooth() {
+		
+		ensureTrianglesSealed();
+		
+		for(int i = 0; i < _triangles.length; i++)
+			_triangles[i]._smoothingGroup = i;
 		
 		return this;
 	}
 	
-	public static final MeshBuilder merge(
-			final boolean         conservative,
-			final MeshBuilder ... meshes) {
+	public static final MeshBuilder merge(final MeshBuilder ... meshes) {
+
+		final MeshBuilder mesh          = new MeshBuilder();
+		final int[]       vIndexOffsets = new int[meshes.length];
 		
-		// Check some preconditions to speed up the function in these cases
-		if(meshes.length == 0) {
-			return new MeshBuilder();
-		} else if(meshes.length == 1) {
-			return meshes[0].createFlatCopy();
+		int vertexCount   = 0;
+		int triangleCount = 0;
+		int vIndex        = 0;
+		int tIndex        = 0;
+		
+		for(int i = 0; i < meshes.length; i++) {
+			vIndexOffsets[i] = vertexCount;
+			vertexCount     += meshes[i].getVertexCount();
+			triangleCount   += meshes[i].getTriangleCount();
 		}
 		
-		final MeshBuilder mesh = new MeshBuilder();
+		mesh.allocateVertices (vertexCount);
+		mesh.allocateTriangles(triangleCount);
 		
-		mesh.setPrimitiveType(_computeMergedPrimitiveType(meshes));
+		for(int i = 0; i < meshes.length; i++) {
+			
+			for(Vertex j : meshes[i].vertices)
+				mesh._vertices[vIndex++]._assign(j);
+			
+			for(Triangle j : meshes[i].triangles)
+				mesh._triangles[tIndex++]._assign(j);
+		}
 		
-		final boolean[] attributes   =
-			computeMergedAttributesExistence(meshes, conservative);
-		final boolean   hasIndices   = attributes[0];
-		final boolean   hasNormals   = attributes[1];
-		final boolean   hasTexCoords = attributes[2];
-		
-		final MeshBuilder[] meshCopies =
-			_unifyMeshes(meshes, mesh, hasIndices, hasNormals, hasTexCoords);
-		
-		final int[] arraySizes  =
-			_computeMergedMeshArraySizes(meshCopies, hasIndices);
-		final int   indexCount  = arraySizes[0];
-		final int   vertexCount = arraySizes[1];
-
-		// Create array for index data
-		if(hasIndices)
-			mesh._indices = new int[indexCount][mesh._primitiveType.size];
-		
-		// Create arrays for vertex data
-		mesh.createPositionArray(vertexCount);
-		if(hasNormals)   mesh.createNormalArray();
-		if(hasTexCoords) mesh.createTexCoordArray();
-		
-		_mergeUnifiedMeshData(
-			meshCopies, mesh, hasIndices, hasNormals, hasTexCoords);
-
 		return mesh;
 	}
-	
-	public final MeshBuilder setIndices(final int[][] indices) {
-		
-		_resetCompiled(_indices, indices);
 
-		_indices = indices;
+	public final MeshBuilder setPolygon(
+			final int     startIndex,
+			final int     smoothingGroup,
+			final int ... vIndices) {
 		
-		if(indices != null)
-			setPrimitiveType(
-				PrimitiveType.fromPrimitiveSize(indices[0].length));
+		_assertTrianglesSealed();
 		
-		return this;
-	}
-	
-	public final MeshBuilder setNormals(final float[][] normals) {
+		for(int i = 2; i < vIndices.length; i++)
+			_dynTriangles.add(_triangles[startIndex + i - 2].
+				setIndices       (vIndices[0], vIndices[i - 1], vIndices[i]).
+				setSmoothingGroup(smoothingGroup));
 		
-		if(normals != null && normals[0].length != 3)
-			throw new UnsupportedOperationException(
-				"A normal vector must consist of 3 components");
-		
-		_assertPositionsNotNull();
-		
-		if(normals != null && normals.length != _positions.length)
-			throw new UnsupportedOperationException(
-				"Normal and position array must have the same length");
-		
-		_resetCompiled(_normals, normals);
-
-		_normals     = normals;
-		_autoNormals = false;
-		
-		return this;
-	}
-	
-	public final MeshBuilder setPositions(final float[][] positions) {
-		
-		if(positions != null && positions[0].length != 3)
-			throw new UnsupportedOperationException(
-				"A position must consist of 3 components");
-		
-		if(positions != null) _checkNewPositionArrayPossible(positions.length);
-		
-		_resetCompiled(_positions, positions);
-
-		_positions = positions;
-		
-		return this;
-	}
-	
-	public final MeshBuilder setPrimitiveType(
-			final PrimitiveType primitiveType) {
-		
-		_primitiveType    = primitiveType;
-		_primitiveTypeSet = true;
-		
-		return this;
-	}
-	
-	public final MeshBuilder setTexCoords(final float[][] texCoords) {
-		
-		if(texCoords != null && texCoords[0].length != 2)
-			throw new UnsupportedOperationException(
-				"A tex-coord must consist of 2 components");
-		
-		_assertPositionsNotNull();
-		
-		if(texCoords != null && texCoords.length != _positions.length)
-			throw new UnsupportedOperationException(
-				"Tex-coord and position array must have the same length");
-		
-		_resetCompiled(_texCoords, texCoords);
-
-		_texCoords = texCoords;
-		
-		return this;
-	}
-
-	public final MeshBuilder setUTangents(final float[][] uTangents) {
-		_uTangents = _assertNewTangentArrayIsValid(_uTangents, uTangents);
-		return this;
-	}
-
-	public final MeshBuilder setVTangents(final float[][] vTangents) {
-		_vTangents = _assertNewTangentArrayIsValid(_vTangents, vTangents);
 		return this;
 	}
 	
 	public final MeshBuilder spliceUnusedVertices() {
-		
-		if(_indices == null) return this;
-		
-		_assertPositionsNotNull();
+
+		// Default indices may be created here
+		ensureSealed();
 		
 		// The index map assigns each vertex a mapped index
-		final int[] indexMap       = new int[_positions.length];
-		int         curMappedIndex = 0;
+		final Vertex[] oldVertices    = _vertices;
+		final int[]    indexMap       = new int[_vertices.length];
+		int            curMappedIndex = 0;
 		
 		// Initialize the map with -1, saying that all vertices should be
 		// spliced
@@ -714,139 +597,47 @@ public class MeshBuilder {
 		
 		// After having looped all indices, 'curMappedIndex' contains the number
 		// of actual referenced vertices
-		for(int[] i : _indices)
-			for(int j : i)
+		for(Triangle i : _triangles)
+			for(int j : i._vIndices)
 				if(indexMap[j] == -1) indexMap[j] = curMappedIndex++;
-
-		// Store the old vertex data
-		final float[][] oldPositions = _positions;
-		final float[][] oldNormals   = _normals;
-		final float[][] oldTexCoords = _texCoords;
 		
-		_renewVertexArrays(_indices.length * _primitiveType.size);
+		// Abort if all vertices are used
+		if(curMappedIndex == _vertices.length) return this;
+		
+		allocateVertices(curMappedIndex);
 		
 		// Set the new indices based on the previous computed mapping
-		for(int i = 0; i < _indices.length; i++)
-			for(int j = 0; j < _primitiveType.size; j++)
-				_indices[i][j] = indexMap[_indices[i][j]];
+		for(Triangle i : _triangles)
+			for(int j = 0; j < 3; j++)
+				i._vIndices[j] = indexMap[i._vIndices[j]];
 		
-		// Copy all vertices to their new positions
-		for(int i = 0; i < oldPositions.length; i++) {
-			
-			final int newIndex = indexMap[i];
-			
-			// Skip vertices that should be spliced
-			if(newIndex == -1) continue;
-			
-			System.arraycopy(oldPositions[i], 0, _positions[newIndex], 0, 3);
-			
-			if(_normals != null)
-				System.arraycopy(oldNormals[i], 0, _normals[newIndex], 0, 3);
-			
-			if(_texCoords != null)
-				System.arraycopy(
-					oldTexCoords[i], 0, _texCoords[newIndex], 0, 2);
-		}
+		// Copy all vertices to their new positions if the index map entry is
+		// not -1
+		for(int i = 0; i < oldVertices.length; i++)
+			if(indexMap[i] >= 0) _vertices[indexMap[i]]._assign(oldVertices[i]);
 		
-		return this;
-	}
-	
-	public final MeshBuilder splitQuads() {
-		
-		_assertPrimitiveTypeSet();
-		
-		if(_primitiveType == PrimitiveType.TRIANGLE) return this;
-		
-		if(_indices != null) {
-			
-			final int[][] oldIndices = _indices;
-			
-			_indices = new int[oldIndices.length * 2][3];
-			
-			for(int i = 0; i < oldIndices.length; i++) // All quads
-				for(int j = 0; j < 2; j++) // The 2 new triangles
-					for(int k = 0; k < 3; k++) // the 3 vertices of each
-						_indices[i * 2 + j][k] =
-							oldIndices[i][_QUAD_TO_TRI_MAP[j][k]];
-			
-		} else {
-			
-			_assertPositionsNotNull();
-			
-			final float[][] oldPositions = _positions;
-			final float[][] oldNormals   = _normals;
-			final float[][] oldTexCoords = _texCoords;
-			final int       quadCount    = _positions.length / 4;
-			
-			_renewVertexArrays(_positions.length * 2);
-			
-			for(int i = 0; i < quadCount; i++) // All quads
-				for(int j = 0; j < 2; j++) // The 2 new triangles
-					for(int k = 0; k < 3; k++) // the 3 vertices of each
-						_copyVertex(
-							oldPositions, oldNormals, oldTexCoords,
-							i * 4 + _QUAD_TO_TRI_MAP[j][k], i * 6 + j * 3 + k);
-		}
-		
-		return this;
+		return _invalidateMesh();
 	}
 	
 	public final MeshBuilder transformPositions(final Matrix4D transform) {
 		
-		_assertPositionsNotNull();
+		ensureVerticesSealed();
 		
-		for(int i = 0; i < _positions.length; i++)
-			transform.applyToPoint(_positions[i]);
+		for(Vertex i : _vertices) {
+			transform.applyToPoint    (i._position);
+			transform.applyToDirVector(i._normal);
+    		transform.applyToDirVector(i._uTangent);
+    		transform.applyToDirVector(i._vTangent);
+		}
 
-		if(_normals != null)
-			for(int i = 0; i < _normals.length; i++)
-				transform.applyToDirVector(_normals[i]);
-
-		return this;
+		return _invalidateMesh();
 	}
 
 	public final MeshBuilder transformTexCoords(Matrix4D transform) {
 		
-		_assertTexCoordsNotNull();
+		ensureVerticesSealed();
+		for(Vertex i : _vertices) transform.applyToPoint(i._texCoord);
 
-		for(int i = 0; i < _texCoords.length; i++)
-			transform.applyToPoint(_texCoords[i]);
-
-		return this;
-	}
-
-	public final MeshBuilder unwrap() {
-		
-		_assertIndicesNotNull();
-		_assertPositionsNotNull();
-		
-		final float[][] oldPositions = _positions;
-		final float[][] oldNormals   = _normals;
-		final float[][] oldTexCoords = _texCoords;
-		
-		_renewVertexArrays(_indices.length * _primitiveType.size);
-		
-		for(int i = 0; i < _indices.length; i++) {
-			for(int j = 0; j < _primitiveType.size; j++) {
-				
-				final int vPosOld = _indices[i][j];
-				final int vPosNew = i * _primitiveType.size + j;
-				
-				System.arraycopy(
-					oldPositions[vPosOld], 0, _positions[vPosNew], 0, 3);
-				
-				if(oldNormals != null)
-					System.arraycopy(
-						oldNormals[vPosOld], 0, _normals[vPosNew], 0, 3);
-				
-				if(oldTexCoords != null)
-					System.arraycopy(
-						oldTexCoords[vPosOld], 0, _texCoords[vPosNew], 0, 2);
-			}
-		}
-
-		setIndices(null);
-		
-		return this;
+		return _invalidateMesh();
 	}
 }

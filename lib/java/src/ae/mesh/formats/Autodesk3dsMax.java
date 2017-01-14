@@ -6,7 +6,6 @@ import java.io.OutputStream;
 import java.nio.ByteOrder;
 
 import ae.mesh.FileFormat;
-import ae.mesh.Mesh;
 import ae.mesh.ModelNode;
 import ae.util.ByteOrderInputStream;
 import ae.util.CountingInputStream;
@@ -58,25 +57,32 @@ public final class Autodesk3dsMax extends FileFormat {
     					new ModelNode(parentNode, sb.toString());
     				
     				_readChunks(in, boin, chunkEnd, parentNode, mn);
-    				mn.mesh.computeNormals(true, true);
+    				mn.mesh.makeFlat().computeNormals();
     				break;
     			
     			case 0x4110: // Vertex chunk
-    
-    				final float[][] positions =
-    					curNode.mesh.createPositionArray(boin.readShort());
     				
-    				for(float[] i : positions)
-    					for(int j = 0; j < 3; j++) i[j] = boin.readFloat();
+    				final int vertexCount = boin.readShort();
+    				
+    				curNode.mesh.allocateVertices(vertexCount);
+    				
+    				for(int i = 0; i < vertexCount; i++)
+    					curNode.mesh.getVertex(i).setPosition(
+							boin.readFloat(),
+							boin.readFloat(),
+							boin.readFloat());
     				break;
     
     			case 0x4120: // Triangle chunk
     				
-    				final int[][] indices = curNode.mesh.createIndexArray(
-    					boin.readShort(), Mesh.PrimitiveType.TRIANGLE);
+    				final int indexCount = boin.readShort();
     				
-    				for(int[] i : indices) {
-    					for(int j = 0; j < 3; j++) i[j] = boin.readShort();
+    				for(int i = 0; i < indexCount; i++) {
+    					curNode.mesh.addPolygon(
+    						0,
+    						boin.readShort(),
+    						boin.readShort(),
+    						boin.readShort());
     					in.skip(2); // Skip additional flags
     				}
     				

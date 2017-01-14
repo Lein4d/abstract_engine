@@ -16,33 +16,6 @@ import ae.util.Functions;
 
 public final class Mesh {
 	
-	public enum PrimitiveType {
-		TRIANGLE(GL_TRIANGLES, 3), QUAD(GL_QUADS, 4);
-		
-		private final int _glMode;
-		
-		public final int size;
-		
-		private PrimitiveType(
-				final int glMode,
-				final int primitiveSize) {
-			
-			this._glMode = glMode;
-			this.size    = primitiveSize;
-		}
-		
-		public static final PrimitiveType fromPrimitiveSize(final int size) {
-			
-			switch(size) {
-				case 3: return PrimitiveType.TRIANGLE;
-				case 4: return PrimitiveType.QUAD;
-			}
-			
-			throw new IllegalArgumentException(
-				"Size doesn't match a primitive type");
-		}
-	}
-	
 	private static final int _VERTEX_SIZE = 32;
 	
 	private final int _vbo;
@@ -52,12 +25,10 @@ public final class Mesh {
 
 	private final Vector3D _tempV = Vector3D.createStatic(0, 0, 0);
 	
-	public final int           vertexCount;
-	public final int           indexCount;
-	public final PrimitiveType primitiveType;
-	public final boolean       autoNormals;
-	public final boolean       textured;
-	public final boolean       cullFacing;
+	public final int     vertexCount;
+	public final int     indexCount;
+	public final boolean textured;
+	public final boolean cullFacing;
 	
 	// If the bounding box vertices are transformed as well,
 	// the bounding box stays valid.
@@ -100,7 +71,7 @@ public final class Mesh {
 		return (float)Math.atan2(_tempT.backend.getY(), _tempT.backend.getX());
 	}
 	*/
-	private final int _initIbo(final int[][] indices) {
+	private final int _initIbo(final Iterable<MeshBuilder.Triangle> triangles) {
 
 		int iboType;
 		int bufferPos = 0;
@@ -126,8 +97,8 @@ public final class Mesh {
 				final ByteBuffer iboData8 =
 					ByteBuffer.allocateDirect(indexCount);
 				
-				for(int[] i : indices)
-					for(int j : i) iboData8.put((byte)j);
+				for(MeshBuilder.Triangle i : triangles)
+					for(int j : i._vIndices) iboData8.put((byte)j);
 				
 				glBufferData(
 					GL_ELEMENT_ARRAY_BUFFER,
@@ -139,8 +110,8 @@ public final class Mesh {
 
 				final short[] iboData16 = new short[indexCount];
 
-				for(int[] i : indices)
-					for(int j : i) iboData16[bufferPos++] = (short)j;
+				for(MeshBuilder.Triangle i : triangles)
+					for(int j : i._vIndices) iboData16[bufferPos++] = (short)j;
 				
 				glBufferData(
 					GL_ELEMENT_ARRAY_BUFFER, iboData16, GL_STATIC_DRAW);
@@ -150,8 +121,8 @@ public final class Mesh {
 				
 				final int[] iboData32 = new int[indexCount];
 
-				for(int[] i : indices)
-					for(int j : i) iboData32[bufferPos++] = j;
+				for(MeshBuilder.Triangle i : triangles)
+					for(int j : i._vIndices) iboData32[bufferPos++] = j;
 				
 				glBufferData(
 					GL_ELEMENT_ARRAY_BUFFER, iboData32, GL_STATIC_DRAW);
@@ -161,32 +132,23 @@ public final class Mesh {
 		return iboType;
 	}
 
-	private final void _initVbo(
-			final float[][] positions,
-			final float[][] normals,
-			final float[][] uTangents,
-			final float[][] vTangents,
-			final float[][] texCoords) {
+	private final void _initVbo(final Iterable<MeshBuilder.Vertex> vertices) {
 
 		final ByteBuffer vboData = BufferUtils.createByteBuffer(vertexCount * 32);
 		
 		// Pack the data interleaved into the VBO buffer
-		for(int i = 0; i < vertexCount; i++) {
+		for(MeshBuilder.Vertex i : vertices) {
 			
 			// positions
-			for(int j = 0; j < 3; j++) vboData.putFloat(positions[i][j]);
+			for(int j = 0; j < 3; j++) vboData.putFloat(i._position[j]);
 			
 			// normals and tangents
-			vboData.putInt(
-				normals   != null ? _packDirVector(normals[i])   : 0);
-			vboData.putInt(
-				uTangents != null ? _packDirVector(uTangents[i]) : 0);
-			vboData.putInt(
-				vTangents != null ? _packDirVector(vTangents[i]) : 0);
+			vboData.putInt(_packDirVector(i._normal));
+			vboData.putInt(_packDirVector(i._uTangent));
+			vboData.putInt(_packDirVector(i._vTangent));
 			
 			// tex-coords
-			for(int j = 0; j < 2; j++)
-				vboData.putFloat(texCoords != null ? texCoords[i][j] : 0);
+			for(int j = 0; j < 2; j++) vboData.putFloat(i._texCoord[j]);
 			
 		}
 		vboData.rewind();
@@ -235,35 +197,27 @@ public final class Mesh {
 	}
 
 	public Mesh(
-			final int[][]   indices,
-			final float[][] positions,
-			final float[][] normals,
-			final float[][] uTangents,
-			final float[][] vTangents,
-			final float[][] texCoords,
-			final boolean   autoNormals,
-			final boolean   cullFacing) {
+			final MeshBuilder mb,
+			final boolean     cullFacing) {
 		
 		_vbo = glGenBuffers();
 		_ibo = glGenBuffers();
 		_vao = glGenVertexArrays();
 		
-		this.primitiveType = PrimitiveType.fromPrimitiveSize(indices[0].length);
-		this.vertexCount   = positions.length;
-		this.indexCount    = indices.length * primitiveType.size;
-		this.autoNormals   = autoNormals;
-		this.textured      = texCoords != null;
-		this.cullFacing    = cullFacing;
+		this.vertexCount = mb.getVertexCount();
+		this.indexCount  = mb.getTriangleCount() * 3;
+		this.textured    = true;
+		this.cullFacing  = cullFacing;
 		
 		// Init the vao
 		glBindVertexArray(_vao);
 		
 		// Fill the vbo
-		_initVbo(positions, normals, uTangents, vTangents, texCoords);
+		_initVbo(mb.vertices);
 		_setVertexAttributes();
 		
 		// Fill the ibo
-		_iboType = _initIbo(indices);
+		_iboType = _initIbo(mb.triangles);
 		
 		// Unbind all buffers to prevent them from changes
 		glBindVertexArray(0);
@@ -276,7 +230,7 @@ public final class Mesh {
 	
 	public final void draw() {
 		glBindVertexArray(_vao);
-		glDrawElements(primitiveType._glMode, indexCount, _iboType, 0);
+		glDrawElements(GL_TRIANGLES, indexCount, _iboType, 0);
 	}
 
 	@Override
