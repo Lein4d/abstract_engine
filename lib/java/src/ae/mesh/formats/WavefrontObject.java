@@ -5,31 +5,106 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ae.mesh.FileFormat;
-import ae.mesh.Mesh;
+import ae.mesh.MeshBuilder;
 import ae.mesh.ModelNode;
 
 public final class WavefrontObject extends FileFormat {
 
+	private static final class Triangle {
+		
+		private final int[][] _indices;
+		private final int[]   _realIndices = new int[3];
+		private final int     _smoothingGroup;
+		
+		private Triangle(
+				final int[] p1,
+				final int[] p2,
+				final int[] p3,
+				final int   smoothingGroup) {
+			
+			_indices        = new int[][]{p1, p2, p3};
+			_smoothingGroup = smoothingGroup;
+		}
+		
+		private final Vertex _computeRealIndices(
+				final Map<Vertex, Vertex> vertexMap,
+				final Vertex              testVertex) {
+			
+			Vertex vertex = testVertex;
+			
+			for(int i = 0; i < 3; i++) {
+				
+				vertex._compIndices = _indices[i];
+				vertex._index       = vertexMap.size();
+				
+				final Vertex mappedVertex =
+					vertexMap.putIfAbsent(vertex, vertex);
+				
+				if(mappedVertex != null) {
+					// The vertex already exists
+					_realIndices[i] = mappedVertex._index;
+				} else {
+					// The previous assigned vertex has been inserted
+					_realIndices[i] = vertex._index;
+					vertex          = new Vertex();
+				}
+			}
+			
+			return vertex;
+		}
+	}
+	
+	private static final class Vertex {
+		
+		private int   _index   = -1;
+		private int[] _compIndices;
+		
+		@Override
+		public final boolean equals(final Object obj) {
+			
+			if(!(obj instanceof Vertex)) return false;
+			
+			final Vertex v = (Vertex)obj;
+			
+			return
+				_compIndices[0] == v._compIndices[0] &&
+				_compIndices[1] == v._compIndices[1] &&
+				_compIndices[2] == v._compIndices[2];
+		}
+		
+		@Override
+		public final int hashCode() {
+			return
+				_compIndices[0] ^
+				(_compIndices[1] << 12) ^ (_compIndices[2] << 22);
+		}
+	}
+	
 	private static final String _SPACE     = "\\s+";
 	private static final String _DATA      = "(\\S+)";
 	private static final String _PADDING   = "^\\s*";
 	private static final String _INDEX     = "(-?\\d+)";
 	private static final String _INDEX_EXT = "(?:/" + _INDEX + "?)?";
 	
-	private static final Pattern _REGEX_TYPE     = Pattern.compile(
+	private static final Pattern _REGEX_TYPE        = Pattern.compile(
 		_PADDING + "(\\w+)" + _SPACE);
-	private static final Pattern _REGEX_POSITION = Pattern.compile(
-		_PADDING + "v" + _SPACE + _DATA + _SPACE + _DATA + _SPACE + _DATA);
-	private static final Pattern _REGEX_VERTEX   = Pattern.compile(
+	private static final Pattern _REGEX_VERTEX_DATA = Pattern.compile(
+		_PADDING + "(?:v|vn|vt)" +
+		_SPACE + _DATA + _SPACE + _DATA + "(?:" + _SPACE + _DATA + ")?");
+	private static final Pattern _REGEX_VERTEX      = Pattern.compile(
 		_INDEX + _INDEX_EXT + _INDEX_EXT);
+	private static final Pattern _REGEX_SGROUP      = Pattern.compile(
+		_PADDING + "s" + _SPACE + "(?:(off)|(\\d+))");
 	
 	public static final WavefrontObject INSTANCE = new WavefrontObject();
 	
@@ -37,9 +112,62 @@ public final class WavefrontObject extends FileFormat {
 		super("obj");
 	}
 	
-	private static final List<int[]> _finishGroup(
-			final List<int[]>      curGroup,
-			final Set<List<int[]>> groups) {
+	private static final ModelNode _createModelNodes(
+    		final float[][]           positionArray,
+    		final float[][]           normalArray,
+    		final float[][]           texCoordArray,
+    		final Set<List<Triangle>> groups) {
+		
+		final ModelNode           rootNode  = new ModelNode("<root>", null);
+		final Map<Vertex, Vertex> vertexMap = new HashMap<>();
+		
+		for(List<Triangle> i : groups) {
+			
+			final MeshBuilder mb         = new ModelNode(rootNode, null).mesh;
+			int               tIndex     = 0;
+			Vertex            testVertex = new Vertex();
+			
+			vertexMap.clear();
+			
+			for(Triangle j : i)
+				testVertex = j._computeRealIndices(vertexMap, testVertex);
+			
+			mb.allocateVertices (vertexMap.size());
+			mb.allocateTriangles(i        .size());
+			
+			for(Vertex j : vertexMap.keySet()) {
+				
+				MeshBuilder.Vertex vertex = mb.getVertex(j._index);
+				
+				if(positionArray != null)
+					vertex.setPosition(positionArray[j._compIndices[0]]);
+				if(normalArray   != null)
+					vertex.setNormal  (normalArray  [j._compIndices[1]]);
+				if(texCoordArray != null)
+					vertex.setTexCoord(texCoordArray[j._compIndices[2]]);
+			}
+			
+			for(Triangle j : i) {
+				
+				mb.getTriangle(tIndex).
+					setIndices(
+						j._realIndices[0],
+						j._realIndices[1],
+						j._realIndices[2]).
+					setSmoothingGroup(j._smoothingGroup);
+				
+				tIndex++;
+			}
+			
+			mb.computeNormals();
+		}
+		
+		return rootNode;
+	}
+	
+	private static final List<Triangle> _finishGroup(
+			final List<Triangle>      curGroup,
+			final Set<List<Triangle>> groups) {
 		
 		if(curGroup.isEmpty()) {
 			return curGroup;
@@ -49,67 +177,20 @@ public final class WavefrontObject extends FileFormat {
 		}
 	}
 	
-	private static final int _readIndex(
-			final String src,
-			final int    curVertexCount) {
+	private static final boolean[] _parseData(
+			final InputStream         in,
+    		final List<float[]>       positions,
+    		final List<float[]>       normals,
+    		final List<float[]>       texCoords,
+    		final Set<List<Triangle>> groups) throws IOException {
 		
-		final int rawIndex = Integer.parseInt(src);
-		return rawIndex > 0 ? rawIndex - 1 : curVertexCount + rawIndex;
-	}
-	
-	private static final void _readPosition(
-			final String        line,
-			final List<float[]> positions) {
-		
-		final Matcher matcher  = _REGEX_POSITION.matcher(line);
-		final float[] position = new float[3];
-		
-		matcher.find();
-		
-		for(int i = 0; i < 3; i++)
-			position[i] = Float.parseFloat(matcher.group(i + 1));
-		
-		positions.add(position);
-	}
-	
-	private static final void _readTriangles(
-			final String      line,
-			final int         curVertexCount,
-			final List<int[]> triangles) {
-		
-		final Matcher matcher = _REGEX_VERTEX.matcher(line);
-		
-		matcher.find();
-		final int firstIndex = _readIndex(matcher.group(1), curVertexCount);
-		
-		matcher.find();
-		int recentIndex = _readIndex(matcher.group(1), curVertexCount);
-		int nextIndex;
-		
-		while(matcher.find()) {
-			
-			nextIndex   = recentIndex;
-			recentIndex = _readIndex(matcher.group(1), curVertexCount);
-			
-			// Create a triangle from the first index and the two most recent
-			// indices
-			triangles.add(new int[]{firstIndex, nextIndex, recentIndex});
-		}
-	}
-	
-	@Override
-	public final void exportMesh(final OutputStream out) throws IOException {}
-
-	@Override
-	public final ModelNode importMesh(final InputStream in) throws IOException {
-		
-		final BufferedReader   reader    =
+		// {<positions>,<normals>,<texCoords>}
+		final boolean[]      attributes = {false, false, false};
+		final BufferedReader reader     =
 			new BufferedReader(new InputStreamReader(in));
-		final List<float[]>    positions = new LinkedList<>();
-		final Set<List<int[]>> groups    = new HashSet<>();
-		final ModelNode        rootNode  = new ModelNode("<root>", null);
 		
-		List<int[]> curGroup = new LinkedList<>();
+		List<Triangle> curGroup  = new LinkedList<>();
+		int            curSGroup = 0;
 		
 		for(String line; (line = reader.readLine()) != null;) {
 			
@@ -121,11 +202,23 @@ public final class WavefrontObject extends FileFormat {
 					case "g":
 						curGroup = _finishGroup(curGroup, groups);
 						break;
+					case "s":
+						curSGroup = _readSmoothingGroup(line);
+						break;
 					case "v":
-						_readPosition(line, positions);
+						_readVertexData(line, 3, positions);
+						break;
+					case "vn":
+						_readVertexData(line, 3, normals);
+						break;
+					case "vt":
+						_readVertexData(line, 2, texCoords);
 						break;
 					case "f":
-						_readTriangles(line, positions.size(), curGroup);
+						_readTriangles(
+							line,
+							positions.size(), normals.size(), texCoords.size(),
+							curGroup, curSGroup, attributes);
 						break;
 				}
 			}
@@ -133,20 +226,130 @@ public final class WavefrontObject extends FileFormat {
 		
 		_finishGroup(curGroup, groups);
 		
-		final float[][] positionArray =
-			positions.toArray(new float[positions.size()][]);
+		return attributes;
+	}
+	
+	private static final int _parseIndex(
+			final String indexString,
+			final int    curCount) {
 		
-		for(List<int[]> i : groups) {
+		if(indexString == null) return 0;
+		
+		final int rawIndex = Integer.parseInt(indexString);
+		return rawIndex > 0 ? rawIndex - 1 : curCount + rawIndex;
+	}
+	
+	private static final int _readSmoothingGroup(final String line) {
+		
+		final Matcher matcher = _REGEX_SGROUP.matcher(line);
+		
+		matcher.find();
+		return
+			matcher.group(1) != null ? 0 : Integer.parseInt(matcher.group(2));
+	}
+	
+	private static final void _readTriangles(
+			final String         line,
+			final int            pCount,
+			final int            nCount,
+			final int            tcCount,
+			final List<Triangle> group,
+			final int            sGroup,
+			final boolean[]      attributes) {
+		
+		final Matcher matcher = _REGEX_VERTEX.matcher(line);
+		
+		matcher.find();
+		final int[] firstIndex =
+			_readVIndices(matcher, pCount, nCount, tcCount, attributes);
+		
+		matcher.find();
+		int[] nextIndex;
+		int[] recentIndex =
+			_readVIndices(matcher, pCount, nCount, tcCount, attributes);
+		
+		while(matcher.find()) {
 			
-			final ModelNode node = new ModelNode(rootNode, null);
+			nextIndex   = recentIndex;
+			recentIndex =
+				_readVIndices(matcher, pCount, nCount, tcCount, attributes);
 			
-			//node.mesh.setPrimitiveType(Mesh.PrimitiveType.TRIANGLE);
-			//node.mesh.setPositions    (positionArray);
-			//node.mesh.setIndices      (i.toArray(new int[i.size()][]));
-			//
-			//node.mesh.computeNormals(true, true);
+			// Create a triangle from the first index and the two most recent
+			// indices
+			group.add(new Triangle(firstIndex, nextIndex, recentIndex, sGroup));
+		}
+	}
+
+	private static final void _readVertexData(
+			final String        line,
+			final int           componentCount,
+			final List<float[]> dst) {
+		
+		final Matcher matcher  = _REGEX_VERTEX_DATA.matcher(line);
+		final float[] data     = new float[componentCount];
+		
+		matcher.find();
+		
+		for(int i = 0; i < componentCount; i++)
+			data[i] = Float.parseFloat(matcher.group(i + 1));
+		
+		dst.add(data);
+	}
+
+	private static final int[] _readVIndices(
+			final Matcher   matcher,
+			final int       curPositionCount,
+			final int       curNormalCount,
+			final int       curTexCoordCount,
+			final boolean[] attributes) {
+		
+		final String position = matcher.group(1);
+		final String normal   = matcher.group(3);
+		final String texCoord = matcher.group(2);
+		
+		if(attributes[0]) {
+			
+			if((normal   != null) != attributes[1])
+				throw new UnsupportedOperationException();
+			if((texCoord != null) != attributes[2])
+				throw new UnsupportedOperationException();
+			
+		} else {
+			
+			attributes[0] = true;
+			attributes[1] = normal   != null;
+			attributes[2] = texCoord != null;
 		}
 		
-		return rootNode;
+		return new int[]{
+			_parseIndex(position, curPositionCount),
+			_parseIndex(normal,   curNormalCount),
+			_parseIndex(texCoord, curTexCoordCount)
+		};
+	}
+
+	@Override
+	public final void exportMesh(final OutputStream out) throws IOException {}
+
+	@Override
+	public final ModelNode importMesh(final InputStream in) throws IOException {
+		
+		final List<float[]>       positions = new LinkedList<>();
+		final List<float[]>       normals   = new LinkedList<>();
+		final List<float[]>       texCoords = new LinkedList<>();
+		final Set<List<Triangle>> groups    = new HashSet<>();
+		
+		// {<positions>,<normals>,<texCoords>}
+		final boolean[] attributes =
+			_parseData(in, positions, normals, texCoords, groups);
+		
+		return _createModelNodes(
+			attributes[0] ?
+				positions.toArray(new float[positions.size()][]) : null,
+			attributes[1] ?
+				normals  .toArray(new float[normals  .size()][]) : null,
+			attributes[2] ?
+				texCoords.toArray(new float[texCoords.size()][]) : null,
+			groups);
 	}
 }

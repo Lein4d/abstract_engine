@@ -1,8 +1,10 @@
 package ae.mesh;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import ae.math.Matrix4D;
 import ae.math.Vector3D;
@@ -11,6 +13,45 @@ import ae.util.CachedObject;
 import ae.util.Functions;
 
 public class MeshBuilder {
+	
+	private final class Adjacency {
+		
+		private final int[][] _data = new int[_vertices.length][];
+		private final int     _maxAdjacencyCount;
+		
+		private Adjacency() {
+			
+			_assertTrianglesSealed();
+			
+			final int   vertexCount    = getVertexCount();
+			final int[] adjacencyCount = new int[vertexCount];
+			
+			int maxAdjacencyCount = 0;
+			
+			// Pass 1: Count the adjacency polygons for each vertex
+			for(Triangle i : _triangles)
+				for(int j : i._vIndices) adjacencyCount[j]++;
+			
+			// Pass 2: Create the adjacency arrays
+			for(int i = 0; i < vertexCount; i++) {
+				_data[i]          = new int[adjacencyCount[i]];
+				maxAdjacencyCount =
+					Math.max(maxAdjacencyCount, adjacencyCount[i]);
+			}
+			
+			// Pass 3: Initialize the adjacency arrays
+			// Use the previous computed adjacency count to determine the slot that
+			// is written next by decrementing the counter each time
+			for(int i = 0; i < _triangles.length; i++) {
+				for(int j : _triangles[i]._vIndices) {
+					adjacencyCount[j]--;
+					_data[j][adjacencyCount[j]] = i;
+				}
+			}
+			
+			_maxAdjacencyCount = maxAdjacencyCount;
+		}
+	}
 	
 	public interface Filler<T> {
 		void fill(T obj, int index);
@@ -57,11 +98,6 @@ public class MeshBuilder {
 			Vector3D.cross(_auxV1, _auxV2, _auxP).normalize().getData(dst);
 		}
 		
-		private final int _getVIndexPos(final int vIndex) {
-			for(int i = 0; i < 3; i++) if(_vIndices[i] == vIndex) return i;
-			return -1;
-		}
-		
 		public final Triangle setIndices(final int[] indices) {
 			return setIndices(indices[0], indices[1], indices[2]);
 		}
@@ -83,8 +119,6 @@ public class MeshBuilder {
 	
 	public final class Vertex {
 
-		private Triangle[] _adjacency = null;
-		
 		final float[] _position = new float[3];
 		final float[] _normal   = new float[3];
 		final float[] _uTangent = new float[3];
@@ -112,20 +146,36 @@ public class MeshBuilder {
 			setTexCoord(v._texCoord);
 		}
 		
-		private final int[] _collectSmoothingGroups(final int[] auxArray) {
+		private final int[] _collectSmoothingGroups(
+				final int[] adjacency,
+				final int[] auxArray) {
 			
 			int sgCount = 0;
 			
-			for(Triangle i : _adjacency)
-				sgCount =
-					_addSmoothingGroup(auxArray, sgCount, i._smoothingGroup);
+			for(int i : adjacency)
+				sgCount = _addSmoothingGroup(
+					auxArray, sgCount, _triangles[i]._smoothingGroup);
 			
 			return Arrays.copyOfRange(auxArray, 0, sgCount);
 		}
 		
-		private final void _computeSmoothNormal(final int ownIndex) {
+		private final void _computeSmoothNormal(
+				final float[][] flatNormals,
+				final int[]     adjacencyTriangles,
+				final float[]   adjacencyAngles) {
 			
-			// TODO
+			float fullAngle = 0;
+			for(float i : adjacencyAngles) fullAngle += i;
+			
+			setNormal(0, 0, 0);
+			
+			for(int i = 0; i < adjacencyTriangles.length; i++)
+				for(int j = 0; j < 3; j++)
+					_normal[j] +=
+						(adjacencyAngles[i] / fullAngle) *     // weight
+						flatNormals[adjacencyTriangles[i]][j]; // normal vector
+			
+			_auxV1.setData(_normal).normalize().getData(_normal);
 		}
 		
 		public final Vertex setNormal(final float[] normal) {
@@ -202,10 +252,6 @@ public class MeshBuilder {
 	private final Vector3D _auxV1 = Vector3D.createStatic();
 	private final Vector3D _auxV2 = Vector3D.createStatic();
 	
-	// Meta information
-	private boolean _vertexAdjacency = false;
-	
-	// Geometry data
 	private Vertex  [] _vertices  = null;
 	private Triangle[] _triangles = null;
 	
@@ -223,79 +269,63 @@ public class MeshBuilder {
 	private final void _assertVerticesSealed() {
 		Functions.assertNotNull(_vertices, "Vertices are not sealed yet");
 	}
-	/*
-	private static final void _computeNormal(
-			final float   p0x,
-			final float   p0y,
-			final float   p0z,
-			final float   p1x,
-			final float   p1y,
-			final float   p1z,
-			final float   p2x,
-			final float   p2y,
-			final float   p2z,
-			final float[] n,
-			final boolean normalize) {
-
-		// Die Vektoren a und b für das Kreuzprodukt erstellen
-		
-		final float ax = p1x - p0x;
-		final float ay = p1y - p0y;
-		final float az = p1z - p0z;
-		final float bx = p2x - p0x;
-		final float by = p2y - p0y;
-		final float bz = p2z - p0z;
-
-		// Das Kreuzprodukt a x b berechnen
-		
-		n[0] = ay * bz - az * by;
-		n[1] = az * bx - ax * bz;
-		n[2] = ax * by - ay * bx;
-
-		if(!normalize) return;
-
-		// Den Normalenvektor normalisieren
-		
-		final float length =
-			(float)Math.sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2]);
-
-		n[0] /= length;
-		n[1] /= length;
-		n[2] /= length;
-	}
-	*/
+	
 	private final Mesh _createCachedMesh() {
 		return new Mesh(this, cullFacing);
 	}
 	
-	private final void _ensureVertexAdjacency() {
+	// The function checks whether there are vertices that belong to triangles
+	// with different smoothing groups. These vertices are split into new
+	// vertices.
+	private final boolean _ensureConsistentSmoothingGroups(
+			final Adjacency adjacency) {
 		
-		if(_vertexAdjacency) return;
+		final int[][] smoothingGroups = new int[_vertices.length][];
+		final int[]   auxArray        = new int[adjacency._maxAdjacencyCount];
+		int           newVertexCount  = 0;
+		final int[]   vIndexMap       = new int[_vertices.length];
 		
-		ensureSealed();
+		for(int i = 0; i < _vertices.length; i++) {
+			smoothingGroups[i] = _vertices[i]._collectSmoothingGroups(
+				adjacency._data[i], auxArray);
+			vIndexMap[i]       = newVertexCount;
+			newVertexCount    += smoothingGroups[i].length;
+		}
 		
-		final int[] adjacencyCount = new int[_vertices.length];
+		// Abort if each vertex belongs to exactly one smoothing group
+		if(newVertexCount == _vertices.length) return true;
 		
-		// Pass 1: Count the adjacency polygons for each vertex
-		for(Triangle i : _triangles) for(int j : i._vIndices) adjacencyCount[j]++;
+		final Vertex[] oldVertices = _vertices;
 		
-		// Pass 2: Create the adjacency arrays
-		for(int i = 0; i < _vertices.length; i++)
-			_vertices[i]._adjacency = new Triangle[adjacencyCount[i]];
+		allocateVertices(newVertexCount);
 		
-		// Pass 3: Initialize the adjacency arrays
-		// Use the previous computed adjacency count to determine the slot that
-		// is written next by decrementing the counter each time
+		// Copy the old vertices into the new array
+		// (as often as it has smoothing groups)
+		for(int i = 0; i < oldVertices.length; i++)
+			for(int j = 0; j < smoothingGroups[i].length; j++)
+				_vertices[vIndexMap[i] + j]._assign(oldVertices[i]);
+		
+		// Map the vertex indices to the new created vertices
 		for(Triangle i : _triangles) {
-			for(int j : i._vIndices) {
-				adjacencyCount[j]--;
-				_vertices[j]._adjacency[adjacencyCount[j]] = i;
+			for(int j = 0; j < 3; j++) {
+				final int vIndex = i._vIndices[j];
+				i._vIndices[j] =
+					vIndexMap[vIndex] +
+					_getValuePos(smoothingGroups[vIndex], i._smoothingGroup);
 			}
 		}
 		
-		_vertexAdjacency = true;
+		return false;
 	}
-
+	
+	private static final int _getValuePos(
+			final int[] array,
+			final int   value) {
+		
+		for(int i = 0; i < array.length; i++) if(array[i] == value) return i;
+		return -1;
+	}
+	
 	private final MeshBuilder _invalidateMesh() {
 		_lastValidMesh.invalidate();
 		return this;
@@ -350,21 +380,56 @@ public class MeshBuilder {
 		return this;
 	}
 
+	public final MeshBuilder collapseSmoothingGroups() {
+		
+		final Map<Integer, Integer> sgMap = new HashMap<>();
+		int                         curSG = 0;
+		
+		// Fill the smoothing group mapping
+		for(Triangle i : triangles)
+			if(!sgMap.containsKey(i._smoothingGroup))
+				sgMap.put(i._smoothingGroup, curSG++);
+		
+		// Apply the smoothing group mapping
+		for(Triangle i : triangles)
+			i._smoothingGroup = sgMap.get(i._smoothingGroup);
+		
+		return this;
+	}
+	
 	public final MeshBuilder computeNormals() {
 		
-		ensureConsistentSmoothingGroups();
-		_ensureVertexAdjacency();
+		_assertVerticesSealed();
 		
-		final float[][] flatNormals  = new float[_triangles.length][3];
-		final float[][] vertexAngles = new float[_triangles.length][3];
+		Adjacency adjacency = new Adjacency();
+		
+		// If the vertex data has changed due to inconsistent smoothing groups,
+		// a new adjacency is computed
+		if(!_ensureConsistentSmoothingGroups(adjacency))
+			adjacency = new Adjacency();
+		
+		final float[][] flatNormals    = new float[_triangles.length][3];
+		final float[][] triangleAngles = new float[_triangles.length][3];
+		final float[]   vertexAngles = new float[adjacency._maxAdjacencyCount];
 		
 		for(int i = 0; i < _triangles.length; i++) {
 			_triangles[i]._computeNormal(flatNormals [i]);
-			_triangles[i]._computeAngles(vertexAngles[i]);
+			_triangles[i]._computeAngles(triangleAngles[i]);
 		}
 		
-		for(int i = 0; i < _vertices.length; i++)
-			_vertices[i]._computeSmoothNormal(i);
+		for(int i = 0; i < _vertices.length; i++) {
+			
+			final Vertex vertex       = _vertices[i];
+			final int[]  curAdjacency = adjacency._data[i];
+			
+			for(int j = 0; j < curAdjacency.length; j++)
+				vertexAngles[j] = triangleAngles
+					[curAdjacency[j]]
+					[_getValuePos(_triangles[curAdjacency[j]]._vIndices, i)];
+			
+			vertex._computeSmoothNormal(
+				flatNormals, curAdjacency, vertexAngles);
+		}
 		
 		return this;
 	}
@@ -381,50 +446,6 @@ public class MeshBuilder {
 	
 	public final Mesh createMesh() {
 		return _lastValidMesh.getObject();
-	}
-	/*
-	public final MeshBuilder ensureCollapsedSmoothingGroups() {
-		
-		if(_collapsedSGs) return this;
-		
-		// TODO
-		
-		_collapsedSGs = true;
-		return this;
-	}
-	*/
-	public final MeshBuilder ensureConsistentSmoothingGroups() {
-		
-		_ensureVertexAdjacency();
-		
-		int maxAdjacencyCount = 0;
-		int newVertexCount    = 0;
-		
-		// Find the vertex with the maximum number of adjacent polygons
-		for(Vertex i : _vertices)
-			maxAdjacencyCount =
-				Math.max(maxAdjacencyCount, i._adjacency.length);
-		
-		final int[][] smoothingGroups = new int[_vertices.length][];
-		final int[]   auxArray        = new int[maxAdjacencyCount];
-		
-		for(int i = 0; i < _vertices.length; i++) {
-			smoothingGroups[i] = _vertices[i]._collectSmoothingGroups(auxArray);
-			newVertexCount    += smoothingGroups[i].length;
-		}
-		
-		// Abort if each vertex belongs to exactly one smoothing group
-		if(newVertexCount == _vertices.length) return this;
-		
-		final Vertex[] oldVertices = _vertices;
-		
-		allocateVertices(newVertexCount);
-		
-		// TODO
-		
-		_vertexAdjacency = false;
-		
-		return this;
 	}
 	
 	public final MeshBuilder ensureSealed() {
@@ -493,12 +514,10 @@ public class MeshBuilder {
 	
 	public final MeshBuilder invertFaceOrientation() {
 		
-		ensureTrianglesSealed();
-		
 		int temp;
 		
 		// Swap index order of each polygon
-		for(Triangle i : _triangles) {
+		for(Triangle i : triangles) {
 			temp           = i._vIndices[1];
 			i._vIndices[1] = i._vIndices[2];
 			i._vIndices[2] = temp;
@@ -509,23 +528,13 @@ public class MeshBuilder {
 	
 	public final MeshBuilder invertNormals() {
 		
-		ensureVerticesSealed();
-		
-		for(Vertex i : _vertices)
+		for(Vertex i : vertices)
 			for(int j = 0; j < 3; j++) i._normal[j] *= -1;
 		
 		return _invalidateMesh();
 	}
 
 	public final MeshBuilder makeFlat() {
-		
-		ensureTrianglesSealed();
-		for(Triangle i : _triangles) i._smoothingGroup = 0;
-		
-		return this;
-	}
-
-	public final MeshBuilder makeSmooth() {
 		
 		ensureTrianglesSealed();
 		
@@ -535,6 +544,14 @@ public class MeshBuilder {
 		return this;
 	}
 	
+	public final MeshBuilder makeSmooth() {
+		
+		ensureTrianglesSealed();
+		for(Triangle i : _triangles) i._smoothingGroup = 0;
+		
+		return this;
+	}
+
 	public static final MeshBuilder merge(final MeshBuilder ... meshes) {
 
 		final MeshBuilder mesh          = new MeshBuilder();
@@ -621,9 +638,7 @@ public class MeshBuilder {
 	
 	public final MeshBuilder transformPositions(final Matrix4D transform) {
 		
-		ensureVerticesSealed();
-		
-		for(Vertex i : _vertices) {
+		for(Vertex i : vertices) {
 			transform.applyToPoint    (i._position);
 			transform.applyToDirVector(i._normal);
     		transform.applyToDirVector(i._uTangent);
@@ -634,10 +649,7 @@ public class MeshBuilder {
 	}
 
 	public final MeshBuilder transformTexCoords(Matrix4D transform) {
-		
-		ensureVerticesSealed();
-		for(Vertex i : _vertices) transform.applyToPoint(i._texCoord);
-
+		for(Vertex i : vertices) transform.applyToPoint(i._texCoord);
 		return _invalidateMesh();
 	}
 }
