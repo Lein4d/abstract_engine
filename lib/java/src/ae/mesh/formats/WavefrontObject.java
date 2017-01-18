@@ -159,7 +159,7 @@ public final class WavefrontObject extends FileFormat {
 				tIndex++;
 			}
 			
-			mb.computeNormals();
+			if(normalArray == null) mb.computeNormals();
 		}
 		
 		return rootNode;

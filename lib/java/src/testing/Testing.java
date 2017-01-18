@@ -253,15 +253,21 @@ public final class Testing {
 				engine.standardMaterials.get(false, false, true, false, false));
 		*/
 		
-		final Entity<?> imported =
-			FileFormat.load("data/airboat.obj").toNestedEntity(
-			//FileFormat.load("data/fighter.3ds").toNestedEntity(
-				sceneGraph,
-				(model) -> {
-					model.setMaterial(
-						engine.standardMaterials.get(false, false, true, false, false));
-					model.transformation.getValue().scale(0.8f).translate(0, 2, 0);
-				});
+		final Entity<? extends Entity<?>> imported =
+			FileFormat.load("data/sherry.obj").toNestedEntity(
+    			sceneGraph,
+    			(model) -> {
+    				model.setMaterial(
+    					engine.standardMaterials.get(true, false, true, false, false));
+    				model.setDiffuseTexture(
+    					Texture.createCheckerTexture(Vector4D.WHITE, Vector4D.GREY));
+    			});
+		
+		imported.setUpdateCallback((event) ->
+			event.host.transformation.getValue().toIdentity().
+				// scale(0.8f).translate(0, 2, 0) // airboat
+    			scale(0.5f).rotateX(-90) // sherry
+    	);
 		
 		final DirectionalLight ambLight = new DirectionalLight(sceneGraph, "amb").
 			makeAmbient();

@@ -63,11 +63,11 @@ public final class ModelNode {
 		}
 	}
 	
-	public final Entity<?> toNestedEntity(
+	public final Entity<? extends Entity<?>> toNestedEntity(
 			final SceneGraph      sceneGraph,
 			final Consumer<Model> setupCallback) {
 		
-		Entity<?> entity;
+		Entity<? extends Entity<?>> entity;
 		
 		if(hasValidMesh()) {
 			
@@ -79,7 +79,7 @@ public final class ModelNode {
 			
 		} else {
 			
-			entity = new Entity<>(sceneGraph, name, true);
+			entity = new Entity<Entity<?>>(sceneGraph, name, true);
 		}
 		
 		for(ModelNode i : _children)
