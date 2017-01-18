@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.nio.ByteOrder;
 
 import ae.mesh.FileFormat;
+import ae.mesh.MeshBuilder;
 import ae.mesh.ModelNode;
 import ae.util.ByteOrderInputStream;
 import ae.util.CountingInputStream;
@@ -18,7 +19,19 @@ public final class Autodesk3dsMax extends FileFormat {
 		super("3ds");
 	}
 	
-	private final void _readChunks(
+	private static final void _fillVertexData(
+			final ByteOrderInputStream                     boin,
+			final MeshBuilder                              mb,
+			final MeshBuilder.FillerIO<MeshBuilder.Vertex> filler)
+				throws IOException {
+		
+		final int newVertexCount = boin.readShort();
+		
+		if(mb.getVertexCount() == 0) mb.allocateVertices(newVertexCount);
+		mb.fillVertexDataIO(filler);
+	}
+	
+	private static final void _readChunks(
 			final CountingInputStream  in,
 			final ByteOrderInputStream boin,
 			final int                  end,
@@ -57,38 +70,43 @@ public final class Autodesk3dsMax extends FileFormat {
     					new ModelNode(parentNode, sb.toString());
     				
     				_readChunks(in, boin, chunkEnd, parentNode, mn);
-    				mn.mesh.makeFlat().computeNormals();
+    				mn.mesh.computeNormals();
     				break;
     			
     			case 0x4110: // Vertex chunk
-    				
-    				final int vertexCount = boin.readShort();
-    				
-    				curNode.mesh.allocateVertices(vertexCount);
-    				
-    				for(int i = 0; i < vertexCount; i++)
-    					curNode.mesh.getVertex(i).setPosition(
+    				_fillVertexData(boin, curNode.mesh, (vertex, index) ->
+    					vertex.setPosition(
+    						boin.readFloat(),
 							boin.readFloat(),
-							boin.readFloat(),
-							boin.readFloat());
+							boin.readFloat()));
     				break;
     
     			case 0x4120: // Triangle chunk
     				
-    				final int indexCount = boin.readShort();
-    				
-    				for(int i = 0; i < indexCount; i++) {
-    					curNode.mesh.addPolygon(
-    						0,
-    						boin.readShort(),
-    						boin.readShort(),
-    						boin.readShort());
-    					in.skip(2); // Skip additional flags
-    				}
+    				curNode.mesh.
+    					allocateTriangles(boin.readShort()).
+    					fillTrianglexDataIO((triangle, index) -> {
+    						triangle.setIndices(
+    							boin.readShort(),
+    							boin.readShort(),
+    							boin.readShort());
+    						in.skip(2); // Skip additional flags
+    					});
     				
     				_readChunks(in, boin, chunkEnd, parentNode, curNode);
     				break;
-    
+    			
+    			case 0x4140: // Mapping Coords chunk
+    				_fillVertexData(boin, curNode.mesh, (vertex, index) ->
+    					vertex.setTexCoord(boin.readFloat(), boin.readFloat()));
+    				break;
+    			
+    			case 0x4150: // Face Smoothing Group Chunk
+    				curNode.mesh.fillTrianglexDataIO((triangle, index) ->
+    					triangle.setSmoothingGroup(
+    						Integer.numberOfTrailingZeros(boin.readInt()) + 1));
+    				break;
+    				
     			default:
     				in.skip(chunkEnd - in.getPositionI());
     				break;

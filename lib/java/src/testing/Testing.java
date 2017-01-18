@@ -254,7 +254,7 @@ public final class Testing {
 		*/
 		
 		final Entity<? extends Entity<?>> imported =
-			FileFormat.load("data/sherry.obj").toNestedEntity(
+			FileFormat.load("data/sherry.3ds").toNestedEntity(
     			sceneGraph,
     			(model) -> {
     				model.setMaterial(
@@ -266,7 +266,7 @@ public final class Testing {
 		imported.setUpdateCallback((event) ->
 			event.host.transformation.getValue().toIdentity().
 				// scale(0.8f).translate(0, 2, 0) // airboat
-    			scale(0.5f).rotateX(-90) // sherry
+    			scale(0.3f).rotateX(-90) // sherry
     	);
 		
 		final DirectionalLight ambLight = new DirectionalLight(sceneGraph, "amb").

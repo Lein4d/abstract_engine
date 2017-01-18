@@ -1,5 +1,6 @@
 package ae.mesh;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -55,6 +56,10 @@ public class MeshBuilder {
 	
 	public interface Filler<T> {
 		void fill(T obj, int index);
+	}
+
+	public interface FillerIO<T> {
+		void fill(T obj, int index) throws IOException;
 	}
 	
 	public final class Triangle {
@@ -485,8 +490,27 @@ public class MeshBuilder {
 		
 		return this;
 	}
+
+	public final MeshBuilder fillTrianglexDataIO(
+			final FillerIO<Triangle> filler) throws IOException {
+		
+		_assertTrianglesSealed();
+		for(int i = 0; i < _triangles.length; i++)
+			filler.fill(_triangles[i], i);
+		
+		return this;
+	}
 	
 	public final MeshBuilder fillVertexData(final Filler<Vertex> filler) {
+		
+		_assertVerticesSealed();
+		for(int i = 0; i < _vertices.length; i++) filler.fill(_vertices[i], i);
+		
+		return this;
+	}
+
+	public final MeshBuilder fillVertexDataIO(
+			final FillerIO<Vertex> filler) throws IOException {
 		
 		_assertVerticesSealed();
 		for(int i = 0; i < _vertices.length; i++) filler.fill(_vertices[i], i);
