@@ -1,4 +1,4 @@
-package ae.util;
+package ae.util.profiling;
 
 public final class AgingAverage extends Average {
 	

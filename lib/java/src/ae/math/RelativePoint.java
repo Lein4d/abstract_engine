@@ -1,7 +1,7 @@
-package ae.util;
+package ae.math;
 
-import ae.math.Vector3D;
 import ae.scenegraph.entities.Marker;
+import ae.util.Functions;
 
 public final class RelativePoint {
 	

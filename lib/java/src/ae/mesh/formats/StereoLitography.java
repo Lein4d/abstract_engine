@@ -12,8 +12,8 @@ import java.util.regex.Pattern;
 import ae.collections.PooledLinkedList;
 import ae.mesh.FileFormat;
 import ae.mesh.ModelNode;
-import ae.util.ByteOrderInputStream;
 import ae.util.Functions;
+import ae.util.stream.ByteOrderInputStream;
 
 public final class StereoLitography extends FileFormat {
 

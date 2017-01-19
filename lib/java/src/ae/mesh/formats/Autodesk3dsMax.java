@@ -8,8 +8,8 @@ import java.nio.ByteOrder;
 import ae.mesh.FileFormat;
 import ae.mesh.MeshBuilder;
 import ae.mesh.ModelNode;
-import ae.util.ByteOrderInputStream;
-import ae.util.CountingInputStream;
+import ae.util.stream.ByteOrderInputStream;
+import ae.util.stream.CountingInputStream;
 
 public final class Autodesk3dsMax extends FileFormat {
 	

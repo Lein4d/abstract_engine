@@ -1,6 +1,6 @@
-package ae.util;
+package ae.util.profiling;
 
-import ae.util.Average.Type;
+import ae.util.profiling.Average.Type;
 
 public final class Profiler {
 	

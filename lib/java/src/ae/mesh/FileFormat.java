@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ae.mesh.formats.Autodesk3dsMax;
-import ae.mesh.formats.LightWave;
 import ae.mesh.formats.StereoLitography;
 import ae.mesh.formats.WavefrontObject;
 
@@ -22,7 +21,6 @@ public abstract class FileFormat {
 	
 	static {
 		_registerFileFormat(Autodesk3dsMax  .INSTANCE);
-		_registerFileFormat(LightWave       .INSTANCE);
 		_registerFileFormat(StereoLitography.INSTANCE);
 		_registerFileFormat(WavefrontObject .INSTANCE);
 	}

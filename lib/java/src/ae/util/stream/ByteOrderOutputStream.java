@@ -1,4 +1,4 @@
-package ae.util;
+package ae.util.stream;
 
 import java.io.FilterOutputStream;
 import java.io.IOException;

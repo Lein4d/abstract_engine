@@ -3,13 +3,13 @@ package ae.scenegraph.entities;
 import ae.core.SceneGraph;
 import ae.math.Axis;
 import ae.math.Matrix4D;
+import ae.math.RelativePoint;
+import ae.math.RelativeVector;
 import ae.math.SignedAxis;
 import ae.math.Vector3D;
 import ae.scenegraph.Attribute;
 import ae.scenegraph.ConstAttribute;
 import ae.scenegraph.Entity;
-import ae.util.RelativePoint;
-import ae.util.RelativeVector;
 
 public final class DynamicSpace extends Entity<DynamicSpace> {
 	

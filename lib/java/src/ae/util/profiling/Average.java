@@ -1,4 +1,4 @@
-package ae.util;
+package ae.util.profiling;
 
 public abstract class Average {
 

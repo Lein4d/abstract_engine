@@ -1,6 +1,4 @@
-package ae.util;
-
-import ae.math.Vector3D;
+package ae.math;
 
 public final class RelativeVector {
 	

@@ -89,9 +89,9 @@ public final class AbstractEngine {
 
 	final GlslShader opGlslShader;
 	
-	public static final int    VERSION_MAJOR    = 0;
-	public static final int    VERSION_MINOR    = 9;
-	public static final int    VERSION_REVISION = 4;
+	public static final int    VERSION_MAJOR    = 1;
+	public static final int    VERSION_MINOR    = 0;
+	public static final int    VERSION_REVISION = 0;
 	public static final String VERSION_STRING   =
 		"v" + VERSION_MAJOR + "." + VERSION_MINOR + "." + VERSION_REVISION;
 	
