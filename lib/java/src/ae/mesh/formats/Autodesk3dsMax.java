@@ -66,10 +66,11 @@ public final class Autodesk3dsMax extends FileFormat {
     				while(sb.length() < 20 && (b = in.read()) != 0)
     					sb.append((char)b);
     				
-    				final ModelNode mn =
-    					new ModelNode(parentNode, sb.toString());
+    				final ModelNode mn = new ModelNode(parentNode);
     				
     				_readChunks(in, boin, chunkEnd, parentNode, mn);
+    				
+    				mn.name = sb.toString();
     				mn.mesh.computeNormals();
     				break;
     			
@@ -122,7 +123,7 @@ public final class Autodesk3dsMax extends FileFormat {
 			final InputStream in) throws IOException {
 		
 		final CountingInputStream cin = new CountingInputStream(in);
-		final ModelNode    parentNode = new ModelNode("<root>", null);
+		final ModelNode    parentNode = new ModelNode();
 		
 		// Can pass '1' as chunk end as the loop will iterate once for the main
 		// chunk. Subsequent chunks will get the correct chunk end.

@@ -6,11 +6,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,6 +18,16 @@ import ae.mesh.ModelNode;
 
 public final class WavefrontObject extends FileFormat {
 
+	private static final class Group {
+		
+		private final String         _name;
+		private final List<Triangle> _triangles = new LinkedList<>();
+		
+		private Group(final String name) {
+			_name = name;
+		}
+	}
+	
 	private static final class Triangle {
 		
 		private final int[][] _indices;
@@ -103,6 +111,8 @@ public final class WavefrontObject extends FileFormat {
 		_SPACE + _DATA + _SPACE + _DATA + "(?:" + _SPACE + _DATA + ")?");
 	private static final Pattern _REGEX_VERTEX      = Pattern.compile(
 		_INDEX + _INDEX_EXT + _INDEX_EXT);
+	private static final Pattern _REGEX_GROUP       = Pattern.compile(
+		_PADDING + "(?:o|g)" + _SPACE + _DATA);
 	private static final Pattern _REGEX_SGROUP      = Pattern.compile(
 		_PADDING + "s" + _SPACE + "(?:(off)|(\\d+))");
 	
@@ -111,33 +121,51 @@ public final class WavefrontObject extends FileFormat {
 	private WavefrontObject() {
 		super("obj");
 	}
+
+	private static final Group _beginNewGroup(
+			final String      line,
+			final List<Group> groups) {
+		
+		final Matcher matcher  = _REGEX_GROUP.matcher(line);
+		
+		matcher.find();
+		
+		final Group newGroup = new Group(matcher.group(1));
+		groups.add(newGroup);
+		
+		return newGroup;
+	}
 	
 	private static final ModelNode _createModelNodes(
-    		final float[][]           positionArray,
-    		final float[][]           normalArray,
-    		final float[][]           texCoordArray,
-    		final Set<List<Triangle>> groups) {
+    		final float[][]   positionArray,
+    		final float[][]   normalArray,
+    		final float[][]   texCoordArray,
+    		final List<Group> groups) {
 		
-		final ModelNode           rootNode  = new ModelNode("<root>", null);
+		final ModelNode           rootNode  = new ModelNode();
 		final Map<Vertex, Vertex> vertexMap = new HashMap<>();
 		
-		for(List<Triangle> i : groups) {
+		for(Group i : groups) {
 			
-			final MeshBuilder mb         = new ModelNode(rootNode, null).mesh;
-			int               tIndex     = 0;
-			Vertex            testVertex = new Vertex();
+			// Skip groups without triangles
+			if(i._triangles.isEmpty()) continue;
+			
+			final ModelNode mn         = new ModelNode(rootNode);
+			int             tIndex     = 0;
+			Vertex          testVertex = new Vertex();
 			
 			vertexMap.clear();
 			
-			for(Triangle j : i)
+			for(Triangle j : i._triangles)
 				testVertex = j._computeRealIndices(vertexMap, testVertex);
 			
-			mb.allocateVertices (vertexMap.size());
-			mb.allocateTriangles(i        .size());
+			mn.name = i._name;
+			mn.mesh.allocateVertices (vertexMap   .size());
+			mn.mesh.allocateTriangles(i._triangles.size());
 			
 			for(Vertex j : vertexMap.keySet()) {
 				
-				MeshBuilder.Vertex vertex = mb.getVertex(j._index);
+				MeshBuilder.Vertex vertex = mn.mesh.getVertex(j._index);
 				
 				if(positionArray != null)
 					vertex.setPosition(positionArray[j._compIndices[0]]);
@@ -147,9 +175,9 @@ public final class WavefrontObject extends FileFormat {
 					vertex.setTexCoord(texCoordArray[j._compIndices[2]]);
 			}
 			
-			for(Triangle j : i) {
+			for(Triangle j : i._triangles) {
 				
-				mb.getTriangle(tIndex).
+				mn.mesh.getTriangle(tIndex).
 					setIndices(
 						j._realIndices[0],
 						j._realIndices[1],
@@ -159,38 +187,26 @@ public final class WavefrontObject extends FileFormat {
 				tIndex++;
 			}
 			
-			if(normalArray == null) mb.computeNormals();
+			if(normalArray == null) mn.mesh.computeNormals();
 		}
 		
 		return rootNode;
 	}
 	
-	private static final List<Triangle> _finishGroup(
-			final List<Triangle>      curGroup,
-			final Set<List<Triangle>> groups) {
-		
-		if(curGroup.isEmpty()) {
-			return curGroup;
-		} else {
-			groups.add(curGroup);
-			return new LinkedList<>();
-		}
-	}
-	
 	private static final boolean[] _parseData(
-			final InputStream         in,
-    		final List<float[]>       positions,
-    		final List<float[]>       normals,
-    		final List<float[]>       texCoords,
-    		final Set<List<Triangle>> groups) throws IOException {
+			final InputStream   in,
+    		final List<float[]> positions,
+    		final List<float[]> normals,
+    		final List<float[]> texCoords,
+    		final List<Group>   groups) throws IOException {
 		
 		// {<positions>,<normals>,<texCoords>}
 		final boolean[]      attributes = {false, false, false};
 		final BufferedReader reader     =
 			new BufferedReader(new InputStreamReader(in));
 		
-		List<Triangle> curGroup  = new LinkedList<>();
-		int            curSGroup = 0;
+		Group curGroup  = new Group("");
+		int   curSGroup = 0;
 		
 		for(String line; (line = reader.readLine()) != null;) {
 			
@@ -200,7 +216,7 @@ public final class WavefrontObject extends FileFormat {
 				switch(typeMatcher.group(1)) {
 					case "o":
 					case "g":
-						curGroup = _finishGroup(curGroup, groups);
+						curGroup = _beginNewGroup(line, groups);
 						break;
 					case "s":
 						curSGroup = _readSmoothingGroup(line);
@@ -218,13 +234,11 @@ public final class WavefrontObject extends FileFormat {
 						_readTriangles(
 							line,
 							positions.size(), normals.size(), texCoords.size(),
-							curGroup, curSGroup, attributes);
+							curGroup._triangles, curSGroup, attributes);
 						break;
 				}
 			}
 		}
-		
-		_finishGroup(curGroup, groups);
 		
 		return attributes;
 	}
@@ -253,7 +267,7 @@ public final class WavefrontObject extends FileFormat {
 			final int            pCount,
 			final int            nCount,
 			final int            tcCount,
-			final List<Triangle> group,
+			final List<Triangle> dst,
 			final int            sGroup,
 			final boolean[]      attributes) {
 		
@@ -276,7 +290,7 @@ public final class WavefrontObject extends FileFormat {
 			
 			// Create a triangle from the first index and the two most recent
 			// indices
-			group.add(new Triangle(firstIndex, nextIndex, recentIndex, sGroup));
+			dst.add(new Triangle(firstIndex, nextIndex, recentIndex, sGroup));
 		}
 	}
 
@@ -334,10 +348,10 @@ public final class WavefrontObject extends FileFormat {
 	@Override
 	public final ModelNode importMesh(final InputStream in) throws IOException {
 		
-		final List<float[]>       positions = new LinkedList<>();
-		final List<float[]>       normals   = new LinkedList<>();
-		final List<float[]>       texCoords = new LinkedList<>();
-		final Set<List<Triangle>> groups    = new HashSet<>();
+		final List<float[]> positions = new LinkedList<>();
+		final List<float[]> normals   = new LinkedList<>();
+		final List<float[]> texCoords = new LinkedList<>();
+		final List<Group>   groups    = new LinkedList<>();
 		
 		// {<positions>,<normals>,<texCoords>}
 		final boolean[] attributes =

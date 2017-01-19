@@ -48,7 +48,7 @@ public final class StereoLitography extends FileFormat {
 			final String      headerString,
 			final String      name) throws IOException {
 		
-		final ModelNode mn           = new ModelNode(name, null);
+		final ModelNode mn           = new ModelNode();
 		final String    content      =
 			headerString + Functions.getStreamAsString(in);
 		final Matcher   facetMatcher = _REGEX_FACET .matcher(content);
@@ -56,6 +56,7 @@ public final class StereoLitography extends FileFormat {
 		final PooledLinkedList<MatchResult> facets    =
 			Functions.getMatches(facetMatcher);
 		
+		mn.name = name;
 		mn.mesh.allocateVertices(facets.getSize() * 3);
 		
 		int vPos = 0;
@@ -70,7 +71,7 @@ public final class StereoLitography extends FileFormat {
 	private final ModelNode _importBinary(
 			final InputStream in) throws IOException {
 		
-		final ModelNode            mn        = new ModelNode("STL Mesh", null);
+		final ModelNode            mn        = new ModelNode();
 		final ByteOrderInputStream boin      =
 			new ByteOrderInputStream(in, ByteOrder.LITTLE_ENDIAN);
 		final int                  triangleCount = boin.readInt();

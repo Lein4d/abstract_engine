@@ -7,37 +7,24 @@ import java.util.function.Consumer;
 import ae.core.SceneGraph;
 import ae.scenegraph.Entity;
 import ae.scenegraph.entities.Model;
-import ae.util.NameDomain;
 
 public final class ModelNode {
 	
 	private final List<ModelNode> _children = new LinkedList<>();
 	
-	public final String                name;
-	public final NameDomain<ModelNode> domain;
-	public final MeshBuilder           mesh;
+	public final MeshBuilder mesh = new MeshBuilder();
+	public       String      name = null;
 	
-	public ModelNode(
-			final String                name,
-			final NameDomain<ModelNode> domain) {
-
-		this.domain = domain != null ? domain : new NameDomain<>("part_");
-		this.name   = this.domain.isNameAvailable(name) ?
-			this.domain.addObject(this, name) : this.domain.addObject(this);
-		this.mesh   = new MeshBuilder();
+	public ModelNode() {
+		this(null);
 	}
 	
-	public ModelNode(
-			final ModelNode parent,
-			final String    name) {
-		
-		this(name, parent.domain);
-		parent._children.add(this);
+	public ModelNode(final ModelNode parent) {
+		if(parent != null) parent._children.add(this);
 	}
 	
 	public final boolean hasValidMesh() {
-		return true;
-		//return mesh.getPositions() != null;
+		return mesh.getVertexCount() > 0;
 	}
 	
 	public final boolean isNested() {
@@ -65,25 +52,29 @@ public final class ModelNode {
 	
 	public final Entity<? extends Entity<?>> toNestedEntity(
 			final SceneGraph      sceneGraph,
+			final String          rootName,
 			final Consumer<Model> setupCallback) {
 		
 		Entity<? extends Entity<?>> entity;
 		
+		final String entityName = rootName + (name != null ? "_" + name : "");
+		
 		if(hasValidMesh()) {
 			
 			final Model model =
-				new Model(sceneGraph, name).setMesh(mesh.createMesh());
+				new Model(sceneGraph, entityName).setMesh(mesh.createMesh());
 			
 			setupCallback.accept(model);
 			entity = model;
 			
 		} else {
 			
-			entity = new Entity<Entity<?>>(sceneGraph, name, true);
+			entity = new Entity<Entity<?>>(sceneGraph, entityName, true);
 		}
 		
 		for(ModelNode i : _children)
-			entity.addChild(i.toNestedEntity(sceneGraph, setupCallback));
+			entity.addChild(
+				i.toNestedEntity(sceneGraph, rootName, setupCallback));
 		
 		return entity;
 	}

@@ -1,6 +1,7 @@
 package ae.core;
 
 import java.io.PrintStream;
+import java.util.Random;
 import java.util.function.Consumer;
 
 import ae.collections.LinkedListNode;
@@ -15,7 +16,6 @@ import ae.scenegraph.entities.DynamicSpace;
 import ae.scenegraph.entities.Marker;
 import ae.scenegraph.entities.Model;
 import ae.util.Event;
-import ae.util.NameDomain;
 import ae.util.OrganizedObject;
 
 public class SceneGraph {
@@ -75,10 +75,11 @@ public class SceneGraph {
 	private static final String _ERROR_MULTI_INSTANCE =
 		"Only one instance is allowed";
 	
+	private final Random   _random          = new Random();
 	private final Matrix4D _tfCameraInverse = new Matrix4D();
 
-	private final NameDomain<Entity<?>>            _entities     =
-		new NameDomain<>("entity_");
+	private final PooledHashMap<String, Entity<?>> _entities     =
+		new PooledHashMap<>();
 	private final PooledHashMap<Integer, Instance> _instances    =
 		new PooledHashMap<>();
 	private final ObjectPool<Instance>             _instancePool =
@@ -176,6 +177,17 @@ public class SceneGraph {
 	public final Event.Notify<SceneGraph> onNewTopology =
 		new Event.Notify<>(this);
 	
+	private final String _generateRandomName(final String prefix) {
+		
+		String name;
+		
+		do {
+			name = prefix + "_" + (_random.nextInt() & 0x7FFFFFFF);
+		} while(_entities.hasKey(name));
+		
+		return name;
+	}
+	
 	private final AbstractEngine _getEngine() {
 		return engine;
 	}
@@ -191,7 +203,7 @@ public class SceneGraph {
 		_instances      .clear();
 		_dirLightNodes  .clear();
 		_pointLightNodes.clear();
-		for(Entity<?> i : _entities.objects) i.resetInstances();
+		for(Entity<?> i : _entities.values) i.resetInstances();
 		
 		_unrollErrors.reset();
 		
@@ -199,7 +211,7 @@ public class SceneGraph {
 		_rootInstance = _instantiateEntity(root, null, null, 0);
 		
 		// Check for graph related errors
-		for(Entity<?> i : _entities.objects) {
+		for(Entity<?> i : _entities.values) {
 			
 			final int oldErrorCount = _unrollErrors.getSize();
 			
@@ -288,7 +300,7 @@ public class SceneGraph {
 		_unrollGraph(dirLights, pointLights);
 		
 		// Call the specific update callbacks for each entity instance
-		for(Entity<?> i : _entities.objects) i.update();
+		for(Entity<?> i : _entities.values) i.update();
 		
 		// Reset the root transformation
 		root.transformation.resetExternal();
@@ -337,7 +349,12 @@ public class SceneGraph {
 			final Entity<?> entity,
 			final String    tempName) {
 		
-		final String realName = _entities.addObject(entity, tempName);
+		final String realName = tempName != null ?
+			(_entities.hasKey(tempName) ?
+				_generateRandomName(tempName) : tempName) :
+			_generateRandomName("entity");
+		
+		_entities.setValue(realName, entity);
 		
 		switch(entity.type) {
 			case CAMERA: _cameras.insertAtEnd((Camera)entity); break;
@@ -370,6 +387,6 @@ public class SceneGraph {
 			throw new UnsupportedOperationException(
 				"Entity belongs to different scene graph");
 		
-		_entities.removeObject(entity.name);
+		_entities.deleteKey(entity.name);
 	}
 }

@@ -254,8 +254,9 @@ public final class Testing {
 		*/
 		
 		final Entity<? extends Entity<?>> imported =
-			FileFormat.load("data/sherry.3ds").toNestedEntity(
+			FileFormat.load("data/sherry.obj").toNestedEntity(
     			sceneGraph,
+    			"import",
     			(model) -> {
     				model.setMaterial(
     					engine.standardMaterials.get(true, false, true, false, false));
