@@ -17,7 +17,7 @@ public final class Triangle {
 		final AbstractEngine engine     =
 			new AbstractEngine(
 				"Triangle (AE " + AbstractEngine.VERSION_STRING + ")",
-				null, null, false);
+				null, null, false, 10);
 		final SceneGraph     sceneGraph = new SceneGraph(engine);
 
 		// The camera is adaptive and doesn't need to be updated

@@ -20,7 +20,7 @@ public final class TexturedCube {
 		final AbstractEngine engine     =
 			new AbstractEngine(
 				"Textured Cube (AE " + AbstractEngine.VERSION_STRING + ")",
-				null, null, false);
+				null, null, false, 10);
 		final SceneGraph     sceneGraph = new SceneGraph(engine);
 		
 		// The camera is adaptive and doesn't need to be updated

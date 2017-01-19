@@ -21,7 +21,7 @@ public final class HoverPicking {
 		final AbstractEngine engine     =
 			new AbstractEngine(
 				"Hover Picking (AE " + AbstractEngine.VERSION_STRING + ")",
-				null, null, true);
+				null, null, true, 10);
 		final SceneGraph     sceneGraph = new SceneGraph(engine);
 		
 		// The camera is adaptive and doesn't need to be updated
@@ -34,9 +34,8 @@ public final class HoverPicking {
 		final Material        material = mb.
 			addParameter("color", GlslType.FLOAT3).
 			addParameter("rim", GlslType.FLOAT3).
-			//setColor(mb.mult(mb.param("color"), mb.phong(mb.normal()))).
 			setColor(mb.add(
-				mb.mult(mb.sub(mb.constF(1, 1, 1), mb.abs(mb.dot(mb.normal(), mb.normalize(mb.position())))), mb.param("rim")),
+				mb.mult(mb.rim(45), mb.param("rim")),
 				mb.mult(mb.param("color"), mb.phong(mb.normal())))).
 			createMaterial(engine, "Rim");
 		
