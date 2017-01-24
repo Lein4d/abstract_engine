@@ -2,6 +2,22 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="C:/Users/Daniel/Repositories/Abstract-Engine/bin/1-0-0/java/abstract_engine_1-0-0.jar"/>
+	<classpathentry kind="lib" path="jars/abstract_engine_1-0-0.jar"/>
+	<classpathentry kind="lib" path="jars/lwjgl-glfw.jar"/>
+	<classpathentry kind="lib" path="jars/lwjgl-opengl.jar"/>
+	<classpathentry kind="lib" path="jars/lwjgl-stb.jar"/>
+	<classpathentry kind="lib" path="jars/lwjgl.jar"/>
+	<classpathentry kind="lib" path="jars/linux/lwjgl-glfw-natives-linux.jar"/>
+	<classpathentry kind="lib" path="jars/linux/lwjgl-natives-linux.jar"/>
+	<classpathentry kind="lib" path="jars/linux/lwjgl-opengl-natives-linux.jar"/>
+	<classpathentry kind="lib" path="jars/linux/lwjgl-stb-natives-linux.jar"/>
+	<classpathentry kind="lib" path="jars/macos/lwjgl-glfw-natives-macos.jar"/>
+	<classpathentry kind="lib" path="jars/macos/lwjgl-natives-macos.jar"/>
+	<classpathentry kind="lib" path="jars/macos/lwjgl-opengl-natives-macos.jar"/>
+	<classpathentry kind="lib" path="jars/macos/lwjgl-stb-natives-macos.jar"/>
+	<classpathentry kind="lib" path="jars/windows/lwjgl-glfw-natives-windows.jar"/>
+	<classpathentry kind="lib" path="jars/windows/lwjgl-natives-windows.jar"/>
+	<classpathentry kind="lib" path="jars/windows/lwjgl-opengl-natives-windows.jar"/>
+	<classpathentry kind="lib" path="jars/windows/lwjgl-stb-natives-windows.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
