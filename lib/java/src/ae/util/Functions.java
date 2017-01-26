@@ -16,7 +16,8 @@ public final class Functions {
 			final String  msg) {
 		
 		if(!cond)
-			throw new AssertException(msg != null ? msg : "Assertion failed");
+			throw msg != null ?
+				new AssertException(msg) : new AssertException();
 	}
 	
 	public static final <T> T assertNotNull(
@@ -27,6 +28,14 @@ public final class Functions {
 			throw new AssertException(msg != null ? msg : "Object is null");
 		
 		return obj;
+	}
+
+	public static final void assertNull(
+			final Object obj,
+			final String msg) {
+		
+		if(obj != null)
+			throw new AssertException(msg != null ? msg : "Object is not null");
 	}
 	
 	public static final int[][] cloneArray2D(

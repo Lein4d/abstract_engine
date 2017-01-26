@@ -180,7 +180,7 @@ public final class Meshes {
 		if(flat) mb.makeFlat().computeNormals();
 		mb.cullFacing = true;
     	
-    	return mb.ensureSealed();
+    	return mb.seal();
 	}
 	
 	public static final MeshBuilder createCube() {

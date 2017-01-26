@@ -209,8 +209,8 @@ public class MeshBuilder {
 			return this;
 		}
 
-		public final Vertex setTexCoord(final float[] texCoordd) {
-			return setTexCoord(texCoordd[0], texCoordd[1]);
+		public final Vertex setTexCoord(final float[] texCoord) {
+			return setTexCoord(texCoord[0], texCoord[1]);
 		}
 		
 		public final Vertex setTexCoord(
@@ -264,13 +264,21 @@ public class MeshBuilder {
 		new ArrayIterator<>(_triangles) : _dynTriangles.iterator();
 	public final Iterable<Vertex>   vertices  = () -> _vertices  != null ?
 		new ArrayIterator<>(_vertices)  : _dynVertices .iterator();
-
+	
 	public boolean cullFacing = false;
+
+	private final void _assertTrianglesNotSealed() {
+		Functions.assertNull(_triangles, "Triangles are already sealed");
+	}
 
 	private final void _assertTrianglesSealed() {
 		Functions.assertNotNull(_triangles, "Triangles are not sealed yet");
 	}
 
+	private final void _assertVerticesNotSealed() {
+		Functions.assertNull(_vertices, "Vertices are already sealed");
+	}
+	
 	private final void _assertVerticesSealed() {
 		Functions.assertNotNull(_vertices, "Vertices are not sealed yet");
 	}
@@ -285,10 +293,12 @@ public class MeshBuilder {
 	private final boolean _ensureConsistentSmoothingGroups(
 			final Adjacency adjacency) {
 		
-		final int[][] smoothingGroups = new int[_vertices.length][];
-		final int[]   auxArray        = new int[adjacency._maxAdjacencyCount];
-		int           newVertexCount  = 0;
-		final int[]   vIndexMap       = new int[_vertices.length];
+		final int[][]  smoothingGroups = new int[_vertices.length][];
+		final int[]    auxArray        = new int[adjacency._maxAdjacencyCount];
+		final int[]    vIndexMap       = new int[_vertices.length];
+		final Vertex[] oldVertices     = _vertices;
+
+		int newVertexCount = 0;
 		
 		for(int i = 0; i < _vertices.length; i++) {
 			smoothingGroups[i] = _vertices[i]._collectSmoothingGroups(
@@ -299,8 +309,6 @@ public class MeshBuilder {
 		
 		// Abort if each vertex belongs to exactly one smoothing group
 		if(newVertexCount == _vertices.length) return true;
-		
-		final Vertex[] oldVertices = _vertices;
 		
 		allocateVertices(newVertexCount);
 		
@@ -338,31 +346,29 @@ public class MeshBuilder {
 	
 	public final MeshBuilder activeCullFaceSupport() {
 		cullFacing = true;
-		return this;
+		return _invalidateMesh();
 	}
 	
 	public final MeshBuilder addPolygon(
 			final int     smoothingGroup,
 			final int ... vIndices) {
 		
-		Functions.assertCond(
-			_triangles == null, "Triangles are already sealed");
+		_assertTrianglesNotSealed();
 		
 		for(int i = 2; i < vIndices.length; i++)
 			_dynTriangles.add(new Triangle().
 				setIndices       (vIndices[0], vIndices[i - 1], vIndices[i]).
 				setSmoothingGroup(smoothingGroup));
 		
-		return this;
+		return _invalidateMesh();
 	}
 	
 	public final MeshBuilder addVertex(final Vertex vertex) {
 		
-		Functions.assertCond(
-			_vertices == null, "Vertices are already sealed");
+		_assertVerticesNotSealed();
 		
 		_dynVertices.add(vertex);
-		return this;
+		return _invalidateMesh();
 	}
 
 	public final MeshBuilder allocateTriangles(final int triangleCount) {
@@ -372,7 +378,7 @@ public class MeshBuilder {
 		for(int i = 0; i < _triangles.length; i++)
 			_triangles[i] = new Triangle();
 		
-		return this;
+		return _invalidateMesh();
 	}
 	
 	public final MeshBuilder allocateVertices(final int vertexCount) {
@@ -382,7 +388,7 @@ public class MeshBuilder {
 		for(int i = 0; i < _vertices.length; i++)
 			_vertices[i] = new Vertex();
 		
-		return this;
+		return _invalidateMesh();
 	}
 
 	public final MeshBuilder collapseSmoothingGroups() {
@@ -399,7 +405,7 @@ public class MeshBuilder {
 		for(Triangle i : triangles)
 			i._smoothingGroup = sgMap.get(i._smoothingGroup);
 		
-		return this;
+		return _invalidateMesh();
 	}
 	
 	public final MeshBuilder computeNormals() {
@@ -436,69 +442,42 @@ public class MeshBuilder {
 				flatNormals, curAdjacency, vertexAngles);
 		}
 		
-		return this;
+		return _invalidateMesh();
 	}
 
 	public final MeshBuilder createDefaultTriangles() {
 		
 		allocateTriangles(_vertices.length / 3);
 		
-		for(int i = 0; i < _triangles.length; i++)
-			for(int j = 0; j < 3; j++) _triangles[i]._vIndices[j] = i * 3 + j;
+		for(int i = 0; i < _triangles.length; i++) {
+			final int[] vIndices = _triangles[i]._vIndices;
+			for(int j = 0; j < 3; j++) vIndices[j] = i * 3 + j;
+		}
 		
-		return this;
+		return _invalidateMesh();
 	}
 	
 	public final Mesh createMesh() {
 		return _lastValidMesh.getObject();
 	}
 	
-	public final MeshBuilder ensureSealed() {
-		return ensureVerticesSealed().ensureTrianglesSealed();
-	}
-	
-	public final MeshBuilder ensureTrianglesSealed() {
-		
-		if(_triangles != null) return this;
-    	
-		if(_dynTriangles.isEmpty()) {
-			createDefaultTriangles();
-		} else {
-			_triangles =
-				_dynTriangles.toArray(new Triangle[_dynTriangles.size()]);
-			_dynTriangles.clear();
-		}
-		
-		return this;
-	}
-	
-	public final MeshBuilder ensureVerticesSealed() {
-		
-		if(_vertices != null) return this;
-		
-    	_vertices = _dynVertices.toArray(new Vertex[_dynVertices.size()]);
-    	_dynVertices.clear();
-    	
-    	return this;
-	}
-
-	public final MeshBuilder fillTrianglexData(final Filler<Triangle> filler) {
+	public final MeshBuilder fillTriangleData(final Filler<Triangle> filler) {
 		
 		_assertTrianglesSealed();
 		for(int i = 0; i < _triangles.length; i++)
 			filler.fill(_triangles[i], i);
 		
-		return this;
+		return _invalidateMesh();
 	}
 
-	public final MeshBuilder fillTrianglexDataIO(
+	public final MeshBuilder fillTriangleDataIO(
 			final FillerIO<Triangle> filler) throws IOException {
 		
 		_assertTrianglesSealed();
 		for(int i = 0; i < _triangles.length; i++)
 			filler.fill(_triangles[i], i);
 		
-		return this;
+		return _invalidateMesh();
 	}
 	
 	public final MeshBuilder fillVertexData(final Filler<Vertex> filler) {
@@ -506,7 +485,7 @@ public class MeshBuilder {
 		_assertVerticesSealed();
 		for(int i = 0; i < _vertices.length; i++) filler.fill(_vertices[i], i);
 		
-		return this;
+		return _invalidateMesh();
 	}
 
 	public final MeshBuilder fillVertexDataIO(
@@ -515,7 +494,7 @@ public class MeshBuilder {
 		_assertVerticesSealed();
 		for(int i = 0; i < _vertices.length; i++) filler.fill(_vertices[i], i);
 		
-		return this;
+		return _invalidateMesh();
 	}
 	
 	public final Triangle getTriangle(final int tIndex) {
@@ -538,11 +517,9 @@ public class MeshBuilder {
 	
 	public final MeshBuilder invertFaceOrientation() {
 		
-		int temp;
-		
-		// Swap index order of each polygon
+		// Swap index order of each triangle
 		for(Triangle i : triangles) {
-			temp           = i._vIndices[1];
+			final int temp = i._vIndices[1];
 			i._vIndices[1] = i._vIndices[2];
 			i._vIndices[2] = temp;
 		}
@@ -560,20 +537,15 @@ public class MeshBuilder {
 
 	public final MeshBuilder makeFlat() {
 		
-		ensureTrianglesSealed();
+		int curSGroup = 0;
+		for(Triangle i : triangles) i._smoothingGroup = curSGroup++;
 		
-		for(int i = 0; i < _triangles.length; i++)
-			_triangles[i]._smoothingGroup = i;
-		
-		return this;
+		return _invalidateMesh();
 	}
 	
 	public final MeshBuilder makeSmooth() {
-		
-		ensureTrianglesSealed();
-		for(Triangle i : _triangles) i._smoothingGroup = 0;
-		
-		return this;
+		for(Triangle i : triangles) i._smoothingGroup = 0;
+		return _invalidateMesh();
 	}
 
 	public static final MeshBuilder merge(final MeshBuilder ... meshes) {
@@ -607,6 +579,35 @@ public class MeshBuilder {
 		return mesh;
 	}
 
+	public final MeshBuilder seal() {
+		return sealVertices().sealTriangles();
+	}
+	
+	public final MeshBuilder sealTriangles() {
+		
+		if(_triangles != null) return this;
+    	
+		if(_dynTriangles.isEmpty()) {
+			createDefaultTriangles();
+		} else {
+			_triangles =
+				_dynTriangles.toArray(new Triangle[_dynTriangles.size()]);
+			_dynTriangles.clear();
+		}
+		
+		return _invalidateMesh();
+	}
+	
+	public final MeshBuilder sealVertices() {
+		
+		if(_vertices != null) return this;
+		
+    	_vertices = _dynVertices.toArray(new Vertex[_dynVertices.size()]);
+    	_dynVertices.clear();
+    	
+    	return _invalidateMesh();
+	}
+
 	public final MeshBuilder setPolygon(
 			final int     startIndex,
 			final int     smoothingGroup,
@@ -615,17 +616,16 @@ public class MeshBuilder {
 		_assertTrianglesSealed();
 		
 		for(int i = 2; i < vIndices.length; i++)
-			_dynTriangles.add(_triangles[startIndex + i - 2].
+			_triangles[startIndex + i - 2].
 				setIndices       (vIndices[0], vIndices[i - 1], vIndices[i]).
-				setSmoothingGroup(smoothingGroup));
+				setSmoothingGroup(smoothingGroup);
 		
-		return this;
+		return _invalidateMesh();
 	}
 	
 	public final MeshBuilder spliceUnusedVertices() {
 
-		// Default indices may be created here
-		ensureSealed();
+		_assertVerticesSealed();
 		
 		// The index map assigns each vertex a mapped index
 		final Vertex[] oldVertices    = _vertices;
@@ -638,7 +638,7 @@ public class MeshBuilder {
 		
 		// After having looped all indices, 'curMappedIndex' contains the number
 		// of actual referenced vertices
-		for(Triangle i : _triangles)
+		for(Triangle i : triangles)
 			for(int j : i._vIndices)
 				if(indexMap[j] == -1) indexMap[j] = curMappedIndex++;
 		
@@ -648,7 +648,7 @@ public class MeshBuilder {
 		allocateVertices(curMappedIndex);
 		
 		// Set the new indices based on the previous computed mapping
-		for(Triangle i : _triangles)
+		for(Triangle i : triangles)
 			for(int j = 0; j < 3; j++)
 				i._vIndices[j] = indexMap[i._vIndices[j]];
 		
@@ -672,7 +672,7 @@ public class MeshBuilder {
 		return _invalidateMesh();
 	}
 
-	public final MeshBuilder transformTexCoords(Matrix4D transform) {
+	public final MeshBuilder transformTexCoords(final Matrix4D transform) {
 		for(Vertex i : vertices) transform.applyToPoint(i._texCoord);
 		return _invalidateMesh();
 	}

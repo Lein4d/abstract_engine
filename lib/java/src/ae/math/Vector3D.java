@@ -4,10 +4,6 @@ import ae.util.OrganizedObject;
 
 public final class Vector3D extends OrganizedObject<Vector3D> {
 	
-	public interface UnaryOperator {
-		float applyToComponent(float x);
-	}
-	
 	public final VectorBackend backend;
 	public final Vector3D      readOnly;
 	
@@ -27,15 +23,6 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 		this.readOnly = new Vector3D(new ReadOnlyBackend(backend));
 		
 		backend.addListener((obj) -> _propagateChange());
-	}
-
-	public final Vector3D applyUnaryOp(final UnaryOperator op) {
-		
-		backend.setX(op.applyToComponent(backend.getX()));
-		backend.setY(op.applyToComponent(backend.getY()));
-		backend.setZ(op.applyToComponent(backend.getZ()));
-		
-		return this;
 	}
 
 	public final Vector3D add(final float value) {
@@ -228,8 +215,7 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 	}
 	
 	public final Vector3D normalize() {
-		final float length = computeLength();
-		return applyUnaryOp((x) -> x / length);
+		return div(computeLength());
 	}
 	
 	public final Vector3D setData(final VectorBackend src) {

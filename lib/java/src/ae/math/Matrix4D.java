@@ -57,7 +57,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 	
 	// Die Matrix ist spaltenweise organisiert
 	private final float[] _data = new float[16];
-	private final float[] _temp = new float[16];
+	private final float[] _auxArray = new float[16];
 
 	// Die Normalenmatrix ist die Inverse der transponierten oberen 3x3 Matrix
 	private final CachedObject<float[]> _dataNmCached = new CachedObject<>(
@@ -149,39 +149,39 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 			final float r32,
 			final float r33) {
 
-		getData(_temp);
+		getData(_auxArray);
 
 		// Zeile 1
 		_data[I_M11] =
-			_temp[I_M11] * r11 + _temp[I_M12] * r21 + _temp[I_M13] * r31;
+			_auxArray[I_M11] * r11 + _auxArray[I_M12] * r21 + _auxArray[I_M13] * r31;
 		_data[I_M12] =
-			_temp[I_M11] * r12 + _temp[I_M12] * r22 + _temp[I_M13] * r32;
+			_auxArray[I_M11] * r12 + _auxArray[I_M12] * r22 + _auxArray[I_M13] * r32;
 		_data[I_M13] =
-			_temp[I_M11] * r13 + _temp[I_M12] * r23 + _temp[I_M13] * r33;
+			_auxArray[I_M11] * r13 + _auxArray[I_M12] * r23 + _auxArray[I_M13] * r33;
 
 		// Zeile 2
 		_data[I_M21] =
-			_temp[I_M21] * r11 + _temp[I_M22] * r21 + _temp[I_M23] * r31;
+			_auxArray[I_M21] * r11 + _auxArray[I_M22] * r21 + _auxArray[I_M23] * r31;
 		_data[I_M22] =
-			_temp[I_M21] * r12 + _temp[I_M22] * r22 + _temp[I_M23] * r32;
+			_auxArray[I_M21] * r12 + _auxArray[I_M22] * r22 + _auxArray[I_M23] * r32;
 		_data[I_M23] =
-			_temp[I_M21] * r13 + _temp[I_M22] * r23 + _temp[I_M23] * r33;
+			_auxArray[I_M21] * r13 + _auxArray[I_M22] * r23 + _auxArray[I_M23] * r33;
 
 		// Zeile 3
 		_data[I_M31] =
-			_temp[I_M31] * r11 + _temp[I_M32] * r21 + _temp[I_M33] * r31;
+			_auxArray[I_M31] * r11 + _auxArray[I_M32] * r21 + _auxArray[I_M33] * r31;
 		_data[I_M32] =
-			_temp[I_M31] * r12 + _temp[I_M32] * r22 + _temp[I_M33] * r32;
+			_auxArray[I_M31] * r12 + _auxArray[I_M32] * r22 + _auxArray[I_M33] * r32;
 		_data[I_M33] =
-			_temp[I_M31] * r13 + _temp[I_M32] * r23 + _temp[I_M33] * r33;
+			_auxArray[I_M31] * r13 + _auxArray[I_M32] * r23 + _auxArray[I_M33] * r33;
 
 		// Zeile 4
 		_data[I_M41] =
-			_temp[I_M41] * r11 + _temp[I_M42] * r21 + _temp[I_M43] * r31;
+			_auxArray[I_M41] * r11 + _auxArray[I_M42] * r21 + _auxArray[I_M43] * r31;
 		_data[I_M42] =
-			_temp[I_M41] * r12 + _temp[I_M42] * r22 + _temp[I_M43] * r32;
+			_auxArray[I_M41] * r12 + _auxArray[I_M42] * r22 + _auxArray[I_M43] * r32;
 		_data[I_M43] =
-			_temp[I_M41] * r13 + _temp[I_M42] * r23 + _temp[I_M43] * r33;
+			_auxArray[I_M41] * r13 + _auxArray[I_M42] * r23 + _auxArray[I_M43] * r33;
 
 		_propagateNmChange();
 		
@@ -193,7 +193,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 	}
 	
 	public final Vector3D applyToDirVector(final Vector3D v) {
-		return v.setData(applyToDirVector(v.getData(_temp)));
+		return v.setData(applyToDirVector(v.getData(_auxArray)));
 	}
 
 	public final float[] applyToDirVector(final float[] v) {
@@ -209,27 +209,27 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		// Die ersten 3 Positionen des temporären Arrays frei lassen, damit sie
 		// von der überladenen Methode genutzt werden können, um den Vektor
 		// an die Position 0 kopieren zu können
-		System.arraycopy(v, offset, _temp, 3, 3);
+		System.arraycopy(v, offset, _auxArray, 3, 3);
 		
 		v[offset + 0] =
-			dataNm[I_NM11] * _temp[3] + dataNm[I_NM12] * _temp[4] +
-			dataNm[I_NM13] * _temp[5];
+			dataNm[I_NM11] * _auxArray[3] + dataNm[I_NM12] * _auxArray[4] +
+			dataNm[I_NM13] * _auxArray[5];
 		v[offset + 1] =
-			dataNm[I_NM21] * _temp[3] + dataNm[I_NM22] * _temp[4] +
-			dataNm[I_NM23] * _temp[5];
+			dataNm[I_NM21] * _auxArray[3] + dataNm[I_NM22] * _auxArray[4] +
+			dataNm[I_NM23] * _auxArray[5];
 		v[offset + 2] =
-			dataNm[I_NM31] * _temp[3] + dataNm[I_NM32] * _temp[4] +
-			dataNm[I_NM33] * _temp[5];
+			dataNm[I_NM31] * _auxArray[3] + dataNm[I_NM32] * _auxArray[4] +
+			dataNm[I_NM33] * _auxArray[5];
 		
 		return v;
 	}
 
 	public final Vector3D applyToOrigin(final Vector3D dst) {
-		return dst.setData(applyToOrigin(_temp, (byte)3));
+		return dst.setData(applyToOrigin(_auxArray, (byte)3));
 	}
 
 	public final Vector4D applyToOrigin(final Vector4D dst) {
-		return dst.setData(applyToOrigin(_temp, (byte)4));
+		return dst.setData(applyToOrigin(_auxArray, (byte)4));
 	}
 
 	public final float[] applyToOrigin(final float[] dst) {
@@ -240,7 +240,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 			final float[] dst,
 			final int     offset) {
 		
-		return applyToOrigin(dst, offset, (byte)dst.length);
+		return applyToOrigin(dst, offset, (byte)(dst.length - offset));
 	}
 	
 	public final float[] applyToOrigin(
@@ -262,11 +262,11 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 	}
 
 	public final Vector3D applyToPoint(final Vector3D p) {
-		return p.setData(applyToPoint(p.getData(_temp), (byte)3));
+		return p.setData(applyToPoint(p.getData(_auxArray), (byte)3));
 	}
 
 	public final Vector4D applyToPoint(final Vector4D p) {
-		return p.setData(applyToPoint(p.getData(_temp), (byte)4));
+		return p.setData(applyToPoint(p.getData(_auxArray), (byte)4));
 	}
 
 	public final float[] applyToPoint(final float[] p) {
@@ -277,7 +277,7 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 			final float[] p,
 			final int     offset) {
 		
-		return applyToPoint(p, offset, (byte)p.length);
+		return applyToPoint(p, offset, (byte)(p.length - offset));
 	}
 	
 	public final float[] applyToPoint(
@@ -386,7 +386,8 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 	}
 	
 	public final Matrix4D getData(final Matrix4D dst) {
-		return dst.setData(_data);
+		getData(dst._data);
+		return dst;
 	}
 	
 	public final float[] getData(final float[] dst) {
@@ -458,28 +459,28 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		final float det = computeDeterminant();
 
 		// Zeile 1
-		_temp[ 0] = (
+		_auxArray[ 0] = (
 			_data[I_M23] * _data[I_M34] * _data[I_M42] -
 			_data[I_M24] * _data[I_M33] * _data[I_M42] +
 			_data[I_M24] * _data[I_M32] * _data[I_M43] -
 			_data[I_M22] * _data[I_M34] * _data[I_M43] -
 			_data[I_M23] * _data[I_M32] * _data[I_M44] +
 			_data[I_M22] * _data[I_M33] * _data[I_M44]) / det;
-		_temp[ 4] = (
+		_auxArray[ 4] = (
 			_data[I_M14] * _data[I_M33] * _data[I_M42] -
 			_data[I_M13] * _data[I_M34] * _data[I_M42] -
 			_data[I_M14] * _data[I_M32] * _data[I_M43] +
 			_data[I_M12] * _data[I_M34] * _data[I_M43] +
 			_data[I_M13] * _data[I_M32] * _data[I_M44] -
 			_data[I_M12] * _data[I_M33] * _data[I_M44]) / det;
-		_temp[ 8] = (
+		_auxArray[ 8] = (
 			_data[I_M13] * _data[I_M24] * _data[I_M42] -
 			_data[I_M14] * _data[I_M23] * _data[I_M42] +
 			_data[I_M14] * _data[I_M22] * _data[I_M43] -
 			_data[I_M12] * _data[I_M24] * _data[I_M43] -
 			_data[I_M13] * _data[I_M22] * _data[I_M44] +
 			_data[I_M12] * _data[I_M23] * _data[I_M44]) / det;
-		_temp[12] = (
+		_auxArray[12] = (
 			_data[I_M14] * _data[I_M23] * _data[I_M32] -
 			_data[I_M13] * _data[I_M24] * _data[I_M32] -
 			_data[I_M14] * _data[I_M22] * _data[I_M33] +
@@ -488,28 +489,28 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 			_data[I_M12] * _data[I_M23] * _data[I_M34]) / det;
 		
 		// Zeile 2
-		_temp[ 1] = (
+		_auxArray[ 1] = (
 			_data[I_M24] * _data[I_M33] * _data[I_M41] -
 			_data[I_M23] * _data[I_M34] * _data[I_M41] -
 			_data[I_M24] * _data[I_M31] * _data[I_M43] +
 			_data[I_M21] * _data[I_M34] * _data[I_M43] +
 			_data[I_M23] * _data[I_M31] * _data[I_M44] -
 			_data[I_M21] * _data[I_M33] * _data[I_M44]) / det;
-		_temp[ 5] = (
+		_auxArray[ 5] = (
 			_data[I_M13] * _data[I_M34] * _data[I_M41] -
 			_data[I_M14] * _data[I_M33] * _data[I_M41] +
 			_data[I_M14] * _data[I_M31] * _data[I_M43] -
 			_data[I_M11] * _data[I_M34] * _data[I_M43] -
 			_data[I_M13] * _data[I_M31] * _data[I_M44] +
 			_data[I_M11] * _data[I_M33] * _data[I_M44]) / det;
-		_temp[ 9] = (
+		_auxArray[ 9] = (
 			_data[I_M14] * _data[I_M23] * _data[I_M41] -
 			_data[I_M13] * _data[I_M24] * _data[I_M41] -
 			_data[I_M14] * _data[I_M21] * _data[I_M43] +
 			_data[I_M11] * _data[I_M24] * _data[I_M43] +
 			_data[I_M13] * _data[I_M21] * _data[I_M44] -
 			_data[I_M11] * _data[I_M23] * _data[I_M44]) / det;
-		_temp[13] = (
+		_auxArray[13] = (
 			_data[I_M13] * _data[I_M24] * _data[I_M31] -
 			_data[I_M14] * _data[I_M23] * _data[I_M31] +
 			_data[I_M14] * _data[I_M21] * _data[I_M33] -
@@ -518,28 +519,28 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 			_data[I_M11] * _data[I_M23] * _data[I_M34]) / det;
 
 		// Zeile 3
-		_temp[ 2] = (
+		_auxArray[ 2] = (
 			_data[I_M22] * _data[I_M34] * _data[I_M41] -
 			_data[I_M24] * _data[I_M32] * _data[I_M41] +
 			_data[I_M24] * _data[I_M31] * _data[I_M42] -
 			_data[I_M21] * _data[I_M34] * _data[I_M42] -
 			_data[I_M22] * _data[I_M31] * _data[I_M44] +
 			_data[I_M21] * _data[I_M32] * _data[I_M44]) / det;
-		_temp[ 6] = (
+		_auxArray[ 6] = (
 			_data[I_M14] * _data[I_M32] * _data[I_M41] -
 			_data[I_M12] * _data[I_M34] * _data[I_M41] -
 			_data[I_M14] * _data[I_M31] * _data[I_M42] +
 			_data[I_M11] * _data[I_M34] * _data[I_M42] +
 			_data[I_M12] * _data[I_M31] * _data[I_M44] -
 			_data[I_M11] * _data[I_M32] * _data[I_M44]) / det;
-		_temp[10] = (
+		_auxArray[10] = (
 			_data[I_M12] * _data[I_M24] * _data[I_M41] -
 			_data[I_M14] * _data[I_M22] * _data[I_M41] +
 			_data[I_M14] * _data[I_M21] * _data[I_M42] -
 			_data[I_M11] * _data[I_M24] * _data[I_M42] -
 			_data[I_M12] * _data[I_M21] * _data[I_M44] +
 			_data[I_M11] * _data[I_M22] * _data[I_M44]) / det;
-		_temp[14] = (
+		_auxArray[14] = (
 			_data[I_M14] * _data[I_M22] * _data[I_M31] -
 			_data[I_M12] * _data[I_M24] * _data[I_M31] -
 			_data[I_M14] * _data[I_M21] * _data[I_M32] +
@@ -548,28 +549,28 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 			_data[I_M11] * _data[I_M22] * _data[I_M34]) / det;
 
 		// Zeile 4
-		_temp[ 3] = (
+		_auxArray[ 3] = (
 			_data[I_M23] * _data[I_M32] * _data[I_M41] -
 			_data[I_M22] * _data[I_M33] * _data[I_M41] -
 			_data[I_M23] * _data[I_M31] * _data[I_M42] +
 			_data[I_M21] * _data[I_M33] * _data[I_M42] +
 			_data[I_M22] * _data[I_M31] * _data[I_M43] -
 			_data[I_M21] * _data[I_M32] * _data[I_M43]) / det;
-		_temp[ 7] = (
+		_auxArray[ 7] = (
 			_data[I_M12] * _data[I_M33] * _data[I_M41] -
 			_data[I_M13] * _data[I_M32] * _data[I_M41] +
 			_data[I_M13] * _data[I_M31] * _data[I_M42] -
 			_data[I_M11] * _data[I_M33] * _data[I_M42] -
 			_data[I_M12] * _data[I_M31] * _data[I_M43] +
 			_data[I_M11] * _data[I_M32] * _data[I_M43]) / det;
-		_temp[11] = (
+		_auxArray[11] = (
 			_data[I_M13] * _data[I_M22] * _data[I_M41] -
 			_data[I_M12] * _data[I_M23] * _data[I_M41] -
 			_data[I_M13] * _data[I_M21] * _data[I_M42] +
 			_data[I_M11] * _data[I_M23] * _data[I_M42] +
 			_data[I_M12] * _data[I_M21] * _data[I_M43] -
 			_data[I_M11] * _data[I_M22] * _data[I_M43]) / det;
-		_temp[15] = (
+		_auxArray[15] = (
 			_data[I_M12] * _data[I_M23] * _data[I_M31] -
 			_data[I_M13] * _data[I_M22] * _data[I_M31] +
 			_data[I_M13] * _data[I_M21] * _data[I_M32] -
@@ -577,70 +578,70 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 			_data[I_M12] * _data[I_M21] * _data[I_M33] +
 			_data[I_M11] * _data[I_M22] * _data[I_M33]) / det;
 		
-		return setData(_temp);
+		return setData(_auxArray);
 	}
 	
 	public final Matrix4D multWithMatrix(final Matrix4D m) {
 		
 		// this = this * m;
 
-		getData(_temp);
+		getData(_auxArray);
 
 		// Zeile 1
 		_data[I_M11] =
-			_temp[I_M11] * m._data[I_M11] + _temp[I_M12] * m._data[I_M21] +
-			_temp[I_M13] * m._data[I_M31] + _temp[I_M14] * m._data[I_M41];
+			_auxArray[I_M11] * m._data[I_M11] + _auxArray[I_M12] * m._data[I_M21] +
+			_auxArray[I_M13] * m._data[I_M31] + _auxArray[I_M14] * m._data[I_M41];
 		_data[I_M12] =
-			_temp[I_M11] * m._data[I_M12] + _temp[I_M12] * m._data[I_M22] +
-			_temp[I_M13] * m._data[I_M32] + _temp[I_M14] * m._data[I_M42];
+			_auxArray[I_M11] * m._data[I_M12] + _auxArray[I_M12] * m._data[I_M22] +
+			_auxArray[I_M13] * m._data[I_M32] + _auxArray[I_M14] * m._data[I_M42];
 		_data[I_M13] =
-			_temp[I_M11] * m._data[I_M13] + _temp[I_M12] * m._data[I_M23] +
-			_temp[I_M13] * m._data[I_M33] + _temp[I_M14] * m._data[I_M43];
+			_auxArray[I_M11] * m._data[I_M13] + _auxArray[I_M12] * m._data[I_M23] +
+			_auxArray[I_M13] * m._data[I_M33] + _auxArray[I_M14] * m._data[I_M43];
 		_data[I_M14] =
-			_temp[I_M11] * m._data[I_M14] + _temp[I_M12] * m._data[I_M24] +
-			_temp[I_M13] * m._data[I_M34] + _temp[I_M14] * m._data[I_M44];
+			_auxArray[I_M11] * m._data[I_M14] + _auxArray[I_M12] * m._data[I_M24] +
+			_auxArray[I_M13] * m._data[I_M34] + _auxArray[I_M14] * m._data[I_M44];
 
 		// Zeile 2
 		_data[I_M21] =
-			_temp[I_M21] * m._data[I_M11] + _temp[I_M22] * m._data[I_M21] +
-			_temp[I_M23] * m._data[I_M31] + _temp[I_M24] * m._data[I_M41];
+			_auxArray[I_M21] * m._data[I_M11] + _auxArray[I_M22] * m._data[I_M21] +
+			_auxArray[I_M23] * m._data[I_M31] + _auxArray[I_M24] * m._data[I_M41];
 		_data[I_M22] =
-			_temp[I_M21] * m._data[I_M12] + _temp[I_M22] * m._data[I_M22] +
-			_temp[I_M23] * m._data[I_M32] + _temp[I_M24] * m._data[I_M42];
+			_auxArray[I_M21] * m._data[I_M12] + _auxArray[I_M22] * m._data[I_M22] +
+			_auxArray[I_M23] * m._data[I_M32] + _auxArray[I_M24] * m._data[I_M42];
 		_data[I_M23] =
-			_temp[I_M21] * m._data[I_M13] + _temp[I_M22] * m._data[I_M23] +
-			_temp[I_M23] * m._data[I_M33] + _temp[I_M24] * m._data[I_M43];
+			_auxArray[I_M21] * m._data[I_M13] + _auxArray[I_M22] * m._data[I_M23] +
+			_auxArray[I_M23] * m._data[I_M33] + _auxArray[I_M24] * m._data[I_M43];
 		_data[I_M24] =
-			_temp[I_M21] * m._data[I_M14] + _temp[I_M22] * m._data[I_M24] +
-			_temp[I_M23] * m._data[I_M34] + _temp[I_M24] * m._data[I_M44];
+			_auxArray[I_M21] * m._data[I_M14] + _auxArray[I_M22] * m._data[I_M24] +
+			_auxArray[I_M23] * m._data[I_M34] + _auxArray[I_M24] * m._data[I_M44];
 
 		// Zeile 3
 		_data[I_M31] =
-			_temp[I_M31] * m._data[I_M11] + _temp[I_M32] * m._data[I_M21] +
-			_temp[I_M33] * m._data[I_M31] + _temp[I_M34] * m._data[I_M41];
+			_auxArray[I_M31] * m._data[I_M11] + _auxArray[I_M32] * m._data[I_M21] +
+			_auxArray[I_M33] * m._data[I_M31] + _auxArray[I_M34] * m._data[I_M41];
 		_data[I_M32] =
-			_temp[I_M31] * m._data[I_M12] + _temp[I_M32] * m._data[I_M22] +
-			_temp[I_M33] * m._data[I_M32] + _temp[I_M34] * m._data[I_M42];
+			_auxArray[I_M31] * m._data[I_M12] + _auxArray[I_M32] * m._data[I_M22] +
+			_auxArray[I_M33] * m._data[I_M32] + _auxArray[I_M34] * m._data[I_M42];
 		_data[I_M33] =
-			_temp[I_M31] * m._data[I_M13] + _temp[I_M32] * m._data[I_M23] +
-			_temp[I_M33] * m._data[I_M33] + _temp[I_M34] * m._data[I_M43];
+			_auxArray[I_M31] * m._data[I_M13] + _auxArray[I_M32] * m._data[I_M23] +
+			_auxArray[I_M33] * m._data[I_M33] + _auxArray[I_M34] * m._data[I_M43];
 		_data[I_M34] =
-			_temp[I_M31] * m._data[I_M14] + _temp[I_M32] * m._data[I_M24] +
-			_temp[I_M33] * m._data[I_M34] + _temp[I_M34] * m._data[I_M44];
+			_auxArray[I_M31] * m._data[I_M14] + _auxArray[I_M32] * m._data[I_M24] +
+			_auxArray[I_M33] * m._data[I_M34] + _auxArray[I_M34] * m._data[I_M44];
 
 		// Zeile 4
 		_data[I_M41] =
-			_temp[I_M41] * m._data[I_M11] + _temp[I_M42] * m._data[I_M21] +
-			_temp[I_M43] * m._data[I_M31] + _temp[I_M44] * m._data[I_M41];
+			_auxArray[I_M41] * m._data[I_M11] + _auxArray[I_M42] * m._data[I_M21] +
+			_auxArray[I_M43] * m._data[I_M31] + _auxArray[I_M44] * m._data[I_M41];
 		_data[I_M42] =
-			_temp[I_M41] * m._data[I_M12] + _temp[I_M42] * m._data[I_M22] +
-			_temp[I_M43] * m._data[I_M32] + _temp[I_M44] * m._data[I_M42];
+			_auxArray[I_M41] * m._data[I_M12] + _auxArray[I_M42] * m._data[I_M22] +
+			_auxArray[I_M43] * m._data[I_M32] + _auxArray[I_M44] * m._data[I_M42];
 		_data[I_M43] =
-			_temp[I_M41] * m._data[I_M13] + _temp[I_M42] * m._data[I_M23] +
-			_temp[I_M43] * m._data[I_M33] + _temp[I_M44] * m._data[I_M43];
+			_auxArray[I_M41] * m._data[I_M13] + _auxArray[I_M42] * m._data[I_M23] +
+			_auxArray[I_M43] * m._data[I_M33] + _auxArray[I_M44] * m._data[I_M43];
 		_data[I_M44] =
-			_temp[I_M41] * m._data[I_M14] + _temp[I_M42] * m._data[I_M24] +
-			_temp[I_M43] * m._data[I_M34] + _temp[I_M44] * m._data[I_M44];
+			_auxArray[I_M41] * m._data[I_M14] + _auxArray[I_M42] * m._data[I_M24] +
+			_auxArray[I_M43] * m._data[I_M34] + _auxArray[I_M44] * m._data[I_M44];
 
 		_propagateNmChange();
 		
@@ -868,19 +869,19 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		final float c = (float)Math.cos(angle * RAD_FACTOR);
 
 		// Spalte 2 kopieren
-		getColumn(1, _temp);
+		getColumn(1, _auxArray);
 
 		// Spalte 2 berechnen
-		_data[I_M12] = _temp[0] * c + _data[I_M13] * s; 
-		_data[I_M22] = _temp[1] * c + _data[I_M23] * s; 
-		_data[I_M32] = _temp[2] * c + _data[I_M33] * s; 
-		_data[I_M42] = _temp[3] * c + _data[I_M43] * s; 
+		_data[I_M12] = _auxArray[0] * c + _data[I_M13] * s; 
+		_data[I_M22] = _auxArray[1] * c + _data[I_M23] * s; 
+		_data[I_M32] = _auxArray[2] * c + _data[I_M33] * s; 
+		_data[I_M42] = _auxArray[3] * c + _data[I_M43] * s; 
 		
 		// Spalte 3 berechnen
-		_data[I_M13] = _data[I_M13] * c - _temp[0] * s;
-		_data[I_M23] = _data[I_M23] * c - _temp[1] * s;
-		_data[I_M33] = _data[I_M33] * c - _temp[2] * s;
-		_data[I_M43] = _data[I_M43] * c - _temp[3] * s;
+		_data[I_M13] = _data[I_M13] * c - _auxArray[0] * s;
+		_data[I_M23] = _data[I_M23] * c - _auxArray[1] * s;
+		_data[I_M33] = _data[I_M33] * c - _auxArray[2] * s;
+		_data[I_M43] = _data[I_M43] * c - _auxArray[3] * s;
 
 		_propagateNmChange();
 		
@@ -893,19 +894,19 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		final float c = (float)Math.cos(angle * RAD_FACTOR);
 
 		// Spalte 1 kopieren
-		getColumn(0, _temp);
+		getColumn(0, _auxArray);
 
 		// Spalte 1 berechnen
-		_data[I_M11] = _temp[0] * c - _data[I_M13] * s;
-		_data[I_M21] = _temp[1] * c - _data[I_M23] * s;
-		_data[I_M31] = _temp[2] * c - _data[I_M33] * s;
-		_data[I_M41] = _temp[3] * c - _data[I_M43] * s;
+		_data[I_M11] = _auxArray[0] * c - _data[I_M13] * s;
+		_data[I_M21] = _auxArray[1] * c - _data[I_M23] * s;
+		_data[I_M31] = _auxArray[2] * c - _data[I_M33] * s;
+		_data[I_M41] = _auxArray[3] * c - _data[I_M43] * s;
 		
 		// Spalte 3 berechnen
-		_data[I_M13] = _temp[0] * s + _data[I_M13] * c;
-		_data[I_M23] = _temp[1] * s + _data[I_M23] * c;
-		_data[I_M33] = _temp[2] * s + _data[I_M33] * c;
-		_data[I_M43] = _temp[3] * s + _data[I_M43] * c;
+		_data[I_M13] = _auxArray[0] * s + _data[I_M13] * c;
+		_data[I_M23] = _auxArray[1] * s + _data[I_M23] * c;
+		_data[I_M33] = _auxArray[2] * s + _data[I_M33] * c;
+		_data[I_M43] = _auxArray[3] * s + _data[I_M43] * c;
 
 		_propagateNmChange();
 		
@@ -918,19 +919,19 @@ public final class Matrix4D extends OrganizedObject<Matrix4D> {
 		final float c = (float)Math.cos(angle * RAD_FACTOR);
 
 		// Spalte 1 kopieren
-		getColumn(0, _temp);
+		getColumn(0, _auxArray);
 
 		// Spalte 1 berechnen
-		_data[I_M11] = _temp[0] * c + _data[I_M12] * s;
-		_data[I_M21] = _temp[1] * c + _data[I_M22] * s;
-		_data[I_M31] = _temp[2] * c + _data[I_M32] * s;
-		_data[I_M41] = _temp[3] * c + _data[I_M42] * s;
+		_data[I_M11] = _auxArray[0] * c + _data[I_M12] * s;
+		_data[I_M21] = _auxArray[1] * c + _data[I_M22] * s;
+		_data[I_M31] = _auxArray[2] * c + _data[I_M32] * s;
+		_data[I_M41] = _auxArray[3] * c + _data[I_M42] * s;
 		
 		// Spalte 2 berechnen
-		_data[I_M12] = _data[I_M12] * c - _temp[0] * s;
-		_data[I_M22] = _data[I_M22] * c - _temp[1] * s;
-		_data[I_M32] = _data[I_M32] * c - _temp[2] * s;
-		_data[I_M42] = _data[I_M42] * c - _temp[3] * s;
+		_data[I_M12] = _data[I_M12] * c - _auxArray[0] * s;
+		_data[I_M22] = _data[I_M22] * c - _auxArray[1] * s;
+		_data[I_M32] = _data[I_M32] * c - _auxArray[2] * s;
+		_data[I_M42] = _data[I_M42] * c - _auxArray[3] * s;
 
 		_propagateNmChange();
 		

@@ -86,7 +86,7 @@ public final class Autodesk3dsMax extends FileFormat {
     				
     				curNode.mesh.
     					allocateTriangles(boin.readShort()).
-    					fillTrianglexDataIO((triangle, index) -> {
+    					fillTriangleDataIO((triangle, index) -> {
     						triangle.setIndices(
     							boin.readShort(),
     							boin.readShort(),
@@ -103,7 +103,7 @@ public final class Autodesk3dsMax extends FileFormat {
     				break;
     			
     			case 0x4150: // Face Smoothing Group Chunk
-    				curNode.mesh.fillTrianglexDataIO((triangle, index) ->
+    				curNode.mesh.fillTriangleDataIO((triangle, index) ->
     					triangle.setSmoothingGroup(
     						Integer.numberOfTrailingZeros(boin.readInt()) + 1));
     				break;
