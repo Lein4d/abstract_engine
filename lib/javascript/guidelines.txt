@@ -1,0 +1,12 @@
+-The code is written against the EsmaScript 6 standard
+-Pseude-namespaces are used to structure the classes
+-As overloading is not supported in JavaScript, names of overloaded functions
+ are extended with A,B,C,... at the end
+
+Naming conventions:
+-All class member and local variables are written in lower camel case
+-private members start with an underscore '_'
+-private members are supposed to be accessed only from within the own namespace
+
+Available constructs:
+-tuples (maybe as return values)
