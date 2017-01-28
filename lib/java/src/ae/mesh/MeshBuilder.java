@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import ae.math.Matrix4D;
-import ae.math.Vector3D;
 import ae.util.ArrayIterator;
 import ae.util.CachedObject;
 import ae.util.Functions;
@@ -72,35 +71,45 @@ public class MeshBuilder {
 			setSmoothingGroup(t._smoothingGroup);
 		}
 		
-		private final void _assignAuxVectors(
-    			final int p0,
-    			final int p1,
-    			final int p2) {
+		private final void _computeNormalAndAngles(
+				final float[] normal,
+				final float[] angles) {
 			
-			_auxP .setData(_vertices[_vIndices[p0]]._position);
-			_auxV1.setData(_vertices[_vIndices[p1]]._position).sub(_auxP);
-			_auxV2.setData(_vertices[_vIndices[p2]]._position).sub(_auxP);
-		}
-		
-		// Computes the angle of the vectors p0p1 and p0p2 in radians
-		private final float _computeAngle(
-				final int p0,
-				final int p1,
-				final int p2) {
+			final float[] p1 = _vertices[_vIndices[0]]._position;
+			final float[] p2 = _vertices[_vIndices[1]]._position;
+			final float[] p3 = _vertices[_vIndices[2]]._position;
 			
-			_assignAuxVectors(p0, p1, p2);
-			return Vector3D.angleRad(_auxV1, _auxV2);
-		}
-		
-		private final void _computeAngles(final float[] dst) {
-			dst[0] = _computeAngle(0, 1, 2);
-			dst[1] = _computeAngle(1, 2, 0);
-			dst[2] = _computeAngle(2, 0, 1);
-		}
-		
-		private final void _computeNormal(final float[] dst) {
-			_assignAuxVectors(0, 1, 2);
-			Vector3D.cross(_auxV1, _auxV2, _auxP).normalize().getData(dst);
+			final float p1x = p1[0], p1y = p1[1], p1z = p1[2];
+			final float p2x = p2[0], p2y = p2[1], p2z = p2[2];
+			final float p3x = p3[0], p3y = p3[1], p3z = p3[2];
+			
+			final float d1x = p2x - p1x, d1y = p2y - p1y, d1z = p2z - p1z;
+			final float d2x = p3x - p1x, d2y = p3y - p1y, d2z = p3z - p1z;
+			final float d3x = p3x - p2x, d3y = p3y - p2y, d3z = p3z - p2z;
+			
+			final float l1 =
+				(float)Math.sqrt(d1x * d1x + d1y * d1y + d1z * d1z);
+			final float l2 =
+				(float)Math.sqrt(d2x * d2x + d2y * d2y + d2z * d2z);
+			final float l3 =
+				(float)Math.sqrt(d3x * d3x + d3y * d3y + d3z * d3z);
+			
+			final float nx = d1y * d2z - d1z * d2y;
+			final float ny = d1z * d2x - d1x * d2z;
+			final float nz = d1x * d2y - d1y * d2x;
+			
+			final float ln = (float)Math.sqrt(nx * nx + ny * ny + nz * nz);
+			
+			normal[0] = nx / ln;
+			normal[1] = ny / ln;
+			normal[2] = nz / ln;
+			
+			angles[0] =
+				_acos( (d1x * d2x + d1y * d2y + d1z * d2z) / (l1 * l2));
+			angles[1] =
+				_acos(-(d1x * d3x + d1y * d3y + d1z * d3z) / (l1 * l3));
+			angles[2] =
+				_acos( (d2x * d3x + d2y * d3y + d2z * d3z) / (l2 * l3));
 		}
 		
 		public final Triangle setIndices(final int[] indices) {
@@ -169,18 +178,23 @@ public class MeshBuilder {
 				final int[]     adjacencyTriangles,
 				final float[]   adjacencyAngles) {
 			
-			float fullAngle = 0;
-			for(float i : adjacencyAngles) fullAngle += i;
+			float nx = 0, ny = 0, nz = 0;
 			
-			setNormal(0, 0, 0);
+			for(int i = 0; i < adjacencyTriangles.length; i++) {
+				
+				final float   angle      = adjacencyTriangles[i];
+				final float[] flatNormal = flatNormals[adjacencyTriangles[i]];
+				
+				nx += angle * flatNormal[0];
+				ny += angle * flatNormal[1];
+				nz += angle * flatNormal[2];
+			}
 			
-			for(int i = 0; i < adjacencyTriangles.length; i++)
-				for(int j = 0; j < 3; j++)
-					_normal[j] +=
-						(adjacencyAngles[i] / fullAngle) *     // weight
-						flatNormals[adjacencyTriangles[i]][j]; // normal vector
+			final float length = (float)Math.sqrt(nx * nx + ny * ny + nz * nz);
 			
-			_auxV1.setData(_normal).normalize().getData(_normal);
+			_normal[0] = nx / length;
+			_normal[1] = ny / length;
+			_normal[2] = nz / length;
 		}
 		
 		public final Vertex setNormal(final float[] normal) {
@@ -248,14 +262,12 @@ public class MeshBuilder {
 		}
 	}
 	
+	private static final float[] _ACOS_LOOKUP = new float[1001];
+	
 	private final CachedObject<Mesh> _lastValidMesh =
 		new CachedObject<Mesh>(null, (object) -> _createCachedMesh());
 	private final List<Vertex>       _dynVertices   = new LinkedList<>();
 	private final List<Triangle>     _dynTriangles  = new LinkedList<>();
-	
-	private final Vector3D _auxP  = Vector3D.createStatic();
-	private final Vector3D _auxV1 = Vector3D.createStatic();
-	private final Vector3D _auxV2 = Vector3D.createStatic();
 	
 	private Vertex  [] _vertices  = null;
 	private Triangle[] _triangles = null;
@@ -267,6 +279,22 @@ public class MeshBuilder {
 	
 	public boolean cullFacing = false;
 
+	static {
+		
+		for(int i = 0; i < _ACOS_LOOKUP.length; i++) {
+			_ACOS_LOOKUP[i] = (float)Math.acos((2.0 * i) / (_ACOS_LOOKUP.length - 1) - 1);
+		}
+	}
+	
+	private static final float _acos(final float x) {
+		
+		final float fPos = (x + 1) * 500;
+		final int   iPos = (int)((x + 1) * 500);
+		final float fract = fPos - iPos;
+		
+		return (1 - fract) * _ACOS_LOOKUP[iPos] + fract * _ACOS_LOOKUP[iPos + 1];
+	}
+	
 	private final void _assertTrianglesNotSealed() {
 		Functions.assertNull(_triangles, "Triangles are already sealed");
 	}
@@ -423,10 +451,9 @@ public class MeshBuilder {
 		final float[][] triangleAngles = new float[_triangles.length][3];
 		final float[]   vertexAngles = new float[adjacency._maxAdjacencyCount];
 		
-		for(int i = 0; i < _triangles.length; i++) {
-			_triangles[i]._computeNormal(flatNormals [i]);
-			_triangles[i]._computeAngles(triangleAngles[i]);
-		}
+		for(int i = 0; i < _triangles.length; i++)
+			_triangles[i]._computeNormalAndAngles(
+				flatNormals[i], triangleAngles[i]);
 		
 		for(int i = 0; i < _vertices.length; i++) {
 			

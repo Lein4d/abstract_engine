@@ -126,7 +126,7 @@ public final class WavefrontObject extends FileFormat {
 			final String      line,
 			final List<Group> groups) {
 		
-		final Matcher matcher  = _REGEX_GROUP.matcher(line);
+		final Matcher matcher = _REGEX_GROUP.matcher(line);
 		
 		matcher.find();
 		

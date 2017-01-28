@@ -269,7 +269,7 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 		
 		return this;
 	}
-
+	
 	@Override
 	public final String toString() {
 		return toString(" ");
