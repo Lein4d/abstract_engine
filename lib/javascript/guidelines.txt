@@ -2,6 +2,10 @@
 -Pseude-namespaces are used to structure the classes
 -As overloading is not supported in JavaScript, names of overloaded functions
  are extended with A,B,C,... at the end
+-'get'-methods in Java are implemented as native getters in JavaScript
+ Same applies to setter
+-Nested Java classes are implemented as independent classes in JavaScript that
+ retrieve a reference to the outer class in their constructor
 
 Naming conventions:
 -All class member and local variables are written in lower camel case
