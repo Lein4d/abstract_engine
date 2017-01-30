@@ -38,6 +38,37 @@ public final class Functions {
 			throw new AssertException(msg != null ? msg : "Object is not null");
 	}
 	
+	public static final int clamp(
+			final int value,
+			final int min,
+			final int max) {
+		
+		return value < min ? min : (value > max ? max : value);
+	}
+
+	public static final float clamp(
+			final float value,
+			final float min,
+			final float max) {
+		
+		return value < min ? min : (value > max ? max : value);
+	}
+
+	public static final double clamp(
+			final double value,
+			final double min,
+			final double max) {
+		
+		return value < min ? min : (value > max ? max : value);
+	}
+	
+	public static final int clampArrayAccess(
+			final int index,
+			final int length) {
+		
+		return index < 0 ? 0 : (index >= length ? length - 1 : index);
+	}
+
 	public static final int[][] cloneArray2D(
 			final int[][] array) {
 		
@@ -104,6 +135,38 @@ public final class Functions {
 		scanner.close();
 		
 		return result;
+	}
+	
+	public static final float mix(
+			final float x1,
+			final float x2,
+			final float ratio) {
+		
+		return (1 - ratio) * x1 + ratio * x2;
+	}
+
+	public static final double mix(
+			final double x1,
+			final double x2,
+			final double ratio) {
+		
+		return (1 - ratio) * x1 + ratio * x2;
+	}
+
+	public static final float mixRev(
+			final float x1,
+			final float x2,
+			final float value) {
+		
+		return (value - x1) / (x2 - x1);
+	}
+	
+	public static final double mixRev(
+			final double x1,
+			final double x2,
+			final double value) {
+		
+		return (value - x1) / (x2 - x1);
 	}
 	
 	public static final int packNormalizedFloatInInt(

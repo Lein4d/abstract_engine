@@ -35,36 +35,36 @@ public final class Meshes {
 		{0,1,0},{0,1,1},{1,1,1},{1,1,0}}; // top
 
 	private static final float[][] _CUBE_NORMALS = {
-		{ 0, 0,-1},{ 0, 0,-1},{ 0, 0,-1},{ 0, 0,-1},
-		{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},
-		{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},
-		{-1, 0, 0},{-1, 0, 0},{-1, 0, 0},{-1, 0, 0},
-		{ 0,-1, 0},{ 0,-1, 0},{ 0,-1, 0},{ 0,-1, 0},
-		{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0}};
+		{ 0, 0,-1},{ 0, 0,-1},{ 0, 0,-1},{ 0, 0,-1},  // front
+		{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},  // right
+		{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},  // back
+		{-1, 0, 0},{-1, 0, 0},{-1, 0, 0},{-1, 0, 0},  // left
+		{ 0,-1, 0},{ 0,-1, 0},{ 0,-1, 0},{ 0,-1, 0},  // bottom
+		{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0}}; // top
 
 	private static final float[][] _CUBE_UTANGENTS = {
-		{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},
-		{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},
-		{-1, 0, 0},{-1, 0, 0},{-1, 0, 0},{-1, 0, 0},
-		{ 0, 0,-1},{ 0, 0,-1},{ 0, 0,-1},{ 0, 0,-1},
-		{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},
-		{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0}};
+		{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},  // front
+		{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},  // right
+		{-1, 0, 0},{-1, 0, 0},{-1, 0, 0},{-1, 0, 0},  // back
+		{ 0, 0,-1},{ 0, 0,-1},{ 0, 0,-1},{ 0, 0,-1},  // left
+		{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},  // bottom
+		{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0},{ 1, 0, 0}}; // top
 
 	private static final float[][] _CUBE_VTANGENTS = {
-		{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},
-		{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},
-		{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},
-		{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},
-		{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},
-		{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1}};
+		{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},  // front
+		{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},  // right
+		{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},  // back
+		{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},{ 0, 1, 0},  // left
+		{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},  // bottom
+		{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1},{ 0, 0, 1}}; // top
 	
 	private static final float[][] _CUBE_TEXCOORDS = {
-		{0,0},{0,1},{1,1},{1,0},
-		{0,0},{0,1},{1,1},{1,0},
-		{0,0},{0,1},{1,1},{1,0},
-		{0,0},{0,1},{1,1},{1,0},
-		{0,0},{1,0},{1,1},{0,1},
-		{0,0},{0,1},{1,1},{1,0}};
+		{0,0},{0,1},{1,1},{1,0},  // front
+		{0,0},{0,1},{1,1},{1,0},  // right
+		{0,0},{0,1},{1,1},{1,0},  // back
+		{0,0},{0,1},{1,1},{1,0},  // left
+		{0,0},{1,0},{1,1},{0,1},  // bottom
+		{0,0},{0,1},{1,1},{1,0}}; // top
 
 	private Meshes() {}
 	
@@ -74,10 +74,9 @@ public final class Meshes {
 			final MeshBuilder mb) {
 		
 		final int ringSize = subdivisions + 1;
-		int       vPos;
 		
 		for(int i = 0; i < subdivisions; i++) {
-			vPos = vOffset + i;
+			final int vPos = vOffset + i;
 			mb.addPolygon(
 				0,
     			vPos,
@@ -167,6 +166,119 @@ public final class Meshes {
 		}
 	}
 
+	private static final void _computeTorusIndices(
+    		final int         subdivisionsHor,
+    		final int         subdivisionsVer,
+    		final MeshBuilder mb) {
+		
+		final int ringSizeHor = subdivisionsHor + 1;
+		
+		for(int i = 0; i < subdivisionsVer; i++)
+			for(int j = 0; j < subdivisionsHor; j++)
+				mb.addPolygon(
+					0,
+    				 i      * ringSizeHor +  j,
+    				(i + 1) * ringSizeHor +  j,
+    				(i + 1) * ringSizeHor + (j + 1),
+    				 i      * ringSizeHor + (j + 1));
+	}
+
+	private static final void _computeTorusVertices(
+    		final int         subdivisionsHor,
+    		final int         subdivisionsVer,
+    		final float       radius,
+    		final MeshBuilder mb) {
+		
+		final int ringSizeHor = subdivisionsHor + 1;
+		final int ringSizeVer = subdivisionsVer + 1;
+		
+		for(int i = 0; i < ringSizeVer; i++) {
+			for(int j = 0; j < ringSizeHor; j++) {
+				
+				final double angleHor = 2.0 * Math.PI * j / subdivisionsHor;
+				final double angleVer = 2.0 * Math.PI * i / subdivisionsVer;
+				
+				// The normals are computed similar to the positions, except
+				// that the radius is assumed as 0 and thus removed from the
+				// formula
+				
+				mb.getVertex(i * ringSizeHor + j).
+    				setPosition(
+    					(float)(Math.sin(angleHor) * (radius - Math.cos(angleVer))),
+    					(float) Math.sin(angleVer),
+    					(float)(Math.cos(angleHor) * (radius - Math.cos(angleVer)))).
+    				setNormal(
+    					(float)(Math.sin(angleHor) * -Math.cos(angleVer)),
+    					(float) Math.sin(angleVer),
+    					(float)(Math.cos(angleHor) * -Math.cos(angleVer))).
+    				setUTangent(
+        				(float) Math.cos(angleHor),
+        				0,
+        				(float)-Math.sin(angleHor)).
+    				setVTangent(
+    					(float)(Math.sin(angleHor) * Math.sin(angleVer)),
+        				(float) Math.cos(angleVer),
+            			(float)(Math.cos(angleHor) * Math.sin(angleVer))).
+        			setTexCoord(
+        				(float)j / subdivisionsHor,
+        				(float)i / subdivisionsVer);
+			}
+		}
+	}
+	
+	private static final void _computeUVSphereIndices(
+			final int         subdivisionsHor,
+			final int         subdivisionsVer,
+			final MeshBuilder mb) {
+		
+		for(int i = 0; i < subdivisionsVer; i++)
+    		for(int j = 0; j < subdivisionsHor; j++)
+    			mb.addPolygon(
+    				0,
+        			 i      * (subdivisionsHor + 1) +  j,
+        			 i      * (subdivisionsHor + 1) + (j + 1),
+        			(i + 1) * (subdivisionsHor + 1) + (j + 1),
+        			(i + 1) * (subdivisionsHor + 1) +  j);
+	}
+	
+	private static final void _computeUVSphereVertices(
+    		final int         subdivisionsHor,
+    		final int         subdivisionsVer,
+    		final MeshBuilder mb) {
+		
+		for(int i = 0; i <= subdivisionsVer; i++) {
+    		for(int j = 0; j <= subdivisionsHor; j++) {
+    			
+    			final double angleHor =
+    				2.0 * Math.PI *  (double)j / subdivisionsHor;
+    			final double angleVer =
+    				      Math.PI * ((double)i / subdivisionsVer - 0.5);
+    
+    			final float x =
+    				(float)(Math.cos(angleVer) * Math.sin(angleHor));
+    			final float y =
+    				(float) Math.sin(angleVer);
+    			final float z =
+    				(float)(Math.cos(angleVer) * Math.cos(angleHor));
+    
+    			mb.getVertex(i * (subdivisionsHor + 1) + j).
+        			setPosition(x, y, z).
+    				setNormal  (x, y, z).
+    				setUTangent(
+    					 (float)Math.cos(angleHor),
+    					0,
+    					-(float)Math.sin(angleHor)).
+    				setVTangent(
+    					(float)(Math.sin(angleVer) * -Math.sin(angleHor)),
+    					(float) Math.cos(angleVer),
+    					(float)(Math.sin(angleVer) * -Math.cos(angleHor))).
+        			setTexCoord(
+        				2 * (float)j / subdivisionsHor,
+        				    (float)i / subdivisionsVer);
+    		}
+    	}
+	}
+	
 	private static final MeshBuilder _createRoundMesh(
 			final int                   vertexCount,
 			final boolean               flat,
@@ -185,7 +297,7 @@ public final class Meshes {
 	
 	public static final MeshBuilder createCube() {
 		
-		final MeshBuilder mb = new MeshBuilder().
+		return new MeshBuilder().
 			allocateVertices     (_CUBE_POSITIONS.length).
 			allocateTriangles    (12).
 			activeCullFaceSupport().
@@ -194,12 +306,8 @@ public final class Meshes {
     			setNormal  (_CUBE_NORMALS  [index]).
     			setUTangent(_CUBE_UTANGENTS[index]).
     			setVTangent(_CUBE_VTANGENTS[index]).
-    			setTexCoord(_CUBE_TEXCOORDS[index]));
-		
-		for(int i = 0; i < 6; i++)
-			mb.setPolygon(i * 2, 0, i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3);
-		
-		return mb;
+    			setTexCoord(_CUBE_TEXCOORDS[index])).
+			createDefaultQuads();
 	}
 
 	public static final MeshBuilder createCube(
@@ -310,7 +418,7 @@ public final class Meshes {
 	
 	public static final MeshBuilder createQuad() {
 		
-		final MeshBuilder mb = new MeshBuilder().
+		return new MeshBuilder().
 			allocateVertices     (_QUAD_POSITIONS.length).
 			allocateTriangles    (4).
 			activeCullFaceSupport().
@@ -319,12 +427,8 @@ public final class Meshes {
     			setNormal  (_QUAD_NORMALS  [index]).
     			setUTangent(_QUAD_UTANGENTS[index]).
     			setVTangent(_QUAD_VTANGENTS[index]).
-    			setTexCoord(_QUAD_TEXCOORDS[index]));
-		
-		for(int i = 0; i < 2; i++)
-			mb.setPolygon(i * 2, 0, i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3);
-		
-		return mb;
+    			setTexCoord(_QUAD_TEXCOORDS[index])).
+			createDefaultQuads();
 	}
 
 	public static final MeshBuilder createQuad(
@@ -361,52 +465,12 @@ public final class Meshes {
 			final float   radius,
 			final boolean flat) {
 		
-		final int ringSizeHor = subdivisionsHor + 1;
-		final int ringSizeVer = subdivisionsVer + 1;
-		
-		return _createRoundMesh(ringSizeHor * ringSizeVer, flat, (mb) -> {
-    		
-    		for(int i = 0; i < subdivisionsVer; i++)
-    			for(int j = 0; j < subdivisionsHor; j++)
-    				mb.addPolygon(
-    					0,
-        				 i      * ringSizeHor +  j,
-        				(i + 1) * ringSizeHor +  j,
-        				(i + 1) * ringSizeHor + (j + 1),
-        				 i      * ringSizeHor + (j + 1));
-    		
-    		for(int i = 0; i < ringSizeVer; i++) {
-    			for(int j = 0; j < ringSizeHor; j++) {
-    				
-    				final double angleHor = 2.0 * Math.PI * j / subdivisionsHor;
-    				final double angleVer = 2.0 * Math.PI * i / subdivisionsVer;
-    				
-    				// The normals are computed similar to the positions, except
-    				// that the radius is assumed as 0 and thus removed from the
-    				// formula
-    				
-    				mb.getVertex(i * ringSizeHor + j).
-        				setPosition(
-        					(float)(Math.sin(angleHor) * (radius - Math.cos(angleVer))),
-        					(float) Math.sin(angleVer),
-        					(float)(Math.cos(angleHor) * (radius - Math.cos(angleVer)))).
-        				setNormal(
-        					(float)(Math.sin(angleHor) * -Math.cos(angleVer)),
-        					(float) Math.sin(angleVer),
-        					(float)(Math.cos(angleHor) * -Math.cos(angleVer))).
-        				setUTangent(
-            				(float) Math.cos(angleHor),
-            				0,
-            				(float)-Math.sin(angleHor)).
-        				setVTangent(
-        					(float)(Math.sin(angleHor) * Math.sin(angleVer)),
-            				(float) Math.cos(angleVer),
-                			(float)(Math.cos(angleHor) * Math.sin(angleVer))).
-            			setTexCoord(
-            				(float)j / subdivisionsHor,
-            				(float)i / subdivisionsVer);
-    			}
-    		}
+		return _createRoundMesh(
+			(subdivisionsHor + 1) * (subdivisionsVer + 1), flat, (mb) -> {
+    			_computeTorusIndices (
+    				subdivisionsHor, subdivisionsVer,         mb);
+    			_computeTorusVertices(
+    				subdivisionsHor, subdivisionsVer, radius, mb);
 		});
 	}
 	
@@ -441,43 +505,9 @@ public final class Meshes {
     	
 		return _createRoundMesh(
 			(subdivisionsHor + 1) * (subdivisionsVer + 1), flat, (mb) -> {
-			
-        	for(int i = 0; i < subdivisionsVer; i++)
-        		for(int j = 0; j < subdivisionsHor; j++)
-        			mb.addPolygon(
-        				0,
-            			 i      * (subdivisionsHor + 1) +  j,
-            			 i      * (subdivisionsHor + 1) + (j + 1),
-            			(i + 1) * (subdivisionsHor + 1) + (j + 1),
-            			(i + 1) * (subdivisionsHor + 1) +  j);
-        	
-        	for(int i = 0; i <= subdivisionsVer; i++) {
-        		for(int j = 0; j <= subdivisionsHor; j++) {
-        			
-        			final double angleHor = 2.0 * Math.PI * (double)j / subdivisionsHor;
-        			final double angleVer = Math.PI * ((double)i / subdivisionsVer - 0.5);
-        
-        			final float x = (float)(Math.cos(angleVer) * Math.sin(angleHor));
-        			final float y = (float) Math.sin(angleVer);
-        			final float z = (float)(Math.cos(angleVer) * Math.cos(angleHor));
-        
-        			mb.getVertex(i * (subdivisionsHor + 1) + j).
-            			setPosition(x, y, z).
-        				setNormal  (x, y, z).
-        				setUTangent(
-        					 (float)Math.cos(angleHor),
-        					0,
-        					-(float)Math.sin(angleHor)).
-        				setVTangent(
-        					(float)(Math.sin(angleVer) * -Math.sin(angleHor)),
-        					(float) Math.cos(angleVer),
-        					(float)(Math.sin(angleVer) * -Math.cos(angleHor))).
-            			setTexCoord(
-            				2 * (float)j / subdivisionsHor,
-            				    (float)i / subdivisionsVer);
-        		}
-        	}
-		});
+    			_computeUVSphereIndices (subdivisionsHor, subdivisionsVer, mb);
+    			_computeUVSphereVertices(subdivisionsHor, subdivisionsVer, mb);
+			});
     }
 
 	public static final MeshBuilder createUVSphere(

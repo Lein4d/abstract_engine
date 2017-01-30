@@ -11,6 +11,7 @@ import ae.math.Matrix4D;
 import ae.util.ArrayIterator;
 import ae.util.CachedObject;
 import ae.util.Functions;
+import ae.util.SampledFunction;
 
 public class MeshBuilder {
 	
@@ -104,12 +105,12 @@ public class MeshBuilder {
 			normal[1] = ny / ln;
 			normal[2] = nz / ln;
 			
-			angles[0] =
-				_acos( (d1x * d2x + d1y * d2y + d1z * d2z) / (l1 * l2));
-			angles[1] =
-				_acos(-(d1x * d3x + d1y * d3y + d1z * d3z) / (l1 * l3));
-			angles[2] =
-				_acos( (d2x * d3x + d2y * d3y + d2z * d3z) / (l2 * l3));
+			angles[0] = _ACOS.sampleLinearF(
+				 (d1x * d2x + d1y * d2y + d1z * d2z) / (l1 * l2));
+			angles[1] = _ACOS.sampleLinearF(
+				-(d1x * d3x + d1y * d3y + d1z * d3z) / (l1 * l3));
+			angles[2] = _ACOS.sampleLinearF(
+				 (d2x * d3x + d2y * d3y + d2z * d3z) / (l2 * l3));
 		}
 		
 		public final Triangle setIndices(final int[] indices) {
@@ -262,7 +263,8 @@ public class MeshBuilder {
 		}
 	}
 	
-	private static final float[] _ACOS_LOOKUP = new float[1001];
+	private static final SampledFunction _ACOS =
+		new SampledFunction(10000, -1, 1, (x) -> Math.acos(x));
 	
 	private final CachedObject<Mesh> _lastValidMesh =
 		new CachedObject<Mesh>(null, (object) -> _createCachedMesh());
@@ -279,22 +281,6 @@ public class MeshBuilder {
 	
 	public boolean cullFacing = false;
 
-	static {
-		
-		for(int i = 0; i < _ACOS_LOOKUP.length; i++) {
-			_ACOS_LOOKUP[i] = (float)Math.acos((2.0 * i) / (_ACOS_LOOKUP.length - 1) - 1);
-		}
-	}
-	
-	private static final float _acos(final float x) {
-		
-		final float fPos = (x + 1) * 500;
-		final int   iPos = (int)((x + 1) * 500);
-		final float fract = fPos - iPos;
-		
-		return (1 - fract) * _ACOS_LOOKUP[iPos] + fract * _ACOS_LOOKUP[iPos + 1];
-	}
-	
 	private final void _assertTrianglesNotSealed() {
 		Functions.assertNull(_triangles, "Triangles are already sealed");
 	}
@@ -472,16 +458,37 @@ public class MeshBuilder {
 		return _invalidateMesh();
 	}
 
-	public final MeshBuilder createDefaultTriangles() {
+	public final MeshBuilder createDefaultPolygons(final int degree) {
 		
-		allocateTriangles(_vertices.length / 3);
+		Functions.assertCond(
+			degree >= 3, "Polygon must consist of at least 3 vertices");
 		
-		for(int i = 0; i < _triangles.length; i++) {
-			final int[] vIndices = _triangles[i]._vIndices;
-			for(int j = 0; j < 3; j++) vIndices[j] = i * 3 + j;
+		final int polygonCount    = (_vertices.length / degree);
+		final int polygonTriCount = degree - 2;
+		
+		allocateTriangles(polygonCount * polygonTriCount);
+		
+		for(int i = 0; i < polygonCount; i++) {
+			for(int j = 0; j < polygonTriCount; j++) {
+				
+				final int[] vIndices =
+					_triangles[i * polygonTriCount + j]._vIndices;
+				
+				vIndices[0] = i * degree;
+				vIndices[1] = i * degree + j + 1;
+				vIndices[2] = i * degree + j + 2;
+			}
 		}
 		
-		return _invalidateMesh();
+		return this;
+	}
+
+	public final MeshBuilder createDefaultQuads() {
+		return createDefaultPolygons(4);
+	}
+	
+	public final MeshBuilder createDefaultTriangles() {
+		return createDefaultPolygons(3);
 	}
 	
 	public final Mesh createMesh() {
