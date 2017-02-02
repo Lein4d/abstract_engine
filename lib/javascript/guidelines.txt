@@ -12,5 +12,19 @@ Naming conventions:
 -private members start with an underscore '_'
 -private members are supposed to be accessed only from within the own namespace
 
+Simulating private/internal classes/members:
+-For each namespace 'some.namespace' there is another namespace
+ 'some.namespace._p' that contains all classes whose constructors are invoked
+ only by classes of the abstract engine
+-Each class invokes 'Object.freeze(this)' in its constructor to ensure no
+ members are added/changed/removed after creation
+-As classes may have properties that are not constant each class with non
+ constant members has a map object '_p' as member that contains all these
+ members.
+-For better readability the members of the '_p' object should made directly
+ accessible by getters, but only the class itself should write to these members.
+-As a result no public members of a class can be changed, unless setters are
+ provided.
+
 Available constructs:
 -tuples (maybe as return values)
