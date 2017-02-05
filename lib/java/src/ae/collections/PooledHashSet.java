@@ -14,7 +14,6 @@ public final class PooledHashSet<T> extends PooledCollection<T> {
 	
 	@Override
 	protected final Iterator<T> _getReverseIterator() {
-		// TODO: A new object is created
 		return _hashMap.keys.iterator();
 	}
 	
@@ -23,7 +22,7 @@ public final class PooledHashSet<T> extends PooledCollection<T> {
 	}
 	
 	public PooledHashSet(final PooledHashMap<T, Object> backend) {
-		super(null, false);
+		super(null);
 		_hashMap = backend;
 	}
 	

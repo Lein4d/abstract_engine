@@ -28,7 +28,7 @@ public final class PooledOrderedSet<T> extends PooledCollection<T> {
 			final PooledHashMap<T, LinkedListNode<T>> backendSet,
 			final PooledLinkedList<T>                 backendList) {
 		
-		super(null, false);
+		super(null);
 		
 		_hashMap = backendSet;
 		_list    = backendList;

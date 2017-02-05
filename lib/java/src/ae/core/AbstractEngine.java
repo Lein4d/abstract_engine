@@ -103,7 +103,7 @@ public final class AbstractEngine {
 	public static final int SIZE_DOUBLE = 8;
 	
 	public static final Path SOURCE_PATH;
-	
+
 	public final int maxDirLightCount;
 	public final int maxPointLightCount;
 	

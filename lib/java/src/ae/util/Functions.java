@@ -1,11 +1,11 @@
 package ae.util;
 
 import java.io.InputStream;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
-
-import ae.collections.PooledLinkedList;
 
 public final class Functions {
 	
@@ -117,13 +117,12 @@ public final class Functions {
 		return dst;
 	}
 	
-	public static final PooledLinkedList<MatchResult> getMatches(
+	public static final List<MatchResult> getMatches(
 			final Matcher matcher) {
 		
-		final PooledLinkedList<MatchResult> results = new PooledLinkedList<>();
+		final List<MatchResult> results = new LinkedList<>();
 		
-		while(matcher.find()) results.insertAtEnd(matcher.toMatchResult());
-		
+		while(matcher.find()) results.add(matcher.toMatchResult());
 		return results;
 	}
 	

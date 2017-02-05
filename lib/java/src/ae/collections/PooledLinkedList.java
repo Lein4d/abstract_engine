@@ -7,7 +7,7 @@ public final class PooledLinkedList<T> extends PooledCollection<T> {
 	
 	private LinkedListNode<T> _first = null;
 	private LinkedListNode<T> _last  = null;
-	
+
 	private final LinkedListNode<T> _insert(final T element) {
 		
 		final LinkedListNode<T> node = _provideNode();
@@ -79,36 +79,21 @@ public final class PooledLinkedList<T> extends PooledCollection<T> {
 
 	@Override
 	protected final Iterator<T> _getReverseIterator() {
-		// TODO: A new object is created
 		return new LinkedListNode.NodeIteratorReverse<T>(_last);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public PooledLinkedList() {
-		this(LinkedListNode.<T>createObjectPool(), false);
-	}
-	
-	public PooledLinkedList(
-			final ObjectPool<LinkedListNode<T>> nodePool,
-			final boolean                       poolSharing) {
-		
-		super(nodePool, poolSharing);
-	}
-	
-	public static final <T> ObjectPool<LinkedListNode<T>> createNodePool() {
-		return LinkedListNode.<T>createObjectPool();
+		super((ObjectPool<LinkedListNode<T>>)(Object)LinkedListNode.POOL);
 	}
 	
 	public final T getFirst() {
-		
 		if(isEmpty()) throw new NoSuchElementException();
-		
 		return _first.content;
 	}
 
 	public final T getLast() {
-
 		if(isEmpty()) throw new NoSuchElementException();
-		
 		return _last.content;
 	}
 	
@@ -136,7 +121,6 @@ public final class PooledLinkedList<T> extends PooledCollection<T> {
 	
 	@Override
 	public final Iterator<T> iterator() {
-		// TODO: Hier wird ein neues Objekt angelegt
 		return new LinkedListNode.NodeIteratorForward<T>(_first);
 	}
 	

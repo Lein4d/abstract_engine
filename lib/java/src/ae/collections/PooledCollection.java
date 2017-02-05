@@ -4,22 +4,16 @@ import java.util.Iterator;
 
 public abstract class PooledCollection<T> implements Iterable<T> {
 	
-	private final ObjectPool<LinkedListNode<T>> _nodePool;
-	
 	// The size needs to be stored separately as the node pool may be shared
 	// between multiple collections
 	private int _size = 0;
-	
+
+	public final ObjectPool<LinkedListNode<T>> nodePool;
 	public final Iterable<T>                   reverse;
-	public final ObjectPool<LinkedListNode<T>> sharedNodePool;
 	
-	protected PooledCollection(
-    		final ObjectPool<LinkedListNode<T>> nodePool,
-    		final boolean                       poolSharing) {
-		
-		this._nodePool      = nodePool;
-		this.reverse        = () -> _getReverseIterator();
-		this.sharedNodePool = poolSharing ? nodePool : null;
+	protected PooledCollection(final ObjectPool<LinkedListNode<T>> nodePool) {
+		this.nodePool = nodePool;
+		this.reverse  = () -> _getReverseIterator();
 	}
 	
 	protected abstract boolean _addSingle(final T element);
@@ -30,7 +24,7 @@ public abstract class PooledCollection<T> implements Iterable<T> {
 	protected final LinkedListNode<T> _freeNode(final LinkedListNode<T> node) {
 		
 		_size--;
-		_nodePool.free(node);
+		nodePool.free(node);
 		
 		return node;
 	}
@@ -39,7 +33,7 @@ public abstract class PooledCollection<T> implements Iterable<T> {
 	
 	protected final LinkedListNode<T> _provideNode() {
 		_size++;
-		return _nodePool.provide();
+		return nodePool.provide();
 	}
 	
 	// True if the collection has changed somehow

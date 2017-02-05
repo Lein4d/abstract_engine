@@ -16,7 +16,7 @@ public final class Instance extends OrganizedObject<Instance> {
 	private int _id;
 	
 	// Used to skip this instance in case of consistency errors
-	private boolean _active;
+	private boolean _valid;
 	
 	// Links to other instances in the unrolled scene graph
 	private Instance _parent;      // 'null' if instance belongs to the root
@@ -25,9 +25,11 @@ public final class Instance extends OrganizedObject<Instance> {
 	
 	// Derived properties
 	private int     _level;
-	private boolean _static;
+	private boolean _fixed;
 	private boolean _rendered;
+	private boolean _renderedRec;
 	private boolean _pickable;
+	private boolean _pickableRec;
 	
 	public final Instance assign(
 			final Entity<?> entity,
@@ -36,7 +38,7 @@ public final class Instance extends OrganizedObject<Instance> {
     		final Instance  nextSibling) {
     	
     	_entity      = entity;
-    	_active      = true;
+    	_valid       = true;
     	_parent      = parent;
     	_firstChild  = firstChild;
     	_nextSibling = nextSibling;
@@ -45,7 +47,7 @@ public final class Instance extends OrganizedObject<Instance> {
 	}
 	
 	public final Instance deactivate() {
-		_active = false;
+		_valid = false;
 		return this;
 	}
 
@@ -53,18 +55,26 @@ public final class Instance extends OrganizedObject<Instance> {
 		
 		if(_parent != null) {
 	    	
-			_active   = _parent._active   && _active;
-			_level    = _parent._level + 1;
-			_static   = _parent._static   && _entity.noTF;
-			_rendered = _parent._rendered && _entity.rendered;
-			_pickable = _parent._pickable && _entity.pickable;
+			_valid = _parent._valid   && _valid;
+			_level = _parent._level + 1;
+			_fixed = _parent._fixed   && _entity.noTF;
+			
+			// Derive the recursive properties
+			_renderedRec = _parent._renderedRec && _entity.renderedRec;
+			_pickableRec = _parent._pickableRec && _entity.pickableRec;
+			
+			// Derive properties based on the recursive ones
+			_rendered = _valid && _renderedRec && _entity.rendered;
+			_pickable = _valid && _pickableRec && _entity.pickable;
 			
 		} else {
 			
-			_level    = 0;
-			_static   = _entity.noTF;
-			_rendered = _entity.rendered;
-			_pickable = _entity.pickable;
+			_level       = 0; // Root is always on level 0
+			_fixed       = _entity.noTF;
+			_renderedRec = _entity.renderedRec;
+			_pickableRec = _entity.pickableRec;
+			_rendered    = _entity.rendered;
+			_pickable    = _entity.pickable;
 		}
 	}
 
@@ -108,11 +118,19 @@ public final class Instance extends OrganizedObject<Instance> {
 	}
 	
 	public final boolean isActive() {
-		return _active;
+		return _valid;
 	}
 	
-	public final boolean isStatic() {
-		return _static;
+	public final boolean isFixed() {
+		return _fixed;
+	}
+	
+	public final boolean isPickable() {
+		return _pickable;
+	}
+	
+	public final boolean isRendered() {
+		return _rendered;
 	}
 	
 	public final Instance setId(final int id) {

@@ -145,7 +145,6 @@ public final class RenderState {
 		
 		final long absTimeNew = System.currentTimeMillis();
 		
-		
 		if(_frameIndex == -1) {
 			
 			// Prevent a huge delta in the first frame
@@ -189,8 +188,8 @@ public final class RenderState {
 		glUniform4fv(_shader.uniDirLights,   _dirLightData);
 		glUniform4fv(_shader.uniPointLights, _pointLightData);
 		
-		glUniform1i (_shader.uniDirLightCount,   _dirLights  .getSize());
-		glUniform1i (_shader.uniPointLightCount, _pointLights.getSize());
+		glUniform1i(_shader.uniDirLightCount,   _dirLights  .getSize());
+		glUniform1i(_shader.uniPointLightCount, _pointLights.getSize());
 	}
 	
 	public final <H> UpdateEvent<H> createUpdateEvent(final H host) {

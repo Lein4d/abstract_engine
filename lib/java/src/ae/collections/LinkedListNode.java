@@ -5,11 +5,11 @@ import ae.util.OrganizedObject;
 public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 	
 	static final class NodeIteratorForward<T> extends NodeIterator<T> {
-
+		
 		public NodeIteratorForward(final LinkedListNode<T> node) {
 			super(node);
 		}
-
+		
 		@Override
 		protected final void _moveToNextNode() {
 			_node = _node.next;
@@ -31,12 +31,10 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 	LinkedListNode<T> prev = null;
 	LinkedListNode<T> next = null;
 	
+	public static final ObjectPool<LinkedListNode<?>> POOL =
+		new ObjectPool<LinkedListNode<?>>(() -> new LinkedListNode<>());
+	
 	public T content = null;
-
-	// Note: linked list nodes will have uninitialized content
-	public static final <T> ObjectPool<LinkedListNode<T>> createObjectPool() {
-		return new ObjectPool<LinkedListNode<T>>(() -> new LinkedListNode<>());
-	}
 	
 	LinkedListNode() {}
 	

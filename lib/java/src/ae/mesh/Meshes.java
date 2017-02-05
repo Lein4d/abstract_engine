@@ -325,8 +325,7 @@ public final class Meshes {
 		
 		final float t = centered ? -0.5f : 0;
 		
-		return
-			createCube().
+		return createCube().
 			transformPositions(
 				new Matrix4D().scale(width, height, length).translate(t, t, t));
 	}
@@ -358,8 +357,7 @@ public final class Meshes {
     		final float   height,
     		final boolean flat) {
 		
-		return
-			createCylinder(subdivisions, flat).
+		return createCylinder(subdivisions, flat).
 			transformPositions(new Matrix4D().scale(rx, height, rz));
 	}
 	
@@ -388,8 +386,7 @@ public final class Meshes {
     		final float   height,
     		final boolean flat) {
 		
-		return
-			createCylinderShell(subdivisions, flat).
+		return createCylinderShell(subdivisions, flat).
 			transformPositions(new Matrix4D().scale(rx, height, rz));
 	}
 	
@@ -411,8 +408,7 @@ public final class Meshes {
 			final float rx,
 			final float rz) {
 		
-		return
-			createDisc(subdivisions).
+		return createDisc(subdivisions).
 			transformPositions(new Matrix4D().scale(rx, 1, rz));
 	}
 	
@@ -445,8 +441,7 @@ public final class Meshes {
 		
 		final float t = centered ? -0.5f : 0;
 		
-		return
-			createQuad().
+		return createQuad().
 			transformPositions(
 				new Matrix4D().scale(width, 1, length).translate(t, 0, t));
 	}
@@ -483,12 +478,8 @@ public final class Meshes {
     		final boolean flat) {
 		
 		// The radius is set to preserve the ratio R/rHor
-		final MeshBuilder mb =
-			createTorus(subdivisionsHor, subdivisionsVer, R / rHor, flat);
-		
-		mb.transformPositions(new Matrix4D().scale(rHor, rVer, rHor));
-		
-		return mb;
+		return createTorus(subdivisionsHor, subdivisionsVer, R / rHor, flat).
+			transformPositions(new Matrix4D().scale(rHor, rVer, rHor));
 	}
 	
 	public static final MeshBuilder createUVSphere(
@@ -526,8 +517,7 @@ public final class Meshes {
     		final float   rz,
     		final boolean flat) {
     	
-		return
-			createUVSphere(subdivisions, flat).
+		return createUVSphere(subdivisions, flat).
 			transformPositions(new Matrix4D().scale(rx, ry, rz));
 	}
 	

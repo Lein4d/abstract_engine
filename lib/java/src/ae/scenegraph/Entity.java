@@ -2,7 +2,6 @@ package ae.scenegraph;
 
 import java.util.function.Consumer;
 
-import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;
 import ae.core.RenderState;
 import ae.core.SceneGraph;
@@ -15,9 +14,10 @@ public class Entity<T> {
 		DYNAMIC_SPACE
 	}
 	
-	private final PooledLinkedList<Entity<?>>      _childrenByOrder;
-	private final PooledHashMap<String, Entity<?>> _childrenByName;
-	private final PooledLinkedList<Instance>       _instances;
+	private final PooledLinkedList<Entity<?>> _children  =
+		new PooledLinkedList<>();
+	private final PooledLinkedList<Instance>  _instances =
+		new PooledLinkedList<>();
 	
 	public final String     name;
 	public final Type       type;
@@ -29,8 +29,12 @@ public class Entity<T> {
 	
 	public final RenderState.UpdateEvent<T> onUpdate;
 	
-	public boolean rendered = true;
-	public boolean pickable = true;
+	// The ...Rec values will affect the children in a recursive manner and
+	// override the children's attributes
+	public boolean rendered    = true;
+	public boolean renderedRec = true;
+	public boolean pickable    = true;
+	public boolean pickableRec = true;
 	
 	// Attributes
 	public final ConstAttribute<Matrix4D> transformation =
@@ -54,13 +58,6 @@ public class Entity<T> {
 		this.multiInstance = multiInstance;
 		this.onUpdate      =
 			sceneGraph.engine.state.createUpdateEvent(downCasted);
-		
-		_childrenByOrder =
-			new PooledLinkedList<>(sceneGraph.nodePoolChildrenLL, false);
-		_childrenByName  =
-			new PooledHashMap   <>(sceneGraph.nodePoolChildrenHM, false);
-		_instances       =
-			new PooledLinkedList<>(sceneGraph.nodePoolInstances,  false);
 	}
 	
 	public Entity(
@@ -77,16 +74,12 @@ public class Entity<T> {
 			throw new UnsupportedOperationException(
 				"Entity belongs to different scene graph");
 		
-		_childrenByOrder.insertAtEnd(entity);
-		_childrenByName .setValue(entity.name, entity);
-		
+		_children .insertAtEnd(entity);
 		sceneGraph.invalidateGraphStructure();
 	}
 	
 	public final Instance addInstance(final Instance instance) {
-	
 		_instances.insertAtEnd(instance);
-		
 		return instance;
 	}
 	
@@ -97,11 +90,11 @@ public class Entity<T> {
 	}
 
 	public final int getChildCount() {
-		return _childrenByOrder.getSize();
+		return _children.getSize();
 	}
 
 	public final Iterable<Entity<?>> getChildren() {
-		return _childrenByOrder;
+		return _children;
 	}
 
 	public final Instance getInstance() {

@@ -5,11 +5,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import ae.collections.PooledLinkedList;
 import ae.mesh.FileFormat;
 import ae.mesh.ModelNode;
 import ae.util.Functions;
@@ -53,11 +53,10 @@ public final class StereoLitography extends FileFormat {
 			headerString + Functions.getStreamAsString(in);
 		final Matcher   facetMatcher = _REGEX_FACET .matcher(content);
 		
-		final PooledLinkedList<MatchResult> facets    =
-			Functions.getMatches(facetMatcher);
+		final List<MatchResult> facets = Functions.getMatches(facetMatcher);
 		
 		mn.name = name;
-		mn.mesh.allocateVertices(facets.getSize() * 3);
+		mn.mesh.allocateVertices(facets.size() * 3);
 		
 		int vPos = 0;
 		for(MatchResult i : facets)

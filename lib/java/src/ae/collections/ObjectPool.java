@@ -81,10 +81,10 @@ public final class ObjectPool<T extends OrganizedObject<T>>
 	
 	public final void reset() {
 		
-		ListNode<T> node;
-		
 		while(_used != null) {
-			node  = _used;
+			
+			final ListNode<T> node = _used;
+			
 			_used = (ListNode<T>)node.remove().next;
 			_free = (ListNode<T>)node.insertBefore(_free);
 		}

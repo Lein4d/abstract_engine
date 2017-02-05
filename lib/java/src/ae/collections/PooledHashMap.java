@@ -78,6 +78,10 @@ public final class PooledHashMap<K, V>
 		}
 	}
 
+	private static final ObjectPool<LinkedListNode<KeyValuePair<?, ?>>>
+		_NODE_POOL =
+		new ObjectPool<>(() -> new LinkedListNode<>(new KeyValuePair<>()));
+	
 	private LinkedListNode<KeyValuePair<K, V>>[] _buckets;
 	private float                                _maxLoadFactor = 0.5f;
 	private int                                  _resizeFactor  = 2;
@@ -130,42 +134,21 @@ public final class PooledHashMap<K, V>
 
 	@Override
 	protected final Iterator<KeyValuePair<K, V>> _getReverseIterator() {
-		// TODO: A new object is created
 		return new KvpIterator();
 	}
-	
+
 	public PooledHashMap() {
 		this(10);
 	}
 	
-	public PooledHashMap(final int bucketCount) {
-		this(PooledHashMap.<K, V>createNodePool(), false, bucketCount);
-	}
-
-	public PooledHashMap(
-			final ObjectPool<LinkedListNode<KeyValuePair<K, V>>> nodePool,
-			final boolean                                        poolSharing) {
-		
-		this(nodePool, poolSharing, 10);
-	}
-
 	@SuppressWarnings("unchecked")
-	public PooledHashMap(
-			final ObjectPool<LinkedListNode<KeyValuePair<K, V>>> nodePool,
-			final boolean                                        poolSharing,
-			final int                                            bucketCount) {
+	public PooledHashMap(final int bucketCount) {
 		
-		super(nodePool, poolSharing);
+		super((ObjectPool<LinkedListNode<KeyValuePair<K, V>>>)(Object)
+			_NODE_POOL);
 		
 		_buckets = (LinkedListNode<KeyValuePair<K, V>>[])
 			new LinkedListNode<?>[bucketCount];
-	}
-
-	public static final <K, V>
-			ObjectPool<LinkedListNode<KeyValuePair<K, V>>> createNodePool() {
-		
-		return
-			new ObjectPool<>(() -> new LinkedListNode<>(new KeyValuePair<>()));
 	}
 	
 	public final boolean deleteKey(final K key) {
@@ -226,7 +209,6 @@ public final class PooledHashMap<K, V>
 
 	@Override
 	public final Iterator<KeyValuePair<K, V>> iterator() {
-		// TODO: Hier wird ein neues Objekt angelegt
 		return new KvpIterator();
 	}
 	

@@ -4,7 +4,6 @@ import java.io.PrintStream;
 import java.util.Random;
 import java.util.function.Consumer;
 
-import ae.collections.LinkedListNode;
 import ae.collections.ObjectPool;
 import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;
@@ -90,9 +89,12 @@ public class SceneGraph {
 		new ObjectPool<>(() -> new UnrollError());
 	
 	// Some entities are stored in separate lists
-	private final PooledLinkedList<Camera> _cameras = new PooledLinkedList<>();
-	private final PooledLinkedList<Model>  _models  = new PooledLinkedList<>();
-	private final PooledLinkedList<Marker> _markers = new PooledLinkedList<>();
+	private final PooledLinkedList<Camera>       _cameras   =
+		new PooledLinkedList<>();
+	private final PooledLinkedList<Model>        _models    =
+		new PooledLinkedList<>();
+	private final PooledLinkedList<Marker>       _markers   =
+		new PooledLinkedList<>();
 	private final PooledLinkedList<DynamicSpace> _dynSpaces =
 		new PooledLinkedList<>();
 	
@@ -111,7 +113,7 @@ public class SceneGraph {
 			final Instance  parent        = instance.getParent();
 			final int       oldErrorCount = _unrollErrors.getSize();
 			
-			if(entity.noInheritedTF && parent != null && !parent.isStatic())
+			if(entity.noInheritedTF && parent != null && !parent.isFixed())
 				_unrollErrors.provide()._set(instance, _ERROR_NOT_STATIC);
 			
 			// Deactivate the instance in case of errors
@@ -152,25 +154,12 @@ public class SceneGraph {
 			for(int i = 0; i < instance.getLevel(); i++) out.print("|\t");
 			
 			out.print("[" + entity.type + "] " + entity.name);
-			if(instance.isStatic()) out.print(" [S]");
+			if(instance.isFixed()) out.print(" [S]");
 			out.println();
 		};
 	
 	private Instance _rootInstance = null;
 	
-	// Node pool for the children linked list of an entity
-	public final ObjectPool<LinkedListNode<Entity<?>>> nodePoolChildrenLL =
-		PooledLinkedList.<Entity<?>>createNodePool();
-	
-	// Node pool for the children hashmap of an entity
-	public final ObjectPool<LinkedListNode<PooledHashMap.KeyValuePair
-			<String, Entity<?>>>> nodePoolChildrenHM =
-		PooledHashMap.<String, Entity<?>>createNodePool();
-
-	// Node pool for the instance list of an entity
-	public final ObjectPool<LinkedListNode<Instance>> nodePoolInstances =
-		PooledLinkedList.<Instance>createNodePool();
-
 	public final AbstractEngine engine;
 	public final Entity<?>      root;
 	

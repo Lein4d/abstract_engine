@@ -1,6 +1,8 @@
 package ae.material;
 
-import ae.collections.PooledHashMap;
+import java.util.HashMap;
+import java.util.Map;
+
 import ae.core.AbstractEngine;
 import ae.core.Texture;
 import ae.math.Vector3D;
@@ -118,13 +120,9 @@ public final class StandardMaterials {
 	private static final int _BIT_EMISSIVE   = 0x08;
 	private static final int _BIT_COLOR_MASK = 0x10;
 
-	private final PooledHashMap<Material, StandardMaterial>
-		_materialsByBackend = new PooledHashMap<>(64);
-	private final PooledHashMap<Integer, StandardMaterial>
-		_materialsById      = new PooledHashMap<>(64);
-	
-	private final StandardMaterial[] _tempSMaterialArray =
-		new StandardMaterial[1];
+	private final Map<Material, StandardMaterial>
+		_materialsByBackend = new HashMap<>(64);
+	private final StandardMaterial[] _materialsById = new StandardMaterial[32];
 	
 	public final AbstractEngine engine;
 	
@@ -147,20 +145,20 @@ public final class StandardMaterials {
 		if(normalMap) materialId |= _BIT_NORMAL_MAP;
 		if(emissive)  materialId |= _BIT_EMISSIVE;
 		
-		if(!_materialsById.hasKey(materialId)) {
+		if(_materialsById[materialId] == null) {
 			
 			final StandardMaterial newMaterial = new StandardMaterial(
 				diffuse, lighten, normalMap, emissive, colorMask);
 			
-			_materialsByBackend.setValue(newMaterial._material, newMaterial);
-			_materialsById     .setValue(materialId,            newMaterial);
+			_materialsById[materialId] = newMaterial;
+			_materialsByBackend.put(newMaterial._material, newMaterial);
 		}
 		
-		return _materialsById.getValue(materialId)._material;
+		return _materialsById[materialId]._material;
 	}
 	
 	public final boolean isStandard(final Material material) {
-		return _materialsByBackend.hasKey(material);
+		return _materialsByBackend.containsKey(material);
 	}
 	
 	public final boolean setMaterialData(
@@ -168,10 +166,10 @@ public final class StandardMaterials {
 		 	final Textures textures,
 		 	final Vector3D colorMask) {
 		
-		if(!_materialsByBackend.tryGetValue(material, _tempSMaterialArray))
-			return false;
+		final StandardMaterial sMaterial =
+			_materialsByBackend.getOrDefault(material, null);
 		
-		final StandardMaterial sMaterial = _tempSMaterialArray[0];
+		if(sMaterial == null) return false;
 		
 		if(textures  != null) sMaterial._setTextures (textures);
 		if(colorMask != null) sMaterial._setColorMask(colorMask);
