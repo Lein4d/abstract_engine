@@ -7,7 +7,7 @@ import ae.core.RenderState;
 import ae.core.SceneGraph;
 import ae.math.Matrix4D;
 
-public class Entity<T> {
+public class Entity<This> {
 	
 	public enum Type {
 		NONE, CAMERA, MODEL, DIRECTIONAL_LIGHT, POINT_LIGHT, MARKER,
@@ -21,13 +21,13 @@ public class Entity<T> {
 	
 	public final String     name;
 	public final Type       type;
-	public final T          downCasted;
+	public final This       downCasted;
 	public final SceneGraph sceneGraph;
 	public final boolean    noTF;
 	public final boolean    noInheritedTF;
 	public final boolean    multiInstance;
 	
-	public final RenderState.UpdateEvent<T> onUpdate;
+	public final RenderState.UpdateEvent<This> onUpdate;
 	
 	// The ...Rec values will affect the children in a recursive manner and
 	// override the children's attributes
@@ -51,7 +51,7 @@ public class Entity<T> {
 		
 		this.type          = type;
 		this.name          = sceneGraph.addEntity(this, name);
-		this.downCasted    = (T)this;
+		this.downCasted    = (This)this;
 		this.sceneGraph    = sceneGraph;
 		this.noTF          = noTF;
 		this.noInheritedTF = noInheritedTF;
@@ -140,8 +140,8 @@ public class Entity<T> {
 		_instances.clear();
 	}
 	
-	public final T setUpdateCallback(
-			final Consumer<RenderState.UpdateEvent<T>> callback) {
+	public final This setUpdateCallback(
+			final Consumer<RenderState.UpdateEvent<This>> callback) {
 		
 		onUpdate.addListener(callback);
 		return downCasted;

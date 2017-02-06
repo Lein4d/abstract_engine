@@ -12,7 +12,7 @@ import ae.util.OrganizedObject;
 
 public final class ObjectPicker {
 	
-	private final class Job extends OrganizedObject<Job> {
+	private static final class Job extends OrganizedObject<Job> {
 		private Screen.Layer   _layer;
 		private int            _x;
 		private int            _y;
@@ -51,14 +51,15 @@ public final class ObjectPicker {
     	"\tout_color = vec4(var_position, u_objectId);\n" +
     	"}\n";
 	
+	private static final ObjectPool<Job> _JOB_POOL =
+		new ObjectPool<>(() -> new Job()); 
+	
 	private final int              _fboLayerIndex;
 	private final float[]          _pixel        = new float[4];
 	private final Vector3D         _modelCoords  = Vector3D.createStatic();
 	private final Vector3D         _cameraCoords = Vector3D.createStatic();
 	private final Vector3D         _worldCoords  = Vector3D.createStatic();
 	private final PooledQueue<Job> _jobs         = new PooledQueue<>();
-	private final ObjectPool<Job>  _jobPool      =
-		new ObjectPool<>(() -> new Job());
 	
 	private int      _texture  = 0;
 	private Instance _instance = null;
@@ -153,6 +154,8 @@ public final class ObjectPicker {
 				
 				job._callback.onPicked(null, null, null, null);
 			}
+			
+			_JOB_POOL.free(job);
 		}
 	}
 	
@@ -162,7 +165,7 @@ public final class ObjectPicker {
 			final int            y,
 			final PickedCallback callback) {
 		
-		final Job job = _jobPool.provide();
+		final Job job = _JOB_POOL.provide();
 		
 		job._layer    = layer;
 		job._x        = x;

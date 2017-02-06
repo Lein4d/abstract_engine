@@ -3,7 +3,8 @@ package ae.collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public final class PooledLinkedList<T> extends PooledCollection<T> {
+public final class PooledLinkedList<T>
+	extends PooledCollection<PooledLinkedList<T>, T> {
 	
 	private LinkedListNode<T> _first = null;
 	private LinkedListNode<T> _last  = null;
@@ -12,7 +13,9 @@ public final class PooledLinkedList<T> extends PooledCollection<T> {
 		
 		final LinkedListNode<T> node = _provideNode();
 		
+		//node.resetListOnly();
 		node.content = element;
+		
 		if(getSize() == 1) _first = _last = node;
 		
 		return node;

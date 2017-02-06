@@ -44,7 +44,7 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 	
 	final LinkedListNode<T> insertAfter(final LinkedListNode<T> node) {
 		
-		if(node == null) return resetList();
+		if(node == null) return resetListOnly();
 
 		prev      = node;
 		next      = node.next;
@@ -55,7 +55,7 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 	
 	final LinkedListNode<T> insertBefore(final LinkedListNode<T> node) {
 		
-		if(node == null) return resetList();
+		if(node == null) return resetListOnly();
 		
 		prev      = node.prev;
 		next      = node;
@@ -80,13 +80,14 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 		return this;
 	}
 	
-	final LinkedListNode<T> resetContent() {
-		content = null;
+	final LinkedListNode<T> resetListOnly() {
+		prev = next = null;
 		return this;
 	}
 	
-	final LinkedListNode<T> resetList() {
-		prev = next = null;
-		return this;
+	@Override
+	public final void pooledInit() {
+		super.pooledInit();
+		resetListOnly();
 	}
 }

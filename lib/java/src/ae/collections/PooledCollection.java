@@ -2,7 +2,10 @@ package ae.collections;
 
 import java.util.Iterator;
 
-public abstract class PooledCollection<T> implements Iterable<T> {
+import ae.util.OrganizedObject;
+
+public abstract class
+	PooledCollection<This extends PooledCollection<This, T>, T> extends OrganizedObject<This> implements Iterable<T> {
 	
 	// The size needs to be stored separately as the node pool may be shared
 	// between multiple collections
@@ -42,6 +45,8 @@ public abstract class PooledCollection<T> implements Iterable<T> {
 		boolean changed = false;
 		
 		for(T i : src) if(_addSingle(i)) changed = true;
+		if(changed) _propagateChange();
+		
 		return changed;
 	}
 	
@@ -51,8 +56,19 @@ public abstract class PooledCollection<T> implements Iterable<T> {
 			return false;
 		} else {
 			_clear();
+			_propagateChange();
 			return true;
 		}
+	}
+
+	@Override
+	public void finalize() {
+		clear();
+	}
+
+	@Override
+	public void pooledFinalize() {
+		clear();
 	}
 	
 	public int getSize() {

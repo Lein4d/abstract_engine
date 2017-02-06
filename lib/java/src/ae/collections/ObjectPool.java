@@ -38,7 +38,7 @@ public final class ObjectPool<T extends OrganizedObject<T>>
 		
 		final ListNode<T> node = object.getPoolNode();
 		
-		object.finalizePooled();
+		object.pooledFinalize();
 		node  .remove();
 		
 		if(node == _used) _used = (ListNode<T>)node.next;
@@ -57,7 +57,6 @@ public final class ObjectPool<T extends OrganizedObject<T>>
 	
 	@Override
 	public final Iterator<T> iterator() {
-		// TODO: Hier wird ein neues Objekt angelegt
 		return new LinkedListNode.NodeIteratorForward<T>(_used);
 	}
 	
@@ -75,6 +74,8 @@ public final class ObjectPool<T extends OrganizedObject<T>>
 		
 		_used = (ListNode<T>)node.insertBefore(_used);
 		_size++;
+		
+		node.content.pooledInit();
 		
 		return node.content;
 	}

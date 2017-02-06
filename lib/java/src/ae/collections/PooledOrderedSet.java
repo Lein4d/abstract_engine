@@ -2,7 +2,8 @@ package ae.collections;
 
 import java.util.Iterator;
 
-public final class PooledOrderedSet<T> extends PooledCollection<T> {
+public final class PooledOrderedSet<T>
+	extends PooledCollection<PooledOrderedSet<T>, T> {
 	
 	private final PooledHashMap<T, LinkedListNode<T>> _hashMap;
 	private final PooledLinkedList<T>                 _list;

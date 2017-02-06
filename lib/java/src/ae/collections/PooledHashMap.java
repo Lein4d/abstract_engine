@@ -3,7 +3,8 @@ package ae.collections;
 import java.util.Iterator;
 
 public final class PooledHashMap<K, V>
-		extends PooledCollection<PooledHashMap.KeyValuePair<K, V>> {
+	extends PooledCollection<
+		PooledHashMap<K, V>, PooledHashMap.KeyValuePair<K, V>> {
 	
 	public static final class KeyValuePair<K, V> {
 		
