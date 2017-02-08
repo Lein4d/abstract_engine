@@ -3,7 +3,7 @@ package ae.collections;
 public final class PooledQueue<T> {
 	
 	private final PooledLinkedList<T> _list = new PooledLinkedList<>();
-
+	
 	public final T getNext() {
 		return _list.getFirst();
 	}

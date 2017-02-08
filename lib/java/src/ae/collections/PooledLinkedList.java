@@ -3,19 +3,20 @@ package ae.collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public final class PooledLinkedList<T>
-	extends PooledCollection<PooledLinkedList<T>, T> {
+public final class PooledLinkedList<T> extends PooledCollection<T> {
+	
+	private static final NodePool _NODE_POOL = new NodePool(4, true, 64, true);
 	
 	private LinkedListNode<T> _first = null;
 	private LinkedListNode<T> _last  = null;
 
 	private final LinkedListNode<T> _insert(final T element) {
 		
-		final LinkedListNode<T> node = _provideNode();
+		final LinkedListNode<T> node = _NODE_POOL.provide(element);
 		
-		//node.resetListOnly();
 		node.content = element;
 		
+		_size++;
 		if(getSize() == 1) _first = _last = node;
 		
 		return node;
@@ -58,7 +59,8 @@ public final class PooledLinkedList<T>
 		if(node == _first) _first = node.next;
 		if(node == _last)  _last  = node.prev;
 		
-		_freeNode(node);
+		_NODE_POOL.free(node);
+		_size--;
 		
 		return true;
 	}
@@ -75,19 +77,15 @@ public final class PooledLinkedList<T>
 		// Cannot reset the whole node pool, as there might be nodes used by
 		// other collections
 		LinkedListNode<T> node = _first;
-		while(node != null) node = _freeNode(node).next;
+		while(node != null) node = _NODE_POOL.free(node).next;
 		
 		_first = _last = null;
+		_size  = 0;
 	}
 
 	@Override
 	protected final Iterator<T> _getReverseIterator() {
 		return new LinkedListNode.NodeIteratorReverse<T>(_last);
-	}
-	
-	@SuppressWarnings("unchecked")
-	public PooledLinkedList() {
-		super((ObjectPool<LinkedListNode<T>>)(Object)LinkedListNode.POOL);
 	}
 	
 	public final T getFirst() {

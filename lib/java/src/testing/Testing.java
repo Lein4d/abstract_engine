@@ -2,8 +2,6 @@ package testing;
 
 import static org.lwjgl.glfw.GLFW.*;
 
-import ae.collections.ObjectPool;
-import ae.collections.PooledLinkedList;
 import ae.core.AbstractEngine;
 import ae.core.SceneGraph;
 import ae.core.Texture;
@@ -23,142 +21,11 @@ import ae.scenegraph.entities.DynamicSpace;
 import ae.scenegraph.entities.Marker;
 import ae.scenegraph.entities.Model;
 import ae.scenegraph.entities.PointLight;
-import ae.util.OrganizedObject;
 import ae.util.Wrapper;
 
 public final class Testing {
 	
-	private static final class PooledInteger
-			extends OrganizedObject<PooledInteger> {
-		
-		@SuppressWarnings("unused")
-		public int value;
-		
-		public PooledInteger(
-				final int value) {
-			
-			this.value = value;
-		}
-	}
-	
-	private static final void log(
-			final String text) {
-		
-		System.out.println(" > " + text);
-	}
-	
-	private static final void logAction(
-			final String description) {
-		
-		log("[ACTION] " + description);
-	}
-	
-	private static final void logConstructor() {
-    	
-		logAction("[CONSTRUCTOR]");
-    }
-
-	private static final void logTest(
-			final String description) {
-		
-		log("[TEST]   " + description);
-	}
-	
-	private static final boolean testObjectPool() {
-		
-		System.out.println("Testing ObjectPool<PooledInteger>...");
-		
-		try {
-
-			logConstructor();
-    		
-    		final ObjectPool<PooledInteger> list =
-    			new ObjectPool<>(() -> new PooledInteger(0));
-    		final PooledInteger[] integers = new PooledInteger[10];
-
-    		logAction("allocate 10 objects");
-    		
-    		for(int i = 0; i < 10; i++) {
-    			integers[i]       = list.provide();
-    			integers[i].value = i;
-    		}
-    		
-    		logTest("size == 10");
-    		if(list.getSize() != 10) return false;
-
-    		logTest("capacity == 10");
-    		if(list.getCapacity() != 10) return false;
-    		
-    		logAction("free last object");
-    		list.free(integers[integers.length - 1]);
-
-    		logTest("size == 9");
-    		if(list.getSize() != 9) return false;
-
-    		logTest("capacity == 10");
-    		if(list.getCapacity() != 10) return false;
-    		
-		} catch(Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-		
-		return true;
-	}
-	
-	private static final boolean testPooledLinkedList() {
-		
-		System.out.println("Testing PooledLinkedList<Integer>...");
-		
-		try {
-	
-			logConstructor();
-			
-			final PooledLinkedList<Integer> list = new PooledLinkedList<>();
-			
-			logAction("insert 10 elements at end");
-			
-			for(int i = 0; i < 10; i++) list.insertAtEnd(i);
-			
-			logTest("list.getFirst() == 0");
-			if(list.getFirst() != 0) return false;
-			
-			logTest("list.getLast() == 9");
-			if(list.getLast() != 9) return false;
-			
-			logAction("iterate all elements");
-			
-			int counter = 0;
-			logTest("list[i] == i");
-			for(int i : list) {
-				if(i != counter) return false;
-	    		counter++;
-			}
-			
-		} catch(Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-		
-		return true;
-	}
-	
-	public static final void main(
-			final String[] args) {
-		
-		int testCount    = 0;
-		int successCount = 0;
-		
-		if(testObjectPool()) successCount++;
-		testCount++;
-		
-		if(testPooledLinkedList()) successCount++;
-		testCount++;
-		
-		System.out.println();
-		System.out.println(
-			"Testing complete: " + successCount + " of " + testCount +
-			" tests successful!");
+	public static final void main(final String[] args) {
 		
 		final AbstractEngine engine = new AbstractEngine(
 			"Abstract Engine " + AbstractEngine.VERSION_STRING,

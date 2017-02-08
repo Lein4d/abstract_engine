@@ -4,7 +4,7 @@ import java.io.PrintStream;
 import java.util.Random;
 import java.util.function.Consumer;
 
-import ae.collections.ObjectPool;
+import ae.collections.GrowingObjectPool;
 import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;
 import ae.math.Matrix4D;
@@ -81,12 +81,12 @@ public class SceneGraph {
 		new PooledHashMap<>();
 	private final PooledHashMap<Integer, Instance> _instances    =
 		new PooledHashMap<>();
-	private final ObjectPool<Instance>             _instancePool =
-		new ObjectPool<>(() -> new Instance());
+	private final GrowingObjectPool<Instance>             _instancePool =
+		new GrowingObjectPool<>(() -> new Instance());
 	
 	// The errors during graph unrolling are stored here
-	private final ObjectPool<UnrollError> _unrollErrors =
-		new ObjectPool<>(() -> new UnrollError());
+	private final GrowingObjectPool<UnrollError> _unrollErrors =
+		new GrowingObjectPool<>(() -> new UnrollError());
 	
 	// Some entities are stored in separate lists
 	private final PooledLinkedList<Camera>       _cameras   =
@@ -111,13 +111,14 @@ public class SceneGraph {
 			
 			final Entity<?> entity        = instance.getEntity();
 			final Instance  parent        = instance.getParent();
-			final int       oldErrorCount = _unrollErrors.getSize();
+			final int       oldErrorCount = _unrollErrors.getUsedObjectCount();
 			
 			if(entity.noInheritedTF && parent != null && !parent.isFixed())
 				_unrollErrors.provide()._set(instance, _ERROR_NOT_STATIC);
 			
 			// Deactivate the instance in case of errors
-			if(_unrollErrors.getSize() > oldErrorCount) instance.deactivate();
+			if(_unrollErrors.getUsedObjectCount() > oldErrorCount)
+				instance.deactivate();
 			
 			if(instance.isActive()) {
 				switch(entity.type) {
@@ -202,14 +203,14 @@ public class SceneGraph {
 		// Check for graph related errors
 		for(Entity<?> i : _entities.values) {
 			
-			final int oldErrorCount = _unrollErrors.getSize();
+			final int oldErrorCount = _unrollErrors.getUsedObjectCount();
 			
 			if(i.getInstanceCount() > 1 && !i.multiInstance)
 				_unrollErrors.provide()._set(i, _ERROR_MULTI_INSTANCE);
 			
 			// Check whether some errors occurred on this entity and deactivate
 			// its instances
-			if(_unrollErrors.getSize() > oldErrorCount)
+			if(_unrollErrors.getUsedObjectCount() > oldErrorCount)
 				for(Instance j : i.getInstances()) j.deactivate();
 		}
 
@@ -230,10 +231,10 @@ public class SceneGraph {
 		pointLights.addAll(_pointLightNodes);
 		
 		// Don't print anything if there are no errors
-		if(_unrollErrors.getSize() > 0) {
+		if(_unrollErrors.getUsedObjectCount() > 0) {
     		
     		engine.err.println(
-    			_unrollErrors.getSize() +
+    			_unrollErrors.getUsedObjectCount() +
     			" errors occured during scene graph unrolling (frame " +
     			engine.state.getFrameIndex() + ")");
     		

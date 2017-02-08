@@ -8,13 +8,12 @@ import ae.collections.PooledOrderedSet;
 public abstract class OrganizedObject<This extends OrganizedObject<This>> {
 	
 	private static final ObjectPool<PooledOrderedSet<?>> _POS_POOL =
-		new ObjectPool<PooledOrderedSet<?>>(() -> new PooledOrderedSet<>());
+		new ObjectPool<>(4, false, 64, () -> new PooledOrderedSet<>());
 	
 	@SuppressWarnings("unchecked")
 	private final ObjectPool<PooledOrderedSet<Consumer<This>>> _pool =
 		(ObjectPool<PooledOrderedSet<Consumer<This>>>)(Object)_POS_POOL;
 	
-	private ObjectPool.ListNode<This>        _poolNode  = null;
 	private PooledOrderedSet<Consumer<This>> _listeners = null;
 	
 	@SuppressWarnings("unchecked")
@@ -32,10 +31,6 @@ public abstract class OrganizedObject<This extends OrganizedObject<This>> {
 		return _listeners != null ? _listeners.getSize() : 0;
 	}
 	
-	public final ObjectPool.ListNode<This> getPoolNode() {
-		return _poolNode;
-	}
-
 	// Free resource like you would do in 'finalize()'
 	// References should not be deleted as they may be used after freeing this
 	// object
@@ -49,9 +44,5 @@ public abstract class OrganizedObject<This extends OrganizedObject<This>> {
 	
 	public final void removeListener(final Consumer<This> listener) {
 		if(_listeners != null) _listeners.remove(listener);
-	}
-	
-	public final void setPoolNode(final ObjectPool.ListNode<This> poolNode) {
-		_poolNode = poolNode;
 	}
 }

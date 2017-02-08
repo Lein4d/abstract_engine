@@ -52,7 +52,7 @@ public final class ObjectPicker {
     	"}\n";
 	
 	private static final ObjectPool<Job> _JOB_POOL =
-		new ObjectPool<>(() -> new Job()); 
+		new ObjectPool<>(true, () -> new Job()); 
 	
 	private final int              _fboLayerIndex;
 	private final float[]          _pixel        = new float[4];

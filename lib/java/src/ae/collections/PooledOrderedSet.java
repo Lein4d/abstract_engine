@@ -2,11 +2,13 @@ package ae.collections;
 
 import java.util.Iterator;
 
-public final class PooledOrderedSet<T>
-	extends PooledCollection<PooledOrderedSet<T>, T> {
+public final class PooledOrderedSet<T> extends PooledCollection<T> {
 	
 	private final PooledHashMap<T, LinkedListNode<T>> _hashMap;
 	private final PooledLinkedList<T>                 _list;
+	
+	public final double maxLoadFactor;
+	public final int    resizeFactor;
 	
 	@SuppressWarnings("unchecked")
 	private final LinkedListNode<T>[] _tempNode = new LinkedListNode[1];
@@ -29,10 +31,10 @@ public final class PooledOrderedSet<T>
 			final PooledHashMap<T, LinkedListNode<T>> backendSet,
 			final PooledLinkedList<T>                 backendList) {
 		
-		super(null);
-		
-		_hashMap = backendSet;
-		_list    = backendList;
+		_hashMap      = backendSet;
+		_list         = backendList;
+		maxLoadFactor = backendSet.maxLoadFactor;
+		resizeFactor  = backendSet.resizeFactor;
 	}
 	
 	@Override
@@ -45,16 +47,8 @@ public final class PooledOrderedSet<T>
 		return _hashMap.hasKey(element);
 	}
 
-	public final float getLoadFactor() {
+	public final double getLoadFactor() {
 		return _hashMap.getLoadFactor();
-	}
-	
-	public final float getMaxLoadFactor() {
-		return _hashMap.getMaxLoadFactor();
-	}
-	
-	public final int getResizeFactor() {
-		return _hashMap.getResizeFactor();
 	}
 	
 	@Override
@@ -133,15 +127,7 @@ public final class PooledOrderedSet<T>
 		
 		return keyExists;
 	}
-
-	public final void setMaxLoadFactor(final float maxLoadFactor) {
-		_hashMap.setMaxLoadFactor(maxLoadFactor);
-	}
 	
-	public final void setResizeFactor(final int resizeFactor) {
-		_hashMap.setResizeFactor(resizeFactor);
-	}
-
 	public final boolean tryInsertAfter(
 			final T element,
 			final T refElement) {

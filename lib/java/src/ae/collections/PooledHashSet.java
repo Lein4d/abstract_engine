@@ -2,12 +2,14 @@ package ae.collections;
 
 import java.util.Iterator;
 
-public final class PooledHashSet<T>
-	extends PooledCollection<PooledHashSet<T>, T> {
+public final class PooledHashSet<T> extends PooledCollection<T> {
 
-	// Die Value-Komponente wird immer auf 'null' gesetzt
+	// The value-component is always set to 'null'
 	private final PooledHashMap<T, Object> _hashMap;
 
+	public final double maxLoadFactor;
+	public final int    resizeFactor;
+	
 	@Override
 	protected final boolean _addSingle(final T element) {
 		return insert(element);
@@ -23,10 +25,12 @@ public final class PooledHashSet<T>
 	}
 	
 	public PooledHashSet(final PooledHashMap<T, Object> backend) {
-		super(null);
-		_hashMap = backend;
+		_hashMap      = backend;
+		maxLoadFactor = backend.maxLoadFactor;
+		resizeFactor  = backend.resizeFactor;
 	}
 	
+	@Override
 	public final boolean clear() {
 		return _hashMap.clear();
 	}
@@ -35,16 +39,8 @@ public final class PooledHashSet<T>
 		return _hashMap.hasKey(element);
 	}
 
-	public final float getLoadFactor() {
+	public final double getLoadFactor() {
 		return _hashMap.getLoadFactor();
-	}
-	
-	public final float getMaxLoadFactor() {
-		return _hashMap.getMaxLoadFactor();
-	}
-	
-	public final int getResizeFactor() {
-		return _hashMap.getResizeFactor();
 	}
 	
 	@Override
@@ -63,14 +59,6 @@ public final class PooledHashSet<T>
 	
 	public final boolean remove(final T element) {
 		return _hashMap.deleteKey(element);
-	}
-
-	public final void setMaxLoadFactor(final float maxLoadFactor) {
-		_hashMap.setMaxLoadFactor(maxLoadFactor);
-	}
-	
-	public final void setResizeFactor(final int resizeFactor) {
-		_hashMap.setResizeFactor(resizeFactor);
 	}
 
 	@Override

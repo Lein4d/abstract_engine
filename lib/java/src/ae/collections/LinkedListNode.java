@@ -1,8 +1,6 @@
 package ae.collections;
 
-import ae.util.OrganizedObject;
-
-public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
+public class LinkedListNode<T> {
 	
 	static final class NodeIteratorForward<T> extends NodeIterator<T> {
 		
@@ -30,9 +28,6 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 	
 	LinkedListNode<T> prev = null;
 	LinkedListNode<T> next = null;
-	
-	public static final ObjectPool<LinkedListNode<?>> POOL =
-		new ObjectPool<LinkedListNode<?>>(() -> new LinkedListNode<>());
 	
 	public T content = null;
 	
@@ -83,11 +78,5 @@ public class LinkedListNode<T> extends OrganizedObject<LinkedListNode<T>> {
 	final LinkedListNode<T> resetListOnly() {
 		prev = next = null;
 		return this;
-	}
-	
-	@Override
-	public final void pooledInit() {
-		super.pooledInit();
-		resetListOnly();
 	}
 }
