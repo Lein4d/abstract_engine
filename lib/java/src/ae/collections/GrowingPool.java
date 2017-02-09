@@ -2,9 +2,10 @@ package ae.collections;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public final class GrowingObjectPool<T> implements Iterable<T> {
+public final class GrowingPool<T> extends Pool<T> implements Iterable<T> {
 	
 	private final class PoolIterator implements Iterator<T> {
 
@@ -27,28 +28,35 @@ public final class GrowingObjectPool<T> implements Iterable<T> {
 	private int      _freePos     = 0;
 	private int      _objectCount = 0;
 	
-	public final Supplier<T> creator;
-	
-	public GrowingObjectPool(final Supplier<T> creator) {
-		this(64, creator);
-	}
-	
-	public GrowingObjectPool(
-			final int         initialCapacity,
-			final Supplier<T> creator) {
+	public GrowingPool(
+    		final Supplier<T> creator,
+    		final Consumer<T> preparator,
+    		final Consumer<T> finalizer) {
 		
-		this._pool   = new Object[initialCapacity];
-		this.creator = creator;
+		this(64, creator, preparator, finalizer);
 	}
 	
+	public GrowingPool(
+			final int         initialCapacity,
+			final Supplier<T> creator,
+			final Consumer<T> preparator,
+			final Consumer<T> finalizer) {
+		
+		super(creator, preparator, finalizer);
+		this._pool = new Object[initialCapacity];
+	}
+	
+	@Override
 	public final int getCapacity() {
 		return _pool.length;
 	}
-	
+
+	@Override
 	public final int getUnusedObjectCount() {
 		return _objectCount - getUsedObjectCount();
 	}
-	
+
+	@Override
 	public final int getUsedObjectCount() {
 		return _freePos;
 	}
@@ -57,8 +65,8 @@ public final class GrowingObjectPool<T> implements Iterable<T> {
 	public final Iterator<T> iterator() {
 		return new PoolIterator();
 	}
-	
-	@SuppressWarnings("unchecked")
+
+	@Override
 	public final T provide() {
 		
 		// Check whether there are free slots left and resize if not
@@ -73,14 +81,16 @@ public final class GrowingObjectPool<T> implements Iterable<T> {
 		
 		// Ensure the current slot contains an object
 		if(_pool[_freePos] == null) {
-			_pool[_freePos] = creator.get();
+			_pool[_freePos] = _create();
 			_objectCount++;
 		}
 		
-		return (T)_pool[_freePos++];
+		return _prepare(_pool[_freePos++]);
 	}
 	
+	@Override
 	public final void reset() {
+		for(Object i : _pool) if(i != null) _finalize(i);
 		_freePos = 0;
 	}
 }

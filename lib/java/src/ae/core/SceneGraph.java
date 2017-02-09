@@ -4,7 +4,7 @@ import java.io.PrintStream;
 import java.util.Random;
 import java.util.function.Consumer;
 
-import ae.collections.GrowingObjectPool;
+import ae.collections.GrowingPool;
 import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;
 import ae.math.Matrix4D;
@@ -81,12 +81,12 @@ public class SceneGraph {
 		new PooledHashMap<>();
 	private final PooledHashMap<Integer, Instance> _instances    =
 		new PooledHashMap<>();
-	private final GrowingObjectPool<Instance>             _instancePool =
-		new GrowingObjectPool<>(() -> new Instance());
+	private final GrowingPool<Instance>            _instancePool =
+		new GrowingPool<>(() -> new Instance(), null, null);
 	
 	// The errors during graph unrolling are stored here
-	private final GrowingObjectPool<UnrollError> _unrollErrors =
-		new GrowingObjectPool<>(() -> new UnrollError());
+	private final GrowingPool<UnrollError> _unrollErrors =
+		new GrowingPool<>(() -> new UnrollError(), null, null);
 	
 	// Some entities are stored in separate lists
 	private final PooledLinkedList<Camera>       _cameras   =

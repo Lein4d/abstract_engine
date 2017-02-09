@@ -2,17 +2,17 @@ package ae.util;
 
 import java.util.function.Consumer;
 
-import ae.collections.ObjectPool;
+import ae.collections.DynamicPool;
 import ae.collections.PooledOrderedSet;
 
 public abstract class OrganizedObject<This extends OrganizedObject<This>> {
 	
-	private static final ObjectPool<PooledOrderedSet<?>> _POS_POOL =
-		new ObjectPool<>(4, false, 64, () -> new PooledOrderedSet<>());
+	private static final DynamicPool<PooledOrderedSet<?>> _POS_POOL =
+		DynamicPool.createCollectionPool(() -> new PooledOrderedSet<>());
 	
 	@SuppressWarnings("unchecked")
-	private final ObjectPool<PooledOrderedSet<Consumer<This>>> _pool =
-		(ObjectPool<PooledOrderedSet<Consumer<This>>>)(Object)_POS_POOL;
+	private final DynamicPool<PooledOrderedSet<Consumer<This>>> _pool =
+		(DynamicPool<PooledOrderedSet<Consumer<This>>>)(Object)_POS_POOL;
 	
 	private PooledOrderedSet<Consumer<This>> _listeners = null;
 	

@@ -5,14 +5,16 @@ import java.util.NoSuchElementException;
 
 public final class PooledLinkedList<T> extends PooledCollection<T> {
 	
-	private static final NodePool _NODE_POOL = new NodePool(4, true, 64, true);
+	private static final DynamicPool<LinkedListNode<?>> _NODE_POOL =
+		DynamicPool.createNodePool(true, () -> new LinkedListNode<>());
 	
 	private LinkedListNode<T> _first = null;
 	private LinkedListNode<T> _last  = null;
 
 	private final LinkedListNode<T> _insert(final T element) {
 		
-		final LinkedListNode<T> node = _NODE_POOL.provide(element);
+		@SuppressWarnings("unchecked")
+		final LinkedListNode<T> node = (LinkedListNode<T>)_NODE_POOL.provide();
 		
 		node.content = element;
 		
@@ -77,7 +79,10 @@ public final class PooledLinkedList<T> extends PooledCollection<T> {
 		// Cannot reset the whole node pool, as there might be nodes used by
 		// other collections
 		LinkedListNode<T> node = _first;
-		while(node != null) node = _NODE_POOL.free(node).next;
+		while(node != null) {
+			_NODE_POOL.free(node);
+			node = node.next;
+		}
 		
 		_first = _last = null;
 		_size  = 0;

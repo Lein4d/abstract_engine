@@ -91,8 +91,8 @@ public final class PooledHashMap<K, V>
 		}
 	}
 	
-	private static final ObjectPool<KeyValuePair<?, ?>> _KVP_POOL =
-		new ObjectPool<>(4, true, 64, () -> new KeyValuePair<>());
+	private static final DynamicPool<KeyValuePair<?, ?>> _KVP_POOL =
+		new DynamicPool<>(true, () -> new KeyValuePair<>(), null, null);
 	
 	private Object [] _keys;
 	private Object [] _values;

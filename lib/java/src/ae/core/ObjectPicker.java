@@ -4,7 +4,7 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.*;
 import static org.lwjgl.opengl.GL30.*;
 
-import ae.collections.ObjectPool;
+import ae.collections.DynamicPool;
 import ae.collections.PooledQueue;
 import ae.math.Vector3D;
 import ae.scenegraph.Instance;
@@ -51,8 +51,8 @@ public final class ObjectPicker {
     	"\tout_color = vec4(var_position, u_objectId);\n" +
     	"}\n";
 	
-	private static final ObjectPool<Job> _JOB_POOL =
-		new ObjectPool<>(true, () -> new Job()); 
+	private static final DynamicPool<Job> _JOB_POOL =
+		new DynamicPool<>(true, () -> new Job(), null, null); 
 	
 	private final int              _fboLayerIndex;
 	private final float[]          _pixel        = new float[4];
