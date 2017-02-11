@@ -14,10 +14,10 @@
 	<classpathentry kind="lib" path="jars/windows/lwjgl-natives-windows.jar"/>
 	<classpathentry kind="lib" path="jars/windows/lwjgl-opengl-natives-windows.jar"/>
 	<classpathentry kind="lib" path="jars/windows/lwjgl-stb-natives-windows.jar"/>
-	<classpathentry kind="lib" path="jars/abstract_engine_1-0-0.jar"/>
 	<classpathentry kind="lib" path="jars/lwjgl-glfw.jar"/>
 	<classpathentry kind="lib" path="jars/lwjgl-opengl.jar"/>
 	<classpathentry kind="lib" path="jars/lwjgl-stb.jar"/>
 	<classpathentry kind="lib" path="jars/lwjgl.jar"/>
+	<classpathentry kind="lib" path="jars/abstract_engine_1-0-1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
