@@ -37,14 +37,8 @@ public abstract class Pool<T> {
 		return casted;
 	}
 	
-	public abstract int  getCapacity();
-	public abstract int  getUnusedObjectCount();
-	public abstract int  getUsedObjectCount();
-	public abstract T    provide();
-	public abstract void reset();
-	
-	public boolean free(final T object) {
-		throw new UnsupportedOperationException(
-			"Freeing a single object is not supported by this pool");
-	}
+	public abstract int getCapacity();
+	public abstract int getUnusedObjectCount();
+	public abstract int getUsedObjectCount();
+	public abstract T   provide();
 }

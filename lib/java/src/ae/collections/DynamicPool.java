@@ -112,8 +112,7 @@ public final class DynamicPool<T> extends Pool<T> {
     		resetNodeContent ? (node) -> {node.content = null;} : null);
     }
 	
-	@Override
-	public boolean free(final T obj) {
+	public final boolean free(final T obj) {
 		
 		if(obj == null) return false;
 		
@@ -149,7 +148,7 @@ public final class DynamicPool<T> extends Pool<T> {
 	}
 
 	@Override
-	public T provide() {
+	public final T provide() {
 		
 		Object overflowObject = null;
 		
@@ -195,14 +194,5 @@ public final class DynamicPool<T> extends Pool<T> {
 			
 			return _popUnused();
 		}
-	}
-
-	@Override
-	public final void reset() {
-		
-		_unusedStackPos = -1;
-		
-		for(int i = 0; i < _pool.length; i++)
-			if(_pool[i] != null) _pushUnused(i);
 	}
 }

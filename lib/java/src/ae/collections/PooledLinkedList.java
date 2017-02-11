@@ -93,6 +93,11 @@ public final class PooledLinkedList<T> extends PooledCollection<T> {
 		return new LinkedListNode.NodeIteratorReverse<T>(_last);
 	}
 	
+	@Override
+	public final void finalize() {
+		_clear();
+	}
+	
 	public final T getFirst() {
 		if(isEmpty()) throw new NoSuchElementException();
 		return _first.content;

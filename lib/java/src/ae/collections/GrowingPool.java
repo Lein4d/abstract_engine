@@ -28,6 +28,22 @@ public final class GrowingPool<T> extends Pool<T> implements Iterable<T> {
 	private int      _freePos     = 0;
 	private int      _objectCount = 0;
 	
+	public final DynamicPool<T> backingPool;
+
+	public GrowingPool(final DynamicPool<T> backend) {
+		this(backend, 64);
+	}
+	
+	public GrowingPool(
+			final DynamicPool<T> backend,
+			final int            initialCapacity) {
+		
+		super(null, backend.preparator, backend.finalizer);
+		
+		this._pool   = new Object[initialCapacity];
+		this.backingPool = backend;
+	}
+	
 	public GrowingPool(
     		final Supplier<T> creator,
     		final Consumer<T> preparator,
@@ -43,7 +59,16 @@ public final class GrowingPool<T> extends Pool<T> implements Iterable<T> {
 			final Consumer<T> finalizer) {
 		
 		super(creator, preparator, finalizer);
-		this._pool = new Object[initialCapacity];
+		
+		this._pool   = new Object[initialCapacity];
+		this.backingPool = null;
+	}
+	
+	@Override
+	@SuppressWarnings("unchecked")
+	public final void finalize() {
+		if(backingPool != null)
+			for(int i = 0; i < _freePos; i++) backingPool.free((T)_pool[i]);
 	}
 	
 	@Override
@@ -81,14 +106,14 @@ public final class GrowingPool<T> extends Pool<T> implements Iterable<T> {
 		
 		// Ensure the current slot contains an object
 		if(_pool[_freePos] == null) {
-			_pool[_freePos] = _create();
+			_pool[_freePos] =
+				backingPool != null ? backingPool.provide() : _create();
 			_objectCount++;
 		}
 		
 		return _prepare(_pool[_freePos++]);
 	}
 	
-	@Override
 	public final void reset() {
 		for(Object i : _pool) if(i != null) _finalize(i);
 		_freePos = 0;
