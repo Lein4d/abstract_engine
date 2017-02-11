@@ -1,8 +1,12 @@
 package ae.math;
 
-import ae.util.OrganizedObject;
+import ae.event.Observable;
+import ae.event.SignalEndPoint;
+import ae.event.SignalSource;
 
-public abstract class VectorBackend extends OrganizedObject<VectorBackend> {
+public abstract class VectorBackend implements Observable {
+	
+	private SignalSource<VectorBackend> _signal = new SignalSource<>(this);
 	
 	protected float _getElement(
     		final int index) {
@@ -40,6 +44,11 @@ public abstract class VectorBackend extends OrganizedObject<VectorBackend> {
     protected abstract void _setY(final float y);
     protected abstract void _setZ(final float z);
     protected abstract void _setW(final float w);
+
+    @Override
+	public final SignalEndPoint createSignalEndPoint() {
+		return _signal.createEndPoint();
+	}
 	
 	public final float getElement(final int index) {
 		return _getElement(index);
@@ -49,13 +58,13 @@ public abstract class VectorBackend extends OrganizedObject<VectorBackend> {
 	public final float getY() {return _getY();}
 	public final float getZ() {return _getZ();}
 	public final float getW() {return _getW();}
-	
+
 	public final VectorBackend setElement(
 			final int   index,
 			final float value) {
 		
 		_setElement(index, value);
-		_propagateChange();
+		_signal.fire();
 		
 		return this;
 	}
@@ -63,7 +72,7 @@ public abstract class VectorBackend extends OrganizedObject<VectorBackend> {
 	public final VectorBackend setX(final float x) {
 		
 		_setX(x);
-		_propagateChange();
+		_signal.fire();
 		
 		return this;
 	}
@@ -71,7 +80,7 @@ public abstract class VectorBackend extends OrganizedObject<VectorBackend> {
 	public final VectorBackend setY(final float y) {
 		
 		_setY(y);
-		_propagateChange();
+		_signal.fire();
 		
 		return this;
 	}
@@ -79,7 +88,7 @@ public abstract class VectorBackend extends OrganizedObject<VectorBackend> {
 	public final VectorBackend setZ(final float z) {
 		
 		_setZ(z);
-		_propagateChange();
+		_signal.fire();
 		
 		return this;
 	}
@@ -87,7 +96,7 @@ public abstract class VectorBackend extends OrganizedObject<VectorBackend> {
 	public final VectorBackend setW(final float w) {
 		
 		_setW(w);
-		_propagateChange();
+		_signal.fire();
 		
 		return this;
 	}

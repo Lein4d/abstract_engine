@@ -2,9 +2,9 @@ package ae.core;
 
 import static org.lwjgl.glfw.GLFW.*;
 
+import ae.event.Event;
 import ae.scenegraph.Instance;
 import ae.scenegraph.entities.Model;
-import ae.util.Event;
 
 public final class InputManager {
 

@@ -1,8 +1,13 @@
 package ae.math;
 
-import ae.util.OrganizedObject;
+import ae.event.Observable;
+import ae.event.SignalEndPoint;
+import ae.event.SignalSource;
 
-public final class Vector3D extends OrganizedObject<Vector3D> {
+public final class Vector3D implements Observable {
+	
+	private final SignalSource<Vector3D> _signal;
+	private final SignalEndPoint         _backendSignal;
 	
 	public final VectorBackend backend;
 	public final Vector3D      readOnly;
@@ -10,19 +15,19 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 	public float x, y, z;
 
 	public Vector3D(final ReadOnlyBackend backend) {
-		
-		this.backend  = backend;
-		this.readOnly = this;
-		
-		backend.addListener((obj) -> _propagateChange());
+
+		this._backendSignal = backend.createSignalEndPoint();
+		this._signal        = new SignalSource<>(this, _backendSignal);
+		this.backend        = backend;
+		this.readOnly       = this;
 	}
 
 	public Vector3D(final VectorBackend backend) {
 		
-		this.backend  = backend;
-		this.readOnly = new Vector3D(new ReadOnlyBackend(backend));
-		
-		backend.addListener((obj) -> _propagateChange());
+		this._backendSignal = backend.createSignalEndPoint();
+		this._signal        = new SignalSource<>(this, _backendSignal);
+		this.backend        = backend;
+		this.readOnly       = new Vector3D(new ReadOnlyBackend(backend));
 	}
 
 	public final Vector3D add(final float value) {
@@ -102,6 +107,11 @@ public final class Vector3D extends OrganizedObject<Vector3D> {
 			final float z) {
 		
 		return new Vector3D(new ReadOnlyBackend(new StaticBackend(x, y, z, 1)));
+	}
+	
+	@Override
+	public final SignalEndPoint createSignalEndPoint() {
+		return _signal.createEndPoint();
 	}
 
 	public static final Vector3D createStatic() {

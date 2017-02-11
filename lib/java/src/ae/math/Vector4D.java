@@ -1,12 +1,17 @@
 package ae.math;
 
-import ae.util.OrganizedObject;
+import ae.event.Observable;
+import ae.event.SignalEndPoint;
+import ae.event.SignalSource;
 
-public final class Vector4D extends OrganizedObject<Vector4D> {
+public final class Vector4D implements Observable {
 
 	public interface UnaryOperator {
 		float applyToComponent(float x);
 	}
+	
+	private final SignalSource<Vector4D> _signal;
+	private final SignalEndPoint         _backendSignal;
 	
 	public static final Vector4D BLACK  = createConst(0,    1);
 	public static final Vector4D GREY   = createConst(0.5f, 1);
@@ -28,11 +33,11 @@ public final class Vector4D extends OrganizedObject<Vector4D> {
 			final ReadOnlyBackend backend,
 			final Vector3D        xyz) {
 		
-		this.backend  = backend;
-		this.xyz      = xyz;
-		this.readOnly = this;
-		
-		backend.addListener((obj) -> _propagateChange());
+		this._backendSignal = backend.createSignalEndPoint();
+		this._signal        = new SignalSource<>(this, _backendSignal);
+		this.backend        = backend;
+		this.xyz            = xyz;
+		this.readOnly       = this;
 	}
 	
 	public Vector4D(final ReadOnlyBackend backend) {
@@ -42,12 +47,12 @@ public final class Vector4D extends OrganizedObject<Vector4D> {
 	
 	public Vector4D(final VectorBackend backend) {
 		
-		this.backend  = backend;
-		this.xyz      = new Vector3D(backend);
-		this.readOnly =
+		this._backendSignal = backend.createSignalEndPoint();
+		this._signal        = new SignalSource<>(this, _backendSignal);
+		this.backend        = backend;
+		this.xyz            = new Vector3D(backend);
+		this.readOnly       =
 			new Vector4D(new ReadOnlyBackend(backend), xyz.readOnly);
-		
-		backend.addListener((obj) -> _propagateChange());
 	}
 	
 	public final Vector4D add(
@@ -128,6 +133,11 @@ public final class Vector4D extends OrganizedObject<Vector4D> {
 			final float w) {
 		
 		return new Vector4D(new ReadOnlyBackend(new StaticBackend(x, y, z, w)));
+	}
+	
+	@Override
+	public final SignalEndPoint createSignalEndPoint() {
+		return _signal.createEndPoint();
 	}
 
 	public static final Vector4D createStatic(final float grey) {

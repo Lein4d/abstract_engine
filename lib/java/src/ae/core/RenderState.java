@@ -3,11 +3,11 @@ package ae.core;
 import static org.lwjgl.opengl.GL20.*;
 
 import ae.collections.PooledLinkedList;
+import ae.event.Event;
 import ae.math.Matrix4D;
 import ae.scenegraph.Instance;
 import ae.scenegraph.entities.DirectionalLight;
 import ae.scenegraph.entities.PointLight;
-import ae.util.Event;
 
 public final class RenderState {
 	

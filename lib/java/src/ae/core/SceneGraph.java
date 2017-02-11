@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 import ae.collections.GrowingPool;
 import ae.collections.PooledHashMap;
 import ae.collections.PooledLinkedList;
+import ae.event.Event;
 import ae.math.Matrix4D;
 import ae.scenegraph.Entity;
 import ae.scenegraph.Instance;
@@ -14,12 +15,10 @@ import ae.scenegraph.entities.Camera;
 import ae.scenegraph.entities.DynamicSpace;
 import ae.scenegraph.entities.Marker;
 import ae.scenegraph.entities.Model;
-import ae.util.Event;
-import ae.util.OrganizedObject;
 
 public class SceneGraph {
 	
-	private final class UnrollError extends OrganizedObject<UnrollError> {
+	private final class UnrollError {
 		
 		private final PooledLinkedList<Instance> _instanceScope =
 			new PooledLinkedList<>();

@@ -8,11 +8,10 @@ import ae.collections.DynamicPool;
 import ae.collections.PooledQueue;
 import ae.math.Vector3D;
 import ae.scenegraph.Instance;
-import ae.util.OrganizedObject;
 
 public final class ObjectPicker {
 	
-	private static final class Job extends OrganizedObject<Job> {
+	private static final class Job {
 		private Screen.Layer   _layer;
 		private int            _x;
 		private int            _y;

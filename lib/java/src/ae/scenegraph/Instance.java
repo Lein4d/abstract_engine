@@ -2,9 +2,8 @@ package ae.scenegraph;
 
 import ae.collections.PooledLinkedList;
 import ae.math.Matrix4D;
-import ae.util.OrganizedObject;
 
-public final class Instance extends OrganizedObject<Instance> {
+public final class Instance {
 	
 	public final Matrix4D tfToEyeSpace    = new Matrix4D();
 	public final Matrix4D tfToCameraSpace = new Matrix4D();

@@ -1,8 +1,10 @@
 package ae.math;
 
-import ae.util.OrganizedObject;
+import ae.event.Observable;
+import ae.event.SignalEndPoint;
+import ae.event.SignalSource;
 
-public final class Matrix3D extends OrganizedObject<Matrix3D> {
+public final class Matrix3D implements Observable {
 
 	public final class MatrixVector extends VectorBackend {
 		
@@ -52,7 +54,7 @@ public final class Matrix3D extends OrganizedObject<Matrix3D> {
 		}
 	}
 	
-	//private static final float RAD_FACTOR = 0.0174532f;
+	private final SignalSource<Matrix3D> _signal = new SignalSource<>(this);
 	
 	// The matrix is structured in rows
 	private final float[] _data = new float[9];
@@ -72,6 +74,11 @@ public final class Matrix3D extends OrganizedObject<Matrix3D> {
 	public static final int I_M32 = 5;
 	public static final int I_M33 = 8;
 
+	private Matrix3D _fireSignal() {
+		_signal.fire();
+		return this;
+	}
+	
 	public final Vector3D apply(final Vector3D x) {
 		return x.setData(apply(x.getData(_temp)));
 	}
@@ -112,6 +119,11 @@ public final class Matrix3D extends OrganizedObject<Matrix3D> {
 			_data[I_M31] * _data[I_M22] * _data[I_M13] -
 			_data[I_M32] * _data[I_M23] * _data[I_M11] -
 			_data[I_M33] * _data[I_M21] * _data[I_M13];
+	}
+
+	@Override
+	public final SignalEndPoint createSignalEndPoint() {
+		return _signal.createEndPoint();
 	}
 
 	public final Vector3D getColumn(final int cIndex) {
@@ -269,9 +281,7 @@ public final class Matrix3D extends OrganizedObject<Matrix3D> {
 			_temp[I_M31] * m._data[I_M13] + _temp[I_M32] * m._data[I_M23] +
 			_temp[I_M33] * m._data[I_M33];
 
-		_propagateChange();
-		
-		return this;
+		return _fireSignal();
 	}
 
 	public final Matrix3D setColumn(
@@ -279,9 +289,7 @@ public final class Matrix3D extends OrganizedObject<Matrix3D> {
 			final Vector3D src) {
 		
 		src.getData(_data, cIndex * 3);
-		_propagateChange();
-		
-		return this;
+		return _fireSignal();
 	}
 	
 	public final Matrix3D setColumn(
@@ -297,9 +305,7 @@ public final class Matrix3D extends OrganizedObject<Matrix3D> {
 			final int     offset) {
 		
 		System.arraycopy(src, offset, _data, cIndex * 4, 4);
-		_propagateChange();
-		
-		return this;
+		return _fireSignal();
 	}
 	
 	public final Matrix3D setColumns(
@@ -314,11 +320,8 @@ public final class Matrix3D extends OrganizedObject<Matrix3D> {
 	}
 	
 	public final Matrix3D setData(final Matrix3D src) {
-		
 		src.getData(_data);
-		_propagateChange();
-		
-		return this;
+		return _fireSignal();
 	}
 	
 	public final Matrix3D setData(final float[] src) {
@@ -330,9 +333,7 @@ public final class Matrix3D extends OrganizedObject<Matrix3D> {
 			final int     offset) {
 		
 		System.arraycopy(src, offset, _data, 0, 9);
-		_propagateChange();
-		
-		return this;
+		return _fireSignal();
 	}
 	
 	public final Matrix3D setData(
@@ -350,9 +351,7 @@ public final class Matrix3D extends OrganizedObject<Matrix3D> {
 		_data[I_M11] = m21; _data[I_M22] = m22; _data[I_M21] = m23;
 		_data[I_M31] = m31; _data[I_M32] = m32; _data[I_M31] = m33;
 
-		_propagateChange();
-		
-    	return this;
+		return _fireSignal();
     }
 	
 	public final Matrix3D setElement(
@@ -361,9 +360,7 @@ public final class Matrix3D extends OrganizedObject<Matrix3D> {
 			final float value) {
 		
 		_data[cIndex * 3 + rIndex] = value;
-		_propagateChange();
-		
-		return this;
+		return _fireSignal();
 	}
 
 	public final Matrix3D setRow(
@@ -374,9 +371,7 @@ public final class Matrix3D extends OrganizedObject<Matrix3D> {
 		_data[I_M12 + rIndex] = src.backend.getY();
 		_data[I_M13 + rIndex] = src.backend.getZ();
 
-		_propagateChange();
-		
-		return this;
+		return _fireSignal();
 	}
 	
 	public final Matrix3D setRow(
@@ -392,9 +387,7 @@ public final class Matrix3D extends OrganizedObject<Matrix3D> {
 			final int     offset) {
 		
 		for(int i = 0; i < 3; i++) _data[i * 3 + rIndex] = src[offset + i];
-		_propagateChange();
-		
-		return this;
+		return _fireSignal();
 	}
 
 	public final Matrix3D setRows(
@@ -415,8 +408,6 @@ public final class Matrix3D extends OrganizedObject<Matrix3D> {
 		_data[I_M12] = _data[I_M13] = _data[I_M21] =
 		_data[I_M23] = _data[I_M31] = _data[I_M32] = 0;
 
-		_propagateChange();
-		
-		return this;
+		return _fireSignal();
 	}
 }
