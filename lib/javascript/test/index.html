@@ -1,0 +1,193 @@
+<html><head>
+<title>Abstract Engine - Test</title>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+
+<script type="text/javascript" src="../abstract_engine.js"></script>
+
+<script id="shader-fs" type="x-shader/x-fragment">
+    precision mediump float;
+
+    void main(void) {
+        gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
+    }
+</script>
+
+<script id="shader-vs" type="x-shader/x-vertex">
+    attribute vec3 aVertexPosition;
+
+    uniform mat4 uMVMatrix;
+    uniform mat4 uPMatrix;
+
+    void main(void) {
+        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+    }
+</script>
+
+
+<script type="text/javascript">
+
+    var gl;
+    function initGL(canvas) {
+        try {
+            gl = canvas.getContext("experimental-webgl");
+            gl.viewportWidth = canvas.width;
+            gl.viewportHeight = canvas.height;
+        } catch (e) {
+        }
+        if (!gl) {
+            alert("Could not initialise WebGL, sorry :-(");
+        }
+    }
+
+
+    function getShader(gl, id) {
+        var shaderScript = document.getElementById(id);
+        if (!shaderScript) {
+            return null;
+        }
+
+        var str = "";
+        var k = shaderScript.firstChild;
+        while (k) {
+            if (k.nodeType == 3) {
+                str += k.textContent;
+            }
+            k = k.nextSibling;
+        }
+
+        var shader;
+        if (shaderScript.type == "x-shader/x-fragment") {
+            shader = gl.createShader(gl.FRAGMENT_SHADER);
+        } else if (shaderScript.type == "x-shader/x-vertex") {
+            shader = gl.createShader(gl.VERTEX_SHADER);
+        } else {
+            return null;
+        }
+
+        gl.shaderSource(shader, str);
+        gl.compileShader(shader);
+
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            alert(gl.getShaderInfoLog(shader));
+            return null;
+        }
+
+        return shader;
+    }
+
+
+    var shaderProgram;
+
+    function initShaders() {
+        var fragmentShader = getShader(gl, "shader-fs");
+        var vertexShader = getShader(gl, "shader-vs");
+
+        shaderProgram = gl.createProgram();
+        gl.attachShader(shaderProgram, vertexShader);
+        gl.attachShader(shaderProgram, fragmentShader);
+		
+		gl.bindAttribLocation(shaderProgram, 0, "aVertexPosition");
+		
+        gl.linkProgram(shaderProgram);
+
+        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+            alert("Could not initialise shaders");
+        }
+
+        gl.useProgram(shaderProgram);
+
+        shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+		
+        gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+
+        shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+        shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+    }
+
+    function webGLStart() {
+        
+		initGL(document.getElementById("gl-canvas"));
+        initShaders();
+		
+		const engine     = new ae.core.AbstractEngine(
+			document.getElementById("gl-canvas"),
+			shaderProgram.pMatrixUniform,
+			shaderProgram.mvMatrixUniform);
+		const sceneGraph = new ae.core.SceneGraph(engine);
+		
+		const camera = new ae.sg.Camera(sceneGraph, "camera").
+			setNearClipDistance(0.1).
+			setFarClipDistanceToInfinity();
+		
+		const object = new ae.sg.Model(sceneGraph, "object").
+			setMesh(ae.mesh.createCubeA(1, true).createMesh(engine.gl)).
+			setUpdateCallback((event) => {event.host.transformation.value.
+				toIdentity().
+				translate(0, 0, -5).
+				rotateY(event.time / 50);
+			});
+		
+		//object.transformation.value.translate(0, 0, -5);
+		
+		sceneGraph.root.addChild(camera);
+		sceneGraph.root.addChild(object);
+		
+		engine.camera = camera;
+		
+		let red = 0, green = 0.33, blue = 0.66;
+		
+		engine.state.onNewFrame.addListener((event) => {
+			
+			red   += 0.01;
+			green += 0.01;
+			blue  += 0.01;
+			
+			engine.background.setDataD(
+				red   - Math.floor(red),
+				green - Math.floor(green),
+				blue  - Math.floor(blue));
+		});
+		
+		sceneGraph.onNewTopology.addListener((event) => event.host.print());
+		
+		
+		
+		//gl = engine.gl;
+		//
+		//const cube = ae.mesh.createCubeA(1, true).createMesh(engine.gl);
+		//
+		//const projection = new ae.math.Matrix4D();
+		//const modelView = new ae.math.Matrix4D();
+		
+		//engine.background.setDataD(1, 0, 0);
+		//engine.render();
+		
+		
+		/*
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.enable(gl.DEPTH_TEST);
+        
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+		
+		projection.
+			projectPerspectiveHorFOV(gl.viewportWidth, gl.viewportHeight, 60, 0.1).
+			applyToShader(engine.gl, shaderProgram.pMatrixUniform);
+		
+		modelView.
+			translate(0, 0, -5).
+			applyToShader(engine.gl, shaderProgram.mvMatrixUniform);
+		
+		cube.draw(engine.gl);
+		*/
+		engine.start();
+    }
+
+</script>
+
+
+</head>
+
+
+<body onload="webGLStart();">
+    <canvas id="gl-canvas" style="border: none;" width="500" height="500"></canvas>
+</body></html>
