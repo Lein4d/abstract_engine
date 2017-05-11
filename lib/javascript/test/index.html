@@ -12,8 +12,17 @@
 			document.getElementById("gl-canvas"));
 		const sceneGraph = new ae.core.SceneGraph(engine);
 		
+		const texture = ae.core.Texture.createCheckerTextureA(engine, ae.math.GREY, ae.math.WHITE);
+		
 		const mb       = new ae.mat.MaterialBuilder();
-		const material = mb.setColor(mb.constF(1, 0, 1)).createMaterial(engine, "material");
+		const material = mb.
+			addTexture("texture").
+			addParameter("myColor", ae.mat.GlslType.FLOAT3).
+			//setColor(mb.constF(1, 0, 1)).
+			setColor(mb.mult(mb.textureRGB("texture"), mb.param("myColor"))).
+			createMaterial(engine, "material").
+			setTexture("texture", texture).
+			setParam("myColor", [1, 1, 0]);
 		
 		const camera = new ae.sg.Camera(sceneGraph, "camera").
 			setNearClipDistance(0.1).
