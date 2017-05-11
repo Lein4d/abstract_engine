@@ -19,7 +19,9 @@
 			addTexture("texture").
 			addParameter("myColor", ae.mat.GlslType.FLOAT3).
 			//setColor(mb.constF(1, 0, 1)).
-			setColor(mb.mult(mb.textureRGB("texture"), mb.param("myColor"))).
+			//setColor(mb.mult(mb.textureRGB("texture"), mb.param("myColor"))).
+			setColor(mb.mult(mb.textureRGB("texture"), mb.phong())).
+			//setColor(mb.phong()).
 			createMaterial(engine, "material").
 			setTexture("texture", texture).
 			setParam("myColor", [1, 1, 0]);
@@ -34,11 +36,25 @@
 			setUpdateCallback((event) => {event.host.transformation.value.
 				toIdentity().
 				translate(0, 0, -5).
-				rotateY(event.time / 50);
+				rotateY(event.time / 40).
+				rotateX(event.time / 60).
+				translate(-0.5, -0.5, -0.5);
 			});
+		
+		const dirLight = new ae.sg.DirectionalLight(sceneGraph, "dirlight").
+			makeAmbient();
+		
+		const pointLight = new ae.sg.PointLight(sceneGraph, "pointLight").
+			makeLinear().
+			setRange(3);
+		
+		pointLight.color.value.setDataDirect(1, 0.2, 0.2);
+		pointLight.transformation.value.translate(-1, 0, -4);
 		
 		sceneGraph.root.addChild(camera);
 		sceneGraph.root.addChild(object);
+		sceneGraph.root.addChild(dirLight);
+		sceneGraph.root.addChild(pointLight);
 		
 		engine.camera = camera;
 		
@@ -50,7 +66,7 @@
 			green += 0.01;
 			blue  += 0.01;
 			
-			engine.background.setDataD(
+			engine.background.setDataDirect(
 				red   - Math.floor(red),
 				green - Math.floor(green),
 				blue  - Math.floor(blue));
